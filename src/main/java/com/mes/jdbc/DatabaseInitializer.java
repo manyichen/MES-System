@@ -1,5 +1,6 @@
 package com.mes.jdbc;
-
+/*这是专业基础实训轮胎制造MES
+系统的数据库初始化类，负责创建数据库和用户表。*/
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
