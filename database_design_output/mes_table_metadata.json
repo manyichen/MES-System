@@ -1,0 +1,3530 @@
+﻿[
+    {
+        "module":  "订单查看",
+        "name":  "mes_customer_order",
+        "cn":  "客户订单表",
+        "desc":  "存储轮胎客户订单主数据，作为生产任务来源。",
+        "fields":  [
+                       {
+                           "name":  "order_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  true,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "PK, auto_increment",
+                           "desc":  "订单主键"
+                       },
+                       {
+                           "name":  "order_no",
+                           "type":  "varchar",
+                           "size":  "40",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "UK",
+                           "desc":  "订单编号"
+                       },
+                       {
+                           "name":  "customer_name",
+                           "type":  "varchar",
+                           "size":  "100",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "客户名称"
+                       },
+                       {
+                           "name":  "product_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_product.product_id",
+                           "desc":  "产品主键"
+                       },
+                       {
+                           "name":  "product_code",
+                           "type":  "varchar",
+                           "size":  "40",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "产品编码快照"
+                       },
+                       {
+                           "name":  "product_model",
+                           "type":  "varchar",
+                           "size":  "80",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "轮胎型号/规格"
+                       },
+                       {
+                           "name":  "order_qty",
+                           "type":  "int",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "0",
+                           "constraint":  "\u003e=0",
+                           "desc":  "订单数量"
+                       },
+                       {
+                           "name":  "unit",
+                           "type":  "varchar",
+                           "size":  "20",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "\u0027条\u0027",
+                           "constraint":  "",
+                           "desc":  "计量单位"
+                       },
+                       {
+                           "name":  "delivery_date",
+                           "type":  "date",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "交付日期"
+                       },
+                       {
+                           "name":  "priority_level",
+                           "type":  "tinyint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "3",
+                           "constraint":  "1-5",
+                           "desc":  "优先级，1最高"
+                       },
+                       {
+                           "name":  "order_status",
+                           "type":  "varchar",
+                           "size":  "30",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "\u0027PENDING_PLAN\u0027",
+                           "constraint":  "IDX",
+                           "desc":  "订单状态"
+                       },
+                       {
+                           "name":  "source_system",
+                           "type":  "varchar",
+                           "size":  "30",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "\u0027ERP\u0027",
+                           "constraint":  "",
+                           "desc":  "来源系统"
+                       },
+                       {
+                           "name":  "remark",
+                           "type":  "varchar",
+                           "size":  "500",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "备注"
+                       },
+                       {
+                           "name":  "created_at",
+                           "type":  "datetime",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "CURRENT_TIMESTAMP",
+                           "constraint":  "",
+                           "desc":  "创建时间"
+                       },
+                       {
+                           "name":  "updated_at",
+                           "type":  "datetime",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "CURRENT_TIMESTAMP",
+                           "constraint":  "ON UPDATE CURRENT_TIMESTAMP",
+                           "desc":  "更新时间"
+                       }
+                   ]
+    },
+    {
+        "module":  "生产任务管理",
+        "name":  "mes_production_task",
+        "cn":  "生产任务表",
+        "desc":  "存储PMC计划员排产形成的生产任务。",
+        "fields":  [
+                       {
+                           "name":  "task_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  true,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "PK, auto_increment",
+                           "desc":  "任务主键"
+                       },
+                       {
+                           "name":  "task_no",
+                           "type":  "varchar",
+                           "size":  "40",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "UK",
+                           "desc":  "任务编号"
+                       },
+                       {
+                           "name":  "order_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_customer_order.order_id",
+                           "desc":  "来源订单"
+                       },
+                       {
+                           "name":  "planner_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_user.user_id",
+                           "desc":  "PMC计划员"
+                       },
+                       {
+                           "name":  "plan_qty",
+                           "type":  "int",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "0",
+                           "constraint":  "\u003e=0",
+                           "desc":  "计划数量"
+                       },
+                       {
+                           "name":  "planned_start_time",
+                           "type":  "datetime",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "计划开始时间"
+                       },
+                       {
+                           "name":  "planned_end_time",
+                           "type":  "datetime",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "计划完成时间"
+                       },
+                       {
+                           "name":  "target_line_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_production_line.line_id",
+                           "desc":  "目标产线"
+                       },
+                       {
+                           "name":  "task_status",
+                           "type":  "varchar",
+                           "size":  "30",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "\u0027DRAFT\u0027",
+                           "constraint":  "IDX",
+                           "desc":  "任务状态"
+                       },
+                       {
+                           "name":  "kitting_status",
+                           "type":  "varchar",
+                           "size":  "30",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "\u0027NOT_ANALYZED\u0027",
+                           "constraint":  "IDX",
+                           "desc":  "齐套状态"
+                       },
+                       {
+                           "name":  "release_time",
+                           "type":  "datetime",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "发布时间"
+                       },
+                       {
+                           "name":  "close_time",
+                           "type":  "datetime",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "闭环时间"
+                       },
+                       {
+                           "name":  "remark",
+                           "type":  "varchar",
+                           "size":  "500",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "备注"
+                       },
+                       {
+                           "name":  "created_at",
+                           "type":  "datetime",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "CURRENT_TIMESTAMP",
+                           "constraint":  "",
+                           "desc":  "创建时间"
+                       },
+                       {
+                           "name":  "updated_at",
+                           "type":  "datetime",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "CURRENT_TIMESTAMP",
+                           "constraint":  "ON UPDATE CURRENT_TIMESTAMP",
+                           "desc":  "更新时间"
+                       }
+                   ]
+    },
+    {
+        "module":  "齐套分析与欠料预警",
+        "name":  "mes_kitting_analysis",
+        "cn":  "齐套分析表",
+        "desc":  "存储任务发布前的物料、产线、设备、工序齐套分析记录。",
+        "fields":  [
+                       {
+                           "name":  "analysis_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  true,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "PK, auto_increment",
+                           "desc":  "分析主键"
+                       },
+                       {
+                           "name":  "analysis_no",
+                           "type":  "varchar",
+                           "size":  "40",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "UK",
+                           "desc":  "分析编号"
+                       },
+                       {
+                           "name":  "task_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_production_task.task_id",
+                           "desc":  "生产任务"
+                       },
+                       {
+                           "name":  "analysis_scope",
+                           "type":  "varchar",
+                           "size":  "100",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "分析范围"
+                       },
+                       {
+                           "name":  "result_status",
+                           "type":  "varchar",
+                           "size":  "30",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "\u0027PENDING\u0027",
+                           "constraint":  "IDX",
+                           "desc":  "分析结果"
+                       },
+                       {
+                           "name":  "snapshot_time",
+                           "type":  "datetime",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "数据快照时间"
+                       },
+                       {
+                           "name":  "material_ok",
+                           "type":  "tinyint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "0",
+                           "constraint":  "",
+                           "desc":  "物料是否齐套"
+                       },
+                       {
+                           "name":  "line_ok",
+                           "type":  "tinyint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "0",
+                           "constraint":  "",
+                           "desc":  "产线是否可用"
+                       },
+                       {
+                           "name":  "equipment_ok",
+                           "type":  "tinyint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "0",
+                           "constraint":  "",
+                           "desc":  "设备是否可用"
+                       },
+                       {
+                           "name":  "process_ok",
+                           "type":  "tinyint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "0",
+                           "constraint":  "",
+                           "desc":  "工艺是否完整"
+                       },
+                       {
+                           "name":  "created_by",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_user.user_id",
+                           "desc":  "分析人"
+                       },
+                       {
+                           "name":  "created_at",
+                           "type":  "datetime",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "CURRENT_TIMESTAMP",
+                           "constraint":  "",
+                           "desc":  "创建时间"
+                       }
+                   ]
+    },
+    {
+        "module":  "齐套分析与欠料预警",
+        "name":  "mes_kitting_shortage_item",
+        "cn":  "齐套缺口明细表",
+        "desc":  "存储齐套分析发现的物料、产线、设备、工序缺口。",
+        "fields":  [
+                       {
+                           "name":  "shortage_item_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  true,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "PK, auto_increment",
+                           "desc":  "缺口明细主键"
+                       },
+                       {
+                           "name":  "analysis_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_kitting_analysis.analysis_id",
+                           "desc":  "齐套分析"
+                       },
+                       {
+                           "name":  "task_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_production_task.task_id",
+                           "desc":  "生产任务"
+                       },
+                       {
+                           "name":  "shortage_type",
+                           "type":  "varchar",
+                           "size":  "30",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "IDX",
+                           "desc":  "缺口类型 MATERIAL/LINE/EQUIPMENT/PROCESS"
+                       },
+                       {
+                           "name":  "resource_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "资源主键"
+                       },
+                       {
+                           "name":  "resource_code",
+                           "type":  "varchar",
+                           "size":  "60",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "资源编码"
+                       },
+                       {
+                           "name":  "resource_name",
+                           "type":  "varchar",
+                           "size":  "100",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "资源名称"
+                       },
+                       {
+                           "name":  "required_qty",
+                           "type":  "decimal",
+                           "size":  "18,4",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "0",
+                           "constraint":  "",
+                           "desc":  "需求数量"
+                       },
+                       {
+                           "name":  "available_qty",
+                           "type":  "decimal",
+                           "size":  "18,4",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "0",
+                           "constraint":  "",
+                           "desc":  "可用数量"
+                       },
+                       {
+                           "name":  "shortage_qty",
+                           "type":  "decimal",
+                           "size":  "18,4",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "0",
+                           "constraint":  "",
+                           "desc":  "缺口数量"
+                       },
+                       {
+                           "name":  "impact_desc",
+                           "type":  "varchar",
+                           "size":  "500",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "影响说明"
+                       },
+                       {
+                           "name":  "suggestion",
+                           "type":  "varchar",
+                           "size":  "500",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "处理建议"
+                       },
+                       {
+                           "name":  "created_at",
+                           "type":  "datetime",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "CURRENT_TIMESTAMP",
+                           "constraint":  "",
+                           "desc":  "创建时间"
+                       }
+                   ]
+    },
+    {
+        "module":  "齐套分析与欠料预警",
+        "name":  "mes_shortage_alert",
+        "cn":  "欠料预警表",
+        "desc":  "存储欠料及资源缺口预警处理记录。",
+        "fields":  [
+                       {
+                           "name":  "alert_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  true,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "PK, auto_increment",
+                           "desc":  "预警主键"
+                       },
+                       {
+                           "name":  "alert_no",
+                           "type":  "varchar",
+                           "size":  "40",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "UK",
+                           "desc":  "预警编号"
+                       },
+                       {
+                           "name":  "task_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_production_task.task_id",
+                           "desc":  "生产任务"
+                       },
+                       {
+                           "name":  "analysis_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_kitting_analysis.analysis_id",
+                           "desc":  "齐套分析"
+                       },
+                       {
+                           "name":  "alert_type",
+                           "type":  "varchar",
+                           "size":  "30",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "IDX",
+                           "desc":  "预警类型"
+                       },
+                       {
+                           "name":  "severity",
+                           "type":  "varchar",
+                           "size":  "20",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "\u0027MEDIUM\u0027",
+                           "constraint":  "",
+                           "desc":  "严重级别"
+                       },
+                       {
+                           "name":  "alert_status",
+                           "type":  "varchar",
+                           "size":  "30",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "\u0027OPEN\u0027",
+                           "constraint":  "IDX",
+                           "desc":  "处理状态"
+                       },
+                       {
+                           "name":  "receiver_role",
+                           "type":  "varchar",
+                           "size":  "50",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "接收角色"
+                       },
+                       {
+                           "name":  "alert_content",
+                           "type":  "varchar",
+                           "size":  "1000",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "预警内容"
+                       },
+                       {
+                           "name":  "resolved_at",
+                           "type":  "datetime",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "解决时间"
+                       },
+                       {
+                           "name":  "created_at",
+                           "type":  "datetime",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "CURRENT_TIMESTAMP",
+                           "constraint":  "",
+                           "desc":  "创建时间"
+                       }
+                   ]
+    },
+    {
+        "module":  "生产工单创建接收派发",
+        "name":  "mes_work_order",
+        "cn":  "生产工单表",
+        "desc":  "存储由生产任务拆分生成的车间执行工单。",
+        "fields":  [
+                       {
+                           "name":  "work_order_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  true,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "PK, auto_increment",
+                           "desc":  "工单主键"
+                       },
+                       {
+                           "name":  "work_order_no",
+                           "type":  "varchar",
+                           "size":  "40",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "UK",
+                           "desc":  "工单编号"
+                       },
+                       {
+                           "name":  "task_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_production_task.task_id",
+                           "desc":  "生产任务"
+                       },
+                       {
+                           "name":  "line_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_production_line.line_id",
+                           "desc":  "产线"
+                       },
+                       {
+                           "name":  "process_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_process_route.process_id",
+                           "desc":  "工序"
+                       },
+                       {
+                           "name":  "planned_qty",
+                           "type":  "int",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "0",
+                           "constraint":  "",
+                           "desc":  "计划数量"
+                       },
+                       {
+                           "name":  "actual_qty",
+                           "type":  "int",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "0",
+                           "constraint":  "",
+                           "desc":  "实际数量"
+                       },
+                       {
+                           "name":  "priority_level",
+                           "type":  "tinyint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "3",
+                           "constraint":  "",
+                           "desc":  "优先级"
+                       },
+                       {
+                           "name":  "work_order_status",
+                           "type":  "varchar",
+                           "size":  "30",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "\u0027CREATED\u0027",
+                           "constraint":  "IDX",
+                           "desc":  "工单状态"
+                       },
+                       {
+                           "name":  "dispatch_time",
+                           "type":  "datetime",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "派发时间"
+                       },
+                       {
+                           "name":  "receive_time",
+                           "type":  "datetime",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "接收时间"
+                       },
+                       {
+                           "name":  "completed_time",
+                           "type":  "datetime",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "完成时间"
+                       },
+                       {
+                           "name":  "created_at",
+                           "type":  "datetime",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "CURRENT_TIMESTAMP",
+                           "constraint":  "",
+                           "desc":  "创建时间"
+                       },
+                       {
+                           "name":  "updated_at",
+                           "type":  "datetime",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "CURRENT_TIMESTAMP",
+                           "constraint":  "ON UPDATE CURRENT_TIMESTAMP",
+                           "desc":  "更新时间"
+                       }
+                   ]
+    },
+    {
+        "module":  "生产工单创建接收派发",
+        "name":  "mes_work_order_operation_log",
+        "cn":  "工单调度操作日志表",
+        "desc":  "记录工单下发、暂停、优先级调整、撤销等调度操作。",
+        "fields":  [
+                       {
+                           "name":  "operation_log_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  true,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "PK, auto_increment",
+                           "desc":  "日志主键"
+                       },
+                       {
+                           "name":  "work_order_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_work_order.work_order_id",
+                           "desc":  "工单"
+                       },
+                       {
+                           "name":  "operation_type",
+                           "type":  "varchar",
+                           "size":  "30",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "IDX",
+                           "desc":  "操作类型"
+                       },
+                       {
+                           "name":  "before_status",
+                           "type":  "varchar",
+                           "size":  "30",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "操作前状态"
+                       },
+                       {
+                           "name":  "after_status",
+                           "type":  "varchar",
+                           "size":  "30",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "操作后状态"
+                       },
+                       {
+                           "name":  "operator_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_user.user_id",
+                           "desc":  "操作人"
+                       },
+                       {
+                           "name":  "operation_reason",
+                           "type":  "varchar",
+                           "size":  "500",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "操作原因"
+                       },
+                       {
+                           "name":  "operation_time",
+                           "type":  "datetime",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "CURRENT_TIMESTAMP",
+                           "constraint":  "",
+                           "desc":  "操作时间"
+                       },
+                       {
+                           "name":  "undoable",
+                           "type":  "tinyint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "0",
+                           "constraint":  "",
+                           "desc":  "是否可撤销"
+                       }
+                   ]
+    },
+    {
+        "module":  "领料任务管理",
+        "name":  "mes_material_requisition",
+        "cn":  "领料任务表",
+        "desc":  "存储生产工单对应的物料申请任务。",
+        "fields":  [
+                       {
+                           "name":  "requisition_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  true,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "PK, auto_increment",
+                           "desc":  "领料任务主键"
+                       },
+                       {
+                           "name":  "requisition_no",
+                           "type":  "varchar",
+                           "size":  "40",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "UK",
+                           "desc":  "领料单号"
+                       },
+                       {
+                           "name":  "work_order_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_work_order.work_order_id",
+                           "desc":  "生产工单"
+                       },
+                       {
+                           "name":  "requested_by",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_user.user_id",
+                           "desc":  "申请人"
+                       },
+                       {
+                           "name":  "request_status",
+                           "type":  "varchar",
+                           "size":  "30",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "\u0027CREATED\u0027",
+                           "constraint":  "IDX",
+                           "desc":  "领料状态"
+                       },
+                       {
+                           "name":  "request_time",
+                           "type":  "datetime",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "CURRENT_TIMESTAMP",
+                           "constraint":  "",
+                           "desc":  "申请时间"
+                       },
+                       {
+                           "name":  "approved_by",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_user.user_id",
+                           "desc":  "审批人"
+                       },
+                       {
+                           "name":  "approved_time",
+                           "type":  "datetime",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "审批时间"
+                       },
+                       {
+                           "name":  "remark",
+                           "type":  "varchar",
+                           "size":  "500",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "备注"
+                       }
+                   ]
+    },
+    {
+        "module":  "领料任务管理",
+        "name":  "mes_material_requisition_item",
+        "cn":  "领料任务明细表",
+        "desc":  "存储领料任务所需物料明细。",
+        "fields":  [
+                       {
+                           "name":  "requisition_item_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  true,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "PK, auto_increment",
+                           "desc":  "明细主键"
+                       },
+                       {
+                           "name":  "requisition_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_material_requisition.requisition_id",
+                           "desc":  "领料任务"
+                       },
+                       {
+                           "name":  "material_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_material.material_id",
+                           "desc":  "物料"
+                       },
+                       {
+                           "name":  "required_qty",
+                           "type":  "decimal",
+                           "size":  "18,4",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "0",
+                           "constraint":  "",
+                           "desc":  "需求数量"
+                       },
+                       {
+                           "name":  "issued_qty",
+                           "type":  "decimal",
+                           "size":  "18,4",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "0",
+                           "constraint":  "",
+                           "desc":  "已发数量"
+                       },
+                       {
+                           "name":  "unit",
+                           "type":  "varchar",
+                           "size":  "20",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "单位"
+                       },
+                       {
+                           "name":  "batch_no",
+                           "type":  "varchar",
+                           "size":  "50",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "指定批次"
+                       },
+                       {
+                           "name":  "item_status",
+                           "type":  "varchar",
+                           "size":  "30",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "\u0027PENDING\u0027",
+                           "constraint":  "IDX",
+                           "desc":  "明细状态"
+                       }
+                   ]
+    },
+    {
+        "module":  "仓库接收与库存核对",
+        "name":  "mes_material",
+        "cn":  "物料主数据表",
+        "desc":  "存储轮胎生产所需原材料、半成品、辅料等物料主数据。",
+        "fields":  [
+                       {
+                           "name":  "material_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  true,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "PK, auto_increment",
+                           "desc":  "物料主键"
+                       },
+                       {
+                           "name":  "material_code",
+                           "type":  "varchar",
+                           "size":  "40",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "UK",
+                           "desc":  "物料编码"
+                       },
+                       {
+                           "name":  "material_name",
+                           "type":  "varchar",
+                           "size":  "100",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "物料名称"
+                       },
+                       {
+                           "name":  "material_type",
+                           "type":  "varchar",
+                           "size":  "30",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "IDX",
+                           "desc":  "物料类型"
+                       },
+                       {
+                           "name":  "specification",
+                           "type":  "varchar",
+                           "size":  "100",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "规格"
+                       },
+                       {
+                           "name":  "unit",
+                           "type":  "varchar",
+                           "size":  "20",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "单位"
+                       },
+                       {
+                           "name":  "shelf_life_days",
+                           "type":  "int",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "保质期天数"
+                       },
+                       {
+                           "name":  "enabled",
+                           "type":  "tinyint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "1",
+                           "constraint":  "",
+                           "desc":  "是否启用"
+                       },
+                       {
+                           "name":  "created_at",
+                           "type":  "datetime",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "CURRENT_TIMESTAMP",
+                           "constraint":  "",
+                           "desc":  "创建时间"
+                       }
+                   ]
+    },
+    {
+        "module":  "仓库接收与库存核对",
+        "name":  "mes_inventory",
+        "cn":  "库存表",
+        "desc":  "存储物料库存数量、批次、库位和质量状态。",
+        "fields":  [
+                       {
+                           "name":  "inventory_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  true,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "PK, auto_increment",
+                           "desc":  "库存主键"
+                       },
+                       {
+                           "name":  "material_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_material.material_id",
+                           "desc":  "物料"
+                       },
+                       {
+                           "name":  "warehouse_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_warehouse.warehouse_id",
+                           "desc":  "仓库"
+                       },
+                       {
+                           "name":  "location_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_warehouse_location.location_id",
+                           "desc":  "库位"
+                       },
+                       {
+                           "name":  "batch_no",
+                           "type":  "varchar",
+                           "size":  "50",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "IDX",
+                           "desc":  "批次号"
+                       },
+                       {
+                           "name":  "available_qty",
+                           "type":  "decimal",
+                           "size":  "18,4",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "0",
+                           "constraint":  "",
+                           "desc":  "可用数量"
+                       },
+                       {
+                           "name":  "reserved_qty",
+                           "type":  "decimal",
+                           "size":  "18,4",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "0",
+                           "constraint":  "",
+                           "desc":  "占用数量"
+                       },
+                       {
+                           "name":  "frozen_qty",
+                           "type":  "decimal",
+                           "size":  "18,4",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "0",
+                           "constraint":  "",
+                           "desc":  "冻结数量"
+                       },
+                       {
+                           "name":  "quality_status",
+                           "type":  "varchar",
+                           "size":  "30",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "\u0027QUALIFIED\u0027",
+                           "constraint":  "IDX",
+                           "desc":  "质量状态"
+                       },
+                       {
+                           "name":  "last_check_time",
+                           "type":  "datetime",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "最近核对时间"
+                       }
+                   ]
+    },
+    {
+        "module":  "仓库接收与库存核对",
+        "name":  "mes_warehouse",
+        "cn":  "仓库表",
+        "desc":  "存储仓库基础信息。",
+        "fields":  [
+                       {
+                           "name":  "warehouse_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  true,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "PK, auto_increment",
+                           "desc":  "仓库主键"
+                       },
+                       {
+                           "name":  "warehouse_code",
+                           "type":  "varchar",
+                           "size":  "40",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "UK",
+                           "desc":  "仓库编码"
+                       },
+                       {
+                           "name":  "warehouse_name",
+                           "type":  "varchar",
+                           "size":  "100",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "仓库名称"
+                       },
+                       {
+                           "name":  "warehouse_type",
+                           "type":  "varchar",
+                           "size":  "30",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "仓库类型"
+                       },
+                       {
+                           "name":  "enabled",
+                           "type":  "tinyint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "1",
+                           "constraint":  "",
+                           "desc":  "是否启用"
+                       }
+                   ]
+    },
+    {
+        "module":  "仓库接收与库存核对",
+        "name":  "mes_warehouse_location",
+        "cn":  "库位表",
+        "desc":  "存储仓库库位信息。",
+        "fields":  [
+                       {
+                           "name":  "location_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  true,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "PK, auto_increment",
+                           "desc":  "库位主键"
+                       },
+                       {
+                           "name":  "warehouse_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_warehouse.warehouse_id",
+                           "desc":  "仓库"
+                       },
+                       {
+                           "name":  "location_code",
+                           "type":  "varchar",
+                           "size":  "40",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "UK",
+                           "desc":  "库位编码"
+                       },
+                       {
+                           "name":  "location_name",
+                           "type":  "varchar",
+                           "size":  "100",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "库位名称"
+                       },
+                       {
+                           "name":  "enabled",
+                           "type":  "tinyint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "1",
+                           "constraint":  "",
+                           "desc":  "是否启用"
+                       }
+                   ]
+    },
+    {
+        "module":  "仓库接收与库存核对",
+        "name":  "mes_inventory_transaction",
+        "cn":  "库存流水表",
+        "desc":  "记录物料入库、出库、冻结、释放、盘点调整等库存变动。",
+        "fields":  [
+                       {
+                           "name":  "transaction_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  true,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "PK, auto_increment",
+                           "desc":  "流水主键"
+                       },
+                       {
+                           "name":  "transaction_no",
+                           "type":  "varchar",
+                           "size":  "40",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "UK",
+                           "desc":  "流水编号"
+                       },
+                       {
+                           "name":  "material_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_material.material_id",
+                           "desc":  "物料"
+                       },
+                       {
+                           "name":  "inventory_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_inventory.inventory_id",
+                           "desc":  "库存"
+                       },
+                       {
+                           "name":  "transaction_type",
+                           "type":  "varchar",
+                           "size":  "30",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "IDX",
+                           "desc":  "变动类型"
+                       },
+                       {
+                           "name":  "qty",
+                           "type":  "decimal",
+                           "size":  "18,4",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "0",
+                           "constraint":  "",
+                           "desc":  "变动数量"
+                       },
+                       {
+                           "name":  "source_doc_type",
+                           "type":  "varchar",
+                           "size":  "30",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "来源单据类型"
+                       },
+                       {
+                           "name":  "source_doc_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "来源单据ID"
+                       },
+                       {
+                           "name":  "operator_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_user.user_id",
+                           "desc":  "操作人"
+                       },
+                       {
+                           "name":  "created_at",
+                           "type":  "datetime",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "CURRENT_TIMESTAMP",
+                           "constraint":  "",
+                           "desc":  "创建时间"
+                       }
+                   ]
+    },
+    {
+        "module":  "备货与拣货",
+        "name":  "mes_picking_task",
+        "cn":  "备货拣货任务表",
+        "desc":  "存储仓库根据领料任务生成的备货与拣货任务。",
+        "fields":  [
+                       {
+                           "name":  "picking_task_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  true,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "PK, auto_increment",
+                           "desc":  "拣货任务主键"
+                       },
+                       {
+                           "name":  "picking_task_no",
+                           "type":  "varchar",
+                           "size":  "40",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "UK",
+                           "desc":  "拣货任务号"
+                       },
+                       {
+                           "name":  "requisition_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_material_requisition.requisition_id",
+                           "desc":  "领料任务"
+                       },
+                       {
+                           "name":  "warehouse_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_warehouse.warehouse_id",
+                           "desc":  "仓库"
+                       },
+                       {
+                           "name":  "task_status",
+                           "type":  "varchar",
+                           "size":  "30",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "\u0027CREATED\u0027",
+                           "constraint":  "IDX",
+                           "desc":  "任务状态"
+                       },
+                       {
+                           "name":  "assigned_to",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_user.user_id",
+                           "desc":  "拣货人"
+                       },
+                       {
+                           "name":  "start_time",
+                           "type":  "datetime",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "开始时间"
+                       },
+                       {
+                           "name":  "finish_time",
+                           "type":  "datetime",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "完成时间"
+                       }
+                   ]
+    },
+    {
+        "module":  "运输机器人配送",
+        "name":  "mes_robot",
+        "cn":  "运输机器人表",
+        "desc":  "存储AGV/运输机器人基础信息。",
+        "fields":  [
+                       {
+                           "name":  "robot_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  true,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "PK, auto_increment",
+                           "desc":  "机器人主键"
+                       },
+                       {
+                           "name":  "robot_code",
+                           "type":  "varchar",
+                           "size":  "40",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "UK",
+                           "desc":  "机器人编码"
+                       },
+                       {
+                           "name":  "robot_name",
+                           "type":  "varchar",
+                           "size":  "100",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "机器人名称"
+                       },
+                       {
+                           "name":  "robot_status",
+                           "type":  "varchar",
+                           "size":  "30",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "\u0027IDLE\u0027",
+                           "constraint":  "IDX",
+                           "desc":  "机器人状态"
+                       },
+                       {
+                           "name":  "battery_level",
+                           "type":  "decimal",
+                           "size":  "5,2",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "电量百分比"
+                       },
+                       {
+                           "name":  "current_location",
+                           "type":  "varchar",
+                           "size":  "100",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "当前位置"
+                       },
+                       {
+                           "name":  "enabled",
+                           "type":  "tinyint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "1",
+                           "constraint":  "",
+                           "desc":  "是否启用"
+                       }
+                   ]
+    },
+    {
+        "module":  "运输机器人配送",
+        "name":  "mes_robot_delivery_task",
+        "cn":  "机器人配送任务表",
+        "desc":  "存储物料装载、配送和交接任务。",
+        "fields":  [
+                       {
+                           "name":  "delivery_task_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  true,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "PK, auto_increment",
+                           "desc":  "配送任务主键"
+                       },
+                       {
+                           "name":  "delivery_task_no",
+                           "type":  "varchar",
+                           "size":  "40",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "UK",
+                           "desc":  "配送任务号"
+                       },
+                       {
+                           "name":  "picking_task_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_picking_task.picking_task_id",
+                           "desc":  "拣货任务"
+                       },
+                       {
+                           "name":  "robot_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_robot.robot_id",
+                           "desc":  "机器人"
+                       },
+                       {
+                           "name":  "from_location_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_warehouse_location.location_id",
+                           "desc":  "起点库位"
+                       },
+                       {
+                           "name":  "to_line_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_production_line.line_id",
+                           "desc":  "目标产线"
+                       },
+                       {
+                           "name":  "delivery_status",
+                           "type":  "varchar",
+                           "size":  "30",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "\u0027CREATED\u0027",
+                           "constraint":  "IDX",
+                           "desc":  "配送状态"
+                       },
+                       {
+                           "name":  "load_time",
+                           "type":  "datetime",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "装载时间"
+                       },
+                       {
+                           "name":  "handover_time",
+                           "type":  "datetime",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "交接时间"
+                       }
+                   ]
+    },
+    {
+        "module":  "生产报工与计件",
+        "name":  "mes_work_report",
+        "cn":  "生产报工表",
+        "desc":  "存储操作工工单报工、产量和工时数据。",
+        "fields":  [
+                       {
+                           "name":  "report_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  true,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "PK, auto_increment",
+                           "desc":  "报工主键"
+                       },
+                       {
+                           "name":  "report_no",
+                           "type":  "varchar",
+                           "size":  "40",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "UK",
+                           "desc":  "报工编号"
+                       },
+                       {
+                           "name":  "work_order_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_work_order.work_order_id",
+                           "desc":  "工单"
+                       },
+                       {
+                           "name":  "operator_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_user.user_id",
+                           "desc":  "操作工"
+                       },
+                       {
+                           "name":  "report_qty",
+                           "type":  "int",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "0",
+                           "constraint":  "",
+                           "desc":  "报工数量"
+                       },
+                       {
+                           "name":  "qualified_qty",
+                           "type":  "int",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "0",
+                           "constraint":  "",
+                           "desc":  "合格数量"
+                       },
+                       {
+                           "name":  "defect_qty",
+                           "type":  "int",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "0",
+                           "constraint":  "",
+                           "desc":  "不合格数量"
+                       },
+                       {
+                           "name":  "work_hours",
+                           "type":  "decimal",
+                           "size":  "10,2",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "0",
+                           "constraint":  "",
+                           "desc":  "工时"
+                       },
+                       {
+                           "name":  "report_time",
+                           "type":  "datetime",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "CURRENT_TIMESTAMP",
+                           "constraint":  "",
+                           "desc":  "报工时间"
+                       },
+                       {
+                           "name":  "report_status",
+                           "type":  "varchar",
+                           "size":  "30",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "\u0027SUBMITTED\u0027",
+                           "constraint":  "IDX",
+                           "desc":  "报工状态"
+                       }
+                   ]
+    },
+    {
+        "module":  "生产报工与计件",
+        "name":  "mes_piecework_wage",
+        "cn":  "计件工资表",
+        "desc":  "存储报工对应计件工资核算结果。",
+        "fields":  [
+                       {
+                           "name":  "wage_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  true,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "PK, auto_increment",
+                           "desc":  "计件工资主键"
+                       },
+                       {
+                           "name":  "report_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_work_report.report_id",
+                           "desc":  "报工"
+                       },
+                       {
+                           "name":  "operator_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_user.user_id",
+                           "desc":  "操作工"
+                       },
+                       {
+                           "name":  "piece_rate",
+                           "type":  "decimal",
+                           "size":  "10,4",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "0",
+                           "constraint":  "",
+                           "desc":  "单件费率"
+                       },
+                       {
+                           "name":  "qualified_qty",
+                           "type":  "int",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "0",
+                           "constraint":  "",
+                           "desc":  "合格数量"
+                       },
+                       {
+                           "name":  "wage_amount",
+                           "type":  "decimal",
+                           "size":  "12,2",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "0",
+                           "constraint":  "",
+                           "desc":  "工资金额"
+                       },
+                       {
+                           "name":  "settlement_status",
+                           "type":  "varchar",
+                           "size":  "30",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "\u0027PENDING\u0027",
+                           "constraint":  "IDX",
+                           "desc":  "结算状态"
+                       },
+                       {
+                           "name":  "created_at",
+                           "type":  "datetime",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "CURRENT_TIMESTAMP",
+                           "constraint":  "",
+                           "desc":  "创建时间"
+                       }
+                   ]
+    },
+    {
+        "module":  "质量抽检与结果判定",
+        "name":  "mes_quality_inspection",
+        "cn":  "质量抽检单表",
+        "desc":  "存储抽检工单、检验对象和检验结果。",
+        "fields":  [
+                       {
+                           "name":  "inspection_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  true,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "PK, auto_increment",
+                           "desc":  "抽检单主键"
+                       },
+                       {
+                           "name":  "inspection_no",
+                           "type":  "varchar",
+                           "size":  "40",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "UK",
+                           "desc":  "抽检单号"
+                       },
+                       {
+                           "name":  "work_order_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_work_order.work_order_id",
+                           "desc":  "工单"
+                       },
+                       {
+                           "name":  "sample_qty",
+                           "type":  "int",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "0",
+                           "constraint":  "",
+                           "desc":  "抽检数量"
+                       },
+                       {
+                           "name":  "inspection_status",
+                           "type":  "varchar",
+                           "size":  "30",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "\u0027CREATED\u0027",
+                           "constraint":  "IDX",
+                           "desc":  "抽检状态"
+                       },
+                       {
+                           "name":  "inspector_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_user.user_id",
+                           "desc":  "质检员"
+                       },
+                       {
+                           "name":  "inspection_time",
+                           "type":  "datetime",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "检验时间"
+                       },
+                       {
+                           "name":  "judgement_result",
+                           "type":  "varchar",
+                           "size":  "30",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "IDX",
+                           "desc":  "判定结果"
+                       }
+                   ]
+    },
+    {
+        "module":  "质量抽检与结果判定",
+        "name":  "mes_quality_inspection_item",
+        "cn":  "质量检验项目表",
+        "desc":  "存储抽检项目、标准值、实测值和项目判定。",
+        "fields":  [
+                       {
+                           "name":  "inspection_item_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  true,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "PK, auto_increment",
+                           "desc":  "检验项目主键"
+                       },
+                       {
+                           "name":  "inspection_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_quality_inspection.inspection_id",
+                           "desc":  "抽检单"
+                       },
+                       {
+                           "name":  "item_code",
+                           "type":  "varchar",
+                           "size":  "40",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "项目编码"
+                       },
+                       {
+                           "name":  "item_name",
+                           "type":  "varchar",
+                           "size":  "100",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "项目名称"
+                       },
+                       {
+                           "name":  "standard_value",
+                           "type":  "varchar",
+                           "size":  "100",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "标准值"
+                       },
+                       {
+                           "name":  "actual_value",
+                           "type":  "varchar",
+                           "size":  "100",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "实测值"
+                       },
+                       {
+                           "name":  "item_result",
+                           "type":  "varchar",
+                           "size":  "30",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "IDX",
+                           "desc":  "项目判定"
+                       },
+                       {
+                           "name":  "remark",
+                           "type":  "varchar",
+                           "size":  "500",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "备注"
+                       }
+                   ]
+    },
+    {
+        "module":  "返工与质量追溯",
+        "name":  "mes_rework_order",
+        "cn":  "返工单表",
+        "desc":  "存储质量不合格后的返工任务和追溯信息。",
+        "fields":  [
+                       {
+                           "name":  "rework_order_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  true,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "PK, auto_increment",
+                           "desc":  "返工单主键"
+                       },
+                       {
+                           "name":  "rework_order_no",
+                           "type":  "varchar",
+                           "size":  "40",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "UK",
+                           "desc":  "返工单号"
+                       },
+                       {
+                           "name":  "source_work_order_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_work_order.work_order_id",
+                           "desc":  "来源工单"
+                       },
+                       {
+                           "name":  "inspection_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_quality_inspection.inspection_id",
+                           "desc":  "来源质检单"
+                       },
+                       {
+                           "name":  "rework_reason",
+                           "type":  "varchar",
+                           "size":  "500",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "返工原因"
+                       },
+                       {
+                           "name":  "rework_status",
+                           "type":  "varchar",
+                           "size":  "30",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "\u0027CREATED\u0027",
+                           "constraint":  "IDX",
+                           "desc":  "返工状态"
+                       },
+                       {
+                           "name":  "assigned_line_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_production_line.line_id",
+                           "desc":  "返工产线"
+                       },
+                       {
+                           "name":  "created_at",
+                           "type":  "datetime",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "CURRENT_TIMESTAMP",
+                           "constraint":  "",
+                           "desc":  "创建时间"
+                       },
+                       {
+                           "name":  "closed_at",
+                           "type":  "datetime",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "关闭时间"
+                       }
+                   ]
+    },
+    {
+        "module":  "返工与质量追溯",
+        "name":  "mes_quality_trace",
+        "cn":  "质量追溯表",
+        "desc":  "存储订单、任务、工单、质检、返工之间的追溯关系。",
+        "fields":  [
+                       {
+                           "name":  "trace_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  true,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "PK, auto_increment",
+                           "desc":  "追溯主键"
+                       },
+                       {
+                           "name":  "trace_no",
+                           "type":  "varchar",
+                           "size":  "40",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "UK",
+                           "desc":  "追溯编号"
+                       },
+                       {
+                           "name":  "order_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_customer_order.order_id",
+                           "desc":  "订单"
+                       },
+                       {
+                           "name":  "task_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_production_task.task_id",
+                           "desc":  "任务"
+                       },
+                       {
+                           "name":  "work_order_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_work_order.work_order_id",
+                           "desc":  "工单"
+                       },
+                       {
+                           "name":  "batch_no",
+                           "type":  "varchar",
+                           "size":  "50",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "IDX",
+                           "desc":  "批次号"
+                       },
+                       {
+                           "name":  "inspection_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_quality_inspection.inspection_id",
+                           "desc":  "质检单"
+                       },
+                       {
+                           "name":  "rework_order_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_rework_order.rework_order_id",
+                           "desc":  "返工单"
+                       },
+                       {
+                           "name":  "trace_status",
+                           "type":  "varchar",
+                           "size":  "30",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "\u0027NORMAL\u0027",
+                           "constraint":  "IDX",
+                           "desc":  "追溯状态"
+                       },
+                       {
+                           "name":  "created_at",
+                           "type":  "datetime",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "CURRENT_TIMESTAMP",
+                           "constraint":  "",
+                           "desc":  "创建时间"
+                       }
+                   ]
+    },
+    {
+        "module":  "设备故障报修",
+        "name":  "mes_equipment",
+        "cn":  "设备表",
+        "desc":  "存储生产设备基础信息和运行状态。",
+        "fields":  [
+                       {
+                           "name":  "equipment_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  true,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "PK, auto_increment",
+                           "desc":  "设备主键"
+                       },
+                       {
+                           "name":  "equipment_code",
+                           "type":  "varchar",
+                           "size":  "40",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "UK",
+                           "desc":  "设备编码"
+                       },
+                       {
+                           "name":  "equipment_name",
+                           "type":  "varchar",
+                           "size":  "100",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "设备名称"
+                       },
+                       {
+                           "name":  "equipment_type",
+                           "type":  "varchar",
+                           "size":  "30",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "IDX",
+                           "desc":  "设备类型"
+                       },
+                       {
+                           "name":  "line_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_production_line.line_id",
+                           "desc":  "所属产线"
+                       },
+                       {
+                           "name":  "equipment_status",
+                           "type":  "varchar",
+                           "size":  "30",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "\u0027IDLE\u0027",
+                           "constraint":  "IDX",
+                           "desc":  "设备状态"
+                       },
+                       {
+                           "name":  "last_maintenance_time",
+                           "type":  "datetime",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "最近维护时间"
+                       },
+                       {
+                           "name":  "enabled",
+                           "type":  "tinyint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "1",
+                           "constraint":  "",
+                           "desc":  "是否启用"
+                       }
+                   ]
+    },
+    {
+        "module":  "设备故障报修",
+        "name":  "mes_equipment_repair_report",
+        "cn":  "设备故障报修表",
+        "desc":  "存储设备故障上报和报修单信息。",
+        "fields":  [
+                       {
+                           "name":  "repair_report_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  true,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "PK, auto_increment",
+                           "desc":  "报修主键"
+                       },
+                       {
+                           "name":  "repair_report_no",
+                           "type":  "varchar",
+                           "size":  "40",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "UK",
+                           "desc":  "报修单号"
+                       },
+                       {
+                           "name":  "equipment_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_equipment.equipment_id",
+                           "desc":  "设备"
+                       },
+                       {
+                           "name":  "work_order_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_work_order.work_order_id",
+                           "desc":  "关联工单"
+                       },
+                       {
+                           "name":  "fault_level",
+                           "type":  "varchar",
+                           "size":  "20",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "\u0027GENERAL\u0027",
+                           "constraint":  "",
+                           "desc":  "故障等级"
+                       },
+                       {
+                           "name":  "fault_desc",
+                           "type":  "varchar",
+                           "size":  "1000",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "故障描述"
+                       },
+                       {
+                           "name":  "reporter_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_user.user_id",
+                           "desc":  "报修人"
+                       },
+                       {
+                           "name":  "report_time",
+                           "type":  "datetime",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "CURRENT_TIMESTAMP",
+                           "constraint":  "",
+                           "desc":  "报修时间"
+                       },
+                       {
+                           "name":  "repair_status",
+                           "type":  "varchar",
+                           "size":  "30",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "\u0027REPORTED\u0027",
+                           "constraint":  "IDX",
+                           "desc":  "报修状态"
+                       }
+                   ]
+    },
+    {
+        "module":  "维修工单与设备维护",
+        "name":  "mes_maintenance_order",
+        "cn":  "维修工单表",
+        "desc":  "存储设备维修派发、处理和结果反馈。",
+        "fields":  [
+                       {
+                           "name":  "maintenance_order_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  true,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "PK, auto_increment",
+                           "desc":  "维修工单主键"
+                       },
+                       {
+                           "name":  "maintenance_order_no",
+                           "type":  "varchar",
+                           "size":  "40",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "UK",
+                           "desc":  "维修工单号"
+                       },
+                       {
+                           "name":  "repair_report_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_equipment_repair_report.repair_report_id",
+                           "desc":  "报修单"
+                       },
+                       {
+                           "name":  "equipment_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_equipment.equipment_id",
+                           "desc":  "设备"
+                       },
+                       {
+                           "name":  "maintainer_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_user.user_id",
+                           "desc":  "维修人"
+                       },
+                       {
+                           "name":  "maintenance_status",
+                           "type":  "varchar",
+                           "size":  "30",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "\u0027CREATED\u0027",
+                           "constraint":  "IDX",
+                           "desc":  "维修状态"
+                       },
+                       {
+                           "name":  "dispatch_time",
+                           "type":  "datetime",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "派发时间"
+                       },
+                       {
+                           "name":  "finish_time",
+                           "type":  "datetime",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "完成时间"
+                       },
+                       {
+                           "name":  "result_desc",
+                           "type":  "varchar",
+                           "size":  "1000",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "维修结果"
+                       }
+                   ]
+    },
+    {
+        "module":  "维修工单与设备维护",
+        "name":  "mes_maintenance_plan",
+        "cn":  "设备维护计划表",
+        "desc":  "存储设备周期维护计划。",
+        "fields":  [
+                       {
+                           "name":  "maintenance_plan_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  true,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "PK, auto_increment",
+                           "desc":  "维护计划主键"
+                       },
+                       {
+                           "name":  "equipment_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_equipment.equipment_id",
+                           "desc":  "设备"
+                       },
+                       {
+                           "name":  "plan_cycle",
+                           "type":  "varchar",
+                           "size":  "30",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "维护周期"
+                       },
+                       {
+                           "name":  "next_plan_time",
+                           "type":  "datetime",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "IDX",
+                           "desc":  "下次计划时间"
+                       },
+                       {
+                           "name":  "plan_status",
+                           "type":  "varchar",
+                           "size":  "30",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "\u0027ACTIVE\u0027",
+                           "constraint":  "IDX",
+                           "desc":  "计划状态"
+                       },
+                       {
+                           "name":  "created_at",
+                           "type":  "datetime",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "CURRENT_TIMESTAMP",
+                           "constraint":  "",
+                           "desc":  "创建时间"
+                       }
+                   ]
+    },
+    {
+        "module":  "数据同步与主数据存储",
+        "name":  "mes_product",
+        "cn":  "产品主数据表",
+        "desc":  "存储轮胎产品型号、规格和基础信息。",
+        "fields":  [
+                       {
+                           "name":  "product_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  true,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "PK, auto_increment",
+                           "desc":  "产品主键"
+                       },
+                       {
+                           "name":  "product_code",
+                           "type":  "varchar",
+                           "size":  "40",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "UK",
+                           "desc":  "产品编码"
+                       },
+                       {
+                           "name":  "product_name",
+                           "type":  "varchar",
+                           "size":  "100",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "产品名称"
+                       },
+                       {
+                           "name":  "product_model",
+                           "type":  "varchar",
+                           "size":  "80",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "IDX",
+                           "desc":  "产品型号"
+                       },
+                       {
+                           "name":  "specification",
+                           "type":  "varchar",
+                           "size":  "100",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "规格"
+                       },
+                       {
+                           "name":  "enabled",
+                           "type":  "tinyint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "1",
+                           "constraint":  "",
+                           "desc":  "是否启用"
+                       }
+                   ]
+    },
+    {
+        "module":  "数据同步与主数据存储",
+        "name":  "mes_product_bom",
+        "cn":  "产品BOM表",
+        "desc":  "存储产品用料参数。",
+        "fields":  [
+                       {
+                           "name":  "bom_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  true,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "PK, auto_increment",
+                           "desc":  "BOM主键"
+                       },
+                       {
+                           "name":  "product_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_product.product_id",
+                           "desc":  "产品"
+                       },
+                       {
+                           "name":  "material_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_material.material_id",
+                           "desc":  "物料"
+                       },
+                       {
+                           "name":  "usage_qty",
+                           "type":  "decimal",
+                           "size":  "18,4",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "0",
+                           "constraint":  "",
+                           "desc":  "单位用量"
+                       },
+                       {
+                           "name":  "unit",
+                           "type":  "varchar",
+                           "size":  "20",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "单位"
+                       },
+                       {
+                           "name":  "process_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_process_route.process_id",
+                           "desc":  "使用工序"
+                       },
+                       {
+                           "name":  "enabled",
+                           "type":  "tinyint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "1",
+                           "constraint":  "",
+                           "desc":  "是否启用"
+                       }
+                   ]
+    },
+    {
+        "module":  "数据同步与主数据存储",
+        "name":  "mes_process_route",
+        "cn":  "工艺路线表",
+        "desc":  "存储轮胎产品生产工序和工艺顺序。",
+        "fields":  [
+                       {
+                           "name":  "process_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  true,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "PK, auto_increment",
+                           "desc":  "工序主键"
+                       },
+                       {
+                           "name":  "product_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_product.product_id",
+                           "desc":  "产品"
+                       },
+                       {
+                           "name":  "process_code",
+                           "type":  "varchar",
+                           "size":  "40",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "工序编码"
+                       },
+                       {
+                           "name":  "process_name",
+                           "type":  "varchar",
+                           "size":  "100",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "工序名称"
+                       },
+                       {
+                           "name":  "process_seq",
+                           "type":  "int",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "IDX",
+                           "desc":  "工序顺序"
+                       },
+                       {
+                           "name":  "standard_hours",
+                           "type":  "decimal",
+                           "size":  "10,2",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "标准工时"
+                       },
+                       {
+                           "name":  "required_equipment_type",
+                           "type":  "varchar",
+                           "size":  "30",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "所需设备类型"
+                       },
+                       {
+                           "name":  "enabled",
+                           "type":  "tinyint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "1",
+                           "constraint":  "",
+                           "desc":  "是否启用"
+                       }
+                   ]
+    },
+    {
+        "module":  "数据同步与主数据存储",
+        "name":  "mes_production_line",
+        "cn":  "生产产线表",
+        "desc":  "存储生产线基础信息、产能和状态。",
+        "fields":  [
+                       {
+                           "name":  "line_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  true,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "PK, auto_increment",
+                           "desc":  "产线主键"
+                       },
+                       {
+                           "name":  "line_code",
+                           "type":  "varchar",
+                           "size":  "40",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "UK",
+                           "desc":  "产线编码"
+                       },
+                       {
+                           "name":  "line_name",
+                           "type":  "varchar",
+                           "size":  "100",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "产线名称"
+                       },
+                       {
+                           "name":  "line_type",
+                           "type":  "varchar",
+                           "size":  "30",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "产线类型"
+                       },
+                       {
+                           "name":  "daily_capacity",
+                           "type":  "int",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "日产能"
+                       },
+                       {
+                           "name":  "line_status",
+                           "type":  "varchar",
+                           "size":  "30",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "\u0027IDLE\u0027",
+                           "constraint":  "IDX",
+                           "desc":  "产线状态"
+                       },
+                       {
+                           "name":  "enabled",
+                           "type":  "tinyint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "1",
+                           "constraint":  "",
+                           "desc":  "是否启用"
+                       }
+                   ]
+    },
+    {
+        "module":  "数据同步与主数据存储",
+        "name":  "mes_sync_log",
+        "cn":  "数据同步日志表",
+        "desc":  "记录ERP/WMS/设备等外部系统同步结果。",
+        "fields":  [
+                       {
+                           "name":  "sync_log_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  true,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "PK, auto_increment",
+                           "desc":  "同步日志主键"
+                       },
+                       {
+                           "name":  "source_system",
+                           "type":  "varchar",
+                           "size":  "30",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "IDX",
+                           "desc":  "来源系统"
+                       },
+                       {
+                           "name":  "sync_object",
+                           "type":  "varchar",
+                           "size":  "50",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "IDX",
+                           "desc":  "同步对象"
+                       },
+                       {
+                           "name":  "business_key",
+                           "type":  "varchar",
+                           "size":  "100",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "业务键"
+                       },
+                       {
+                           "name":  "sync_status",
+                           "type":  "varchar",
+                           "size":  "30",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "IDX",
+                           "desc":  "同步状态"
+                       },
+                       {
+                           "name":  "error_message",
+                           "type":  "varchar",
+                           "size":  "1000",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "错误信息"
+                       },
+                       {
+                           "name":  "sync_time",
+                           "type":  "datetime",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "CURRENT_TIMESTAMP",
+                           "constraint":  "",
+                           "desc":  "同步时间"
+                       }
+                   ]
+    },
+    {
+        "module":  "产品追溯看板决策反馈",
+        "name":  "mes_product_trace",
+        "cn":  "产品追溯表",
+        "desc":  "存储订单、物料、工序、质量的产品追溯主链路。",
+        "fields":  [
+                       {
+                           "name":  "product_trace_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  true,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "PK, auto_increment",
+                           "desc":  "产品追溯主键"
+                       },
+                       {
+                           "name":  "trace_code",
+                           "type":  "varchar",
+                           "size":  "60",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "UK",
+                           "desc":  "追溯码"
+                       },
+                       {
+                           "name":  "order_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_customer_order.order_id",
+                           "desc":  "订单"
+                       },
+                       {
+                           "name":  "task_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_production_task.task_id",
+                           "desc":  "任务"
+                       },
+                       {
+                           "name":  "work_order_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_work_order.work_order_id",
+                           "desc":  "工单"
+                       },
+                       {
+                           "name":  "product_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_product.product_id",
+                           "desc":  "产品"
+                       },
+                       {
+                           "name":  "batch_no",
+                           "type":  "varchar",
+                           "size":  "50",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "IDX",
+                           "desc":  "生产批次"
+                       },
+                       {
+                           "name":  "trace_status",
+                           "type":  "varchar",
+                           "size":  "30",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "\u0027NORMAL\u0027",
+                           "constraint":  "IDX",
+                           "desc":  "追溯状态"
+                       },
+                       {
+                           "name":  "created_at",
+                           "type":  "datetime",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "CURRENT_TIMESTAMP",
+                           "constraint":  "",
+                           "desc":  "创建时间"
+                       }
+                   ]
+    },
+    {
+        "module":  "产品追溯看板决策反馈",
+        "name":  "mes_dashboard_metric",
+        "cn":  "综合生产看板指标表",
+        "desc":  "存储产量、订单、质量、设备等看板聚合指标。",
+        "fields":  [
+                       {
+                           "name":  "metric_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  true,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "PK, auto_increment",
+                           "desc":  "指标主键"
+                       },
+                       {
+                           "name":  "metric_date",
+                           "type":  "date",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "IDX",
+                           "desc":  "指标日期"
+                       },
+                       {
+                           "name":  "metric_type",
+                           "type":  "varchar",
+                           "size":  "50",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "IDX",
+                           "desc":  "指标类型"
+                       },
+                       {
+                           "name":  "metric_name",
+                           "type":  "varchar",
+                           "size":  "100",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "指标名称"
+                       },
+                       {
+                           "name":  "metric_value",
+                           "type":  "decimal",
+                           "size":  "18,4",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "0",
+                           "constraint":  "",
+                           "desc":  "指标值"
+                       },
+                       {
+                           "name":  "metric_unit",
+                           "type":  "varchar",
+                           "size":  "20",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "单位"
+                       },
+                       {
+                           "name":  "dimension_key",
+                           "type":  "varchar",
+                           "size":  "100",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "维度键"
+                       },
+                       {
+                           "name":  "generated_at",
+                           "type":  "datetime",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "CURRENT_TIMESTAMP",
+                           "constraint":  "",
+                           "desc":  "生成时间"
+                       }
+                   ]
+    },
+    {
+        "module":  "产品追溯看板决策反馈",
+        "name":  "mes_management_feedback",
+        "cn":  "管理决策反馈表",
+        "desc":  "存储异常处理、计划调整和管理反馈记录。",
+        "fields":  [
+                       {
+                           "name":  "feedback_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  true,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "PK, auto_increment",
+                           "desc":  "反馈主键"
+                       },
+                       {
+                           "name":  "feedback_no",
+                           "type":  "varchar",
+                           "size":  "40",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "UK",
+                           "desc":  "反馈编号"
+                       },
+                       {
+                           "name":  "feedback_type",
+                           "type":  "varchar",
+                           "size":  "30",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "IDX",
+                           "desc":  "反馈类型"
+                       },
+                       {
+                           "name":  "related_doc_type",
+                           "type":  "varchar",
+                           "size":  "30",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "关联单据类型"
+                       },
+                       {
+                           "name":  "related_doc_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "关联单据ID"
+                       },
+                       {
+                           "name":  "feedback_content",
+                           "type":  "varchar",
+                           "size":  "1000",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "反馈内容"
+                       },
+                       {
+                           "name":  "decision_action",
+                           "type":  "varchar",
+                           "size":  "1000",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "决策动作"
+                       },
+                       {
+                           "name":  "feedback_status",
+                           "type":  "varchar",
+                           "size":  "30",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "\u0027OPEN\u0027",
+                           "constraint":  "IDX",
+                           "desc":  "处理状态"
+                       },
+                       {
+                           "name":  "created_by",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "FK -\u003e mes_user.user_id",
+                           "desc":  "创建人"
+                       },
+                       {
+                           "name":  "created_at",
+                           "type":  "datetime",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "CURRENT_TIMESTAMP",
+                           "constraint":  "",
+                           "desc":  "创建时间"
+                       }
+                   ]
+    },
+    {
+        "module":  "数据同步与主数据存储",
+        "name":  "mes_user",
+        "cn":  "用户表",
+        "desc":  "存储系统用户基础信息。",
+        "fields":  [
+                       {
+                           "name":  "user_id",
+                           "type":  "bigint",
+                           "size":  "",
+                           "pk":  true,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "PK, auto_increment",
+                           "desc":  "用户主键"
+                       },
+                       {
+                           "name":  "username",
+                           "type":  "varchar",
+                           "size":  "50",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "UK",
+                           "desc":  "登录名"
+                       },
+                       {
+                           "name":  "real_name",
+                           "type":  "varchar",
+                           "size":  "100",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "姓名"
+                       },
+                       {
+                           "name":  "role_code",
+                           "type":  "varchar",
+                           "size":  "50",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "",
+                           "constraint":  "IDX",
+                           "desc":  "角色编码"
+                       },
+                       {
+                           "name":  "department",
+                           "type":  "varchar",
+                           "size":  "100",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "部门"
+                       },
+                       {
+                           "name":  "phone",
+                           "type":  "varchar",
+                           "size":  "30",
+                           "pk":  false,
+                           "nn":  false,
+                           "default":  "",
+                           "constraint":  "",
+                           "desc":  "电话"
+                       },
+                       {
+                           "name":  "enabled",
+                           "type":  "tinyint",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "1",
+                           "constraint":  "",
+                           "desc":  "是否启用"
+                       },
+                       {
+                           "name":  "created_at",
+                           "type":  "datetime",
+                           "size":  "",
+                           "pk":  false,
+                           "nn":  true,
+                           "default":  "CURRENT_TIMESTAMP",
+                           "constraint":  "",
+                           "desc":  "创建时间"
+                       }
+                   ]
+    }
+]
