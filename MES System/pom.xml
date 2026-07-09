@@ -12,7 +12,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.release>25</maven.compiler.release>
+        <maven.compiler.release>21</maven.compiler.release>
         <junit.version>5.13.2</junit.version>
     </properties>
 
@@ -21,6 +21,7 @@
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <version>42.7.4</version>
+            <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>jakarta.enterprise</groupId>
@@ -63,7 +64,19 @@
                 <configuration>
                     <release>${maven.compiler.release}</release>
                     <fork>true</fork>
+                    <useModulePath>false</useModulePath>
                 </configuration>
+                <executions>
+                    <execution>
+                        <id>default-testCompile</id>
+                        <configuration>
+                            <compilerArgs>
+                                <arg>-sourcepath</arg>
+                                <arg>${project.build.sourceDirectory}${path.separator}${project.build.testSourceDirectory}</arg>
+                            </compilerArgs>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
