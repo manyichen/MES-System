@@ -24,6 +24,26 @@ public class MaterialRequisitionResource {
         return ResourceSupport.ok(service.listRequisitions());
     }
 
+    @GET
+    @Path("/by-work-order/{workOrderId}")
+    public Response listByWorkOrder(@PathParam("workOrderId") long workOrderId) {
+        try {
+            return ResourceSupport.ok(service.listRequisitionsByWorkOrder(workOrderId));
+        } catch (RuntimeException ex) {
+            return ResourceSupport.handle(ex);
+        }
+    }
+
+    @GET
+    @Path("/{id}")
+    public Response get(@PathParam("id") long id) {
+        try {
+            return ResourceSupport.ok(service.getRequisition(id));
+        } catch (RuntimeException ex) {
+            return ResourceSupport.handle(ex);
+        }
+    }
+
     @POST
     public Response create(MesMaterialRequisition requisition) {
         try {

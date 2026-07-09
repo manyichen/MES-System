@@ -1,5 +1,14 @@
 const API_BASE = "./api";
 
+function escapeHtml(value) {
+    return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+}
+
 async function requestJson(path, options = {}) {
     const response = await fetch(`${API_BASE}${path}`, {
         headers: { "Content-Type": "application/json" },
@@ -26,12 +35,29 @@ function renderTable(containerId, rows, columns) {
         container.innerHTML = "<p>暂无数据</p>";
         return;
     }
-    const head = columns.map(col => `<th>${col.title}</th>`).join("");
+    const head = columns.map(col => `<th>${escapeHtml(col.title)}</th>`).join("");
     const body = rows.map(row => {
-        const cells = columns.map(col => `<td>${col.render ? col.render(row) : row[col.key] ?? ""}</td>`).join("");
+        const cells = columns.map(col => {
+            const value = col.render ? col.render(row) : escapeHtml(row[col.key]);
+            return `<td>${value}</td>`;
+        }).join("");
         return `<tr>${cells}</tr>`;
     }).join("");
     container.innerHTML = `<table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
+}
+
+function renderDetail(containerId, data, title = "详情") {
+    const container = document.getElementById(containerId);
+    if (!container) {
+        return;
+    }
+    const rows = Object.entries(data ?? {}).map(([key, value]) => {
+        const display = Array.isArray(value) || (value && typeof value === "object")
+            ? `<pre>${escapeHtml(JSON.stringify(value, null, 2))}</pre>`
+            : escapeHtml(value);
+        return `<div class="detail-row"><span>${escapeHtml(key)}</span><strong>${display}</strong></div>`;
+    }).join("");
+    container.innerHTML = `<h3>${escapeHtml(title)}</h3>${rows || "<p>暂无详情</p>"}`;
 }
 
 function showMessage(message, type = "info") {

@@ -8,6 +8,7 @@ import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -23,6 +24,16 @@ public class WarehouseResource {
         return ResourceSupport.ok(service.listWarehouses());
     }
 
+    @GET
+    @Path("/{id}")
+    public Response getWarehouse(@PathParam("id") long id) {
+        try {
+            return ResourceSupport.ok(service.getWarehouse(id));
+        } catch (RuntimeException ex) {
+            return ResourceSupport.handle(ex);
+        }
+    }
+
     @POST
     public Response createWarehouse(MesWarehouse warehouse) {
         try {
@@ -36,6 +47,16 @@ public class WarehouseResource {
     @Path("/locations")
     public Response listLocations() {
         return ResourceSupport.ok(service.listLocations());
+    }
+
+    @GET
+    @Path("/locations/{id}")
+    public Response getLocation(@PathParam("id") long id) {
+        try {
+            return ResourceSupport.ok(service.getLocation(id));
+        } catch (RuntimeException ex) {
+            return ResourceSupport.handle(ex);
+        }
     }
 
     @POST

@@ -22,6 +22,16 @@ public class PickingTaskResource {
         return ResourceSupport.ok(service.listPickingTasks());
     }
 
+    @GET
+    @Path("/{id}")
+    public Response get(@PathParam("id") long id) {
+        try {
+            return ResourceSupport.ok(service.getPickingTask(id));
+        } catch (RuntimeException ex) {
+            return ResourceSupport.handle(ex);
+        }
+    }
+
     @POST
     @Path("/{id}/complete")
     public Response complete(@PathParam("id") long id) {

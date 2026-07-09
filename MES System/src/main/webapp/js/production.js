@@ -9,15 +9,40 @@ async function refreshProduction() {
         { title: "工单", key: "workOrderId" },
         { title: "合格", key: "qualifiedQty" },
         { title: "状态", key: "reportStatus" },
-        { title: "操作", render: row => `<button onclick="approveReport(${row.reportId})">审核</button>` }
+        { title: "操作", render: renderReportActions }
     ]);
     renderTable("wageTable", wages, [
         { title: "ID", key: "wageId" },
         { title: "报工", key: "reportId" },
         { title: "单价", key: "pieceRate" },
         { title: "金额", key: "wageAmount" },
-        { title: "状态", key: "settlementStatus" }
+        { title: "状态", key: "settlementStatus" },
+        { title: "操作", render: row => `<button onclick="showWageDetail(${row.wageId})">详情</button>` }
     ]);
+}
+
+function renderReportActions(row) {
+    const actions = [`<button onclick="showReportDetail(${row.reportId})">详情</button>`];
+    if (row.reportStatus === "SUBMITTED") {
+        actions.push(`<button onclick="approveReport(${row.reportId})">审核</button>`);
+    }
+    return actions.join("");
+}
+
+async function showReportDetail(id) {
+    try {
+        renderDetail("productionDetail", await getJson(`/work-reports/${id}`), "报工单详情");
+    } catch (error) {
+        showMessage(error.message, "error");
+    }
+}
+
+async function showWageDetail(id) {
+    try {
+        renderDetail("productionDetail", await getJson(`/piecework-wages/${id}`), "计件工资详情");
+    } catch (error) {
+        showMessage(error.message, "error");
+    }
 }
 
 async function approveReport(id) {

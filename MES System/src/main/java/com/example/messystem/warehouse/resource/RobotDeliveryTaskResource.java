@@ -22,11 +22,31 @@ public class RobotDeliveryTaskResource {
         return ResourceSupport.ok(service.listDeliveryTasks());
     }
 
+    @GET
+    @Path("/{id}")
+    public Response get(@PathParam("id") long id) {
+        try {
+            return ResourceSupport.ok(service.getDeliveryTask(id));
+        } catch (RuntimeException ex) {
+            return ResourceSupport.handle(ex);
+        }
+    }
+
     @POST
     @Path("/{id}/arrive")
     public Response arrive(@PathParam("id") long id) {
         try {
             return ResourceSupport.action("delivery arrived", service.markDeliveryArrived(id));
+        } catch (RuntimeException ex) {
+            return ResourceSupport.handle(ex);
+        }
+    }
+
+    @POST
+    @Path("/{id}/confirm-receipt")
+    public Response confirmReceipt(@PathParam("id") long id) {
+        try {
+            return ResourceSupport.action("materials received", service.confirmDeliveryReceipt(id));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }

@@ -7,6 +7,7 @@ import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -22,6 +23,16 @@ public class InventoryResource {
         return ResourceSupport.ok(service.listInventory());
     }
 
+    @GET
+    @Path("/{id}")
+    public Response get(@PathParam("id") long id) {
+        try {
+            return ResourceSupport.ok(service.getInventory(id));
+        } catch (RuntimeException ex) {
+            return ResourceSupport.handle(ex);
+        }
+    }
+
     @POST
     public Response create(MesInventory inventory) {
         try {
@@ -35,5 +46,15 @@ public class InventoryResource {
     @Path("/transactions")
     public Response listTransactions() {
         return ResourceSupport.ok(service.listTransactions());
+    }
+
+    @GET
+    @Path("/transactions/{id}")
+    public Response getTransaction(@PathParam("id") long id) {
+        try {
+            return ResourceSupport.ok(service.getTransaction(id));
+        } catch (RuntimeException ex) {
+            return ResourceSupport.handle(ex);
+        }
     }
 }

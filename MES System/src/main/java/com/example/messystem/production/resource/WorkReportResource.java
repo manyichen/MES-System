@@ -23,6 +23,26 @@ public class WorkReportResource {
         return ResourceSupport.ok(service.listWorkReports());
     }
 
+    @GET
+    @Path("/by-work-order/{workOrderId}")
+    public Response listByWorkOrder(@PathParam("workOrderId") long workOrderId) {
+        try {
+            return ResourceSupport.ok(service.listWorkReportsByWorkOrder(workOrderId));
+        } catch (RuntimeException ex) {
+            return ResourceSupport.handle(ex);
+        }
+    }
+
+    @GET
+    @Path("/{id}")
+    public Response get(@PathParam("id") long id) {
+        try {
+            return ResourceSupport.ok(service.getWorkReport(id));
+        } catch (RuntimeException ex) {
+            return ResourceSupport.handle(ex);
+        }
+    }
+
     @POST
     public Response create(MesWorkReport report) {
         try {

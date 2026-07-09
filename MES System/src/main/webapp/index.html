@@ -22,10 +22,36 @@
             </div>
         </header>
         <div class="grid">
+            <div class="tool wide">
+                <h3>基础数据</h3>
+                <div class="basic-grid">
+                    <div>
+                        <h4>物料</h4>
+                        <div id="materialTable"></div>
+                    </div>
+                    <div>
+                        <h4>仓库</h4>
+                        <div id="warehouseTable"></div>
+                    </div>
+                    <div>
+                        <h4>库位</h4>
+                        <div id="locationTable"></div>
+                    </div>
+                    <div>
+                        <h4>库存</h4>
+                        <div id="inventoryTable"></div>
+                    </div>
+                    <div>
+                        <h4>机器人</h4>
+                        <div id="robotTable"></div>
+                    </div>
+                </div>
+            </div>
             <form id="requisitionForm" class="tool">
                 <h3>创建领料任务</h3>
-                <label>工单ID <input name="workOrderId" type="number" value="1" min="1" required></label>
-                <label>物料ID <input name="materialId" type="number" value="1" min="1" required></label>
+                <label>工单 ID <input name="workOrderId" type="number" value="1" min="1" required></label>
+                <label>物料 ID <input name="materialId" type="number" value="1" min="1" required></label>
+                <label>批次号 <input name="batchNo" type="text" value="BATCH-20260709-001" required></label>
                 <label>数量 <input name="requiredQty" type="number" value="10" min="0" step="0.01" required></label>
                 <button type="submit">创建</button>
             </form>
@@ -45,6 +71,10 @@
                 <h3>库存流水</h3>
                 <div id="transactionTable"></div>
             </div>
+            <div id="warehouseDetail" class="tool wide detail-panel">
+                <h3>仓储详情</h3>
+                <p>点击表格中的详情查看记录。</p>
+            </div>
         </div>
     </section>
     <section id="production" class="panel">
@@ -55,8 +85,8 @@
         <div class="grid">
             <form id="reportForm" class="tool">
                 <h3>提交报工</h3>
-                <label>工单ID <input name="workOrderId" type="number" value="1" min="1" required></label>
-                <label>操作工ID <input name="operatorId" type="number" value="1" min="1"></label>
+                <label>工单 ID <input name="workOrderId" type="number" value="1" min="1" required></label>
+                <label>操作工 ID <input name="operatorId" type="number" value="1" min="1"></label>
                 <label>报工数量 <input name="reportQty" type="number" value="100" min="0" required></label>
                 <label>合格数量 <input name="qualifiedQty" type="number" value="95" min="0" required></label>
                 <label>不合格数量 <input name="defectQty" type="number" value="5" min="0" required></label>
@@ -70,6 +100,10 @@
             <div class="tool">
                 <h3>计件工资</h3>
                 <div id="wageTable"></div>
+            </div>
+            <div id="productionDetail" class="tool wide detail-panel">
+                <h3>生产详情</h3>
+                <p>点击表格中的详情查看记录。</p>
             </div>
         </div>
     </section>
