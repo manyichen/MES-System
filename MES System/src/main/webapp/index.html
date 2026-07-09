@@ -9,12 +9,26 @@
 <body>
 <aside class="sidebar">
     <h1>MES</h1>
-    <button data-tab="planning" class="active">计划工单</button>
+    <button data-tab="dashboard" class="active">首页看板</button>
+    <button data-tab="planning">计划工单</button>
     <button data-tab="warehouse">仓储物流</button>
     <button data-tab="production">生产报工</button>
+    <button data-tab="quality">质量管理</button>
+    <button data-tab="equipment">设备维护</button>
+    <button data-tab="trace">产品追溯</button>
+    <button data-tab="feedback">管理反馈</button>
 </aside>
+
 <main>
-    <section id="planning" class="panel active">
+    <section id="dashboard" class="panel active">
+        <header>
+            <h2>首页看板</h2>
+            <button id="refresh-dashboard">刷新</button>
+        </header>
+        <div id="dashboard-metrics" class="metric-grid"></div>
+    </section>
+
+    <section id="planning" class="panel">
         <header>
             <h2>计划工单</h2>
             <div class="actions">
@@ -43,22 +57,10 @@
                 <label>工序ID <input name="processId" type="number" value="1" min="1"></label>
                 <button type="submit">创建工单</button>
             </form>
-            <div class="tool">
-                <h3>客户订单</h3>
-                <div id="orderTable"></div>
-            </div>
-            <div class="tool">
-                <h3>生产任务</h3>
-                <div id="taskTable"></div>
-            </div>
-            <div class="tool">
-                <h3>生产工单</h3>
-                <div id="workOrderTable"></div>
-            </div>
-            <div class="tool wide">
-                <h3>工单操作日志</h3>
-                <div id="workOrderLogTable"></div>
-            </div>
+            <div class="tool"><h3>客户订单</h3><div id="orderTable"></div></div>
+            <div class="tool"><h3>生产任务</h3><div id="taskTable"></div></div>
+            <div class="tool"><h3>生产工单</h3><div id="workOrderTable"></div></div>
+            <div class="tool wide"><h3>工单操作日志</h3><div id="workOrderLogTable"></div></div>
         </div>
     </section>
 
@@ -78,22 +80,10 @@
                 <label>数量 <input name="requiredQty" type="number" value="10" min="0" step="0.01" required></label>
                 <button type="submit">创建</button>
             </form>
-            <div class="tool">
-                <h3>领料任务</h3>
-                <div id="requisitionTable"></div>
-            </div>
-            <div class="tool">
-                <h3>拣货任务</h3>
-                <div id="pickingTable"></div>
-            </div>
-            <div class="tool">
-                <h3>配送任务</h3>
-                <div id="deliveryTable"></div>
-            </div>
-            <div class="tool wide">
-                <h3>库存流水</h3>
-                <div id="transactionTable"></div>
-            </div>
+            <div class="tool"><h3>领料任务</h3><div id="requisitionTable"></div></div>
+            <div class="tool"><h3>拣货任务</h3><div id="pickingTable"></div></div>
+            <div class="tool"><h3>配送任务</h3><div id="deliveryTable"></div></div>
+            <div class="tool wide"><h3>库存流水</h3><div id="transactionTable"></div></div>
         </div>
     </section>
 
@@ -113,21 +103,132 @@
                 <label>工时 <input name="workHours" type="number" value="8" min="0" step="0.1"></label>
                 <button type="submit">提交</button>
             </form>
-            <div class="tool">
-                <h3>报工单</h3>
-                <div id="reportTable"></div>
-            </div>
-            <div class="tool">
-                <h3>计件工资</h3>
-                <div id="wageTable"></div>
-            </div>
+            <div class="tool"><h3>报工单</h3><div id="reportTable"></div></div>
+            <div class="tool"><h3>计件工资</h3><div id="wageTable"></div></div>
+        </div>
+    </section>
+
+    <section id="quality" class="panel">
+        <header>
+            <h2>质量管理</h2>
+            <button id="refresh-quality">刷新</button>
+        </header>
+        <div class="grid">
+            <form id="inspection-form" class="tool">
+                <h3>创建质检单</h3>
+                <label>质检单号 <input name="inspectionNo" value="QI-DEMO-001" required></label>
+                <label>工单ID <input name="workOrderId" type="number" value="1" min="1" required></label>
+                <label>抽检数量 <input name="sampleQty" type="number" value="10" min="1" required></label>
+                <label>质检员ID <input name="inspectorId" type="number" value="1" min="1"></label>
+                <button type="submit">创建</button>
+            </form>
+            <form id="inspection-item-form" class="tool">
+                <h3>添加质检项目</h3>
+                <label>质检单ID <input name="inspectionId" type="number" value="1" min="1" required></label>
+                <label>项目编码 <input name="itemCode" value="ITEM-001" required></label>
+                <label>项目名称 <input name="itemName" value="外观检查" required></label>
+                <label>标准值 <input name="standardValue" value="合格"></label>
+                <label>实际值 <input name="actualValue" value="待判定"></label>
+                <label>结果 <input name="itemResult" value="PASS"></label>
+                <label>备注 <input name="remark"></label>
+                <button type="submit">添加</button>
+            </form>
+            <div class="tool wide"><h3>质检单</h3><div id="quality-table"></div></div>
+            <div class="tool wide"><h3>返工单</h3><div id="rework-table"></div></div>
+        </div>
+    </section>
+
+    <section id="equipment" class="panel">
+        <header>
+            <h2>设备维护</h2>
+            <button id="refresh-equipment">刷新</button>
+        </header>
+        <div class="grid">
+            <form id="equipment-form" class="tool">
+                <h3>创建设备</h3>
+                <label>设备编码 <input name="equipmentCode" value="EQ-DEMO-001" required></label>
+                <label>设备名称 <input name="equipmentName" value="密炼机一号" required></label>
+                <label>设备类型 <input name="equipmentType" value="MIXER"></label>
+                <label>产线ID <input name="lineId" type="number" value="1"></label>
+                <label>状态 <input name="equipmentStatus" value="RUNNING"></label>
+                <button type="submit">创建</button>
+            </form>
+            <form id="repair-form" class="tool">
+                <h3>提交报修</h3>
+                <label>报修单号 <input name="repairReportNo" value="REP-DEMO-001" required></label>
+                <label>设备ID <input name="equipmentId" type="number" value="1" min="1" required></label>
+                <label>工单ID <input name="workOrderId" type="number" value="1"></label>
+                <label>故障级别 <input name="faultLevel" value="HIGH"></label>
+                <label>故障描述 <input name="faultDesc" value="设备异常停机" required></label>
+                <label>上报人ID <input name="reporterId" type="number" value="1"></label>
+                <button type="submit">提交</button>
+            </form>
+            <div class="tool wide"><h3>设备列表</h3><div id="equipment-table"></div></div>
+            <div class="tool wide"><h3>报修单</h3><div id="repair-table"></div></div>
+            <div class="tool wide"><h3>维修工单</h3><div id="maintenance-table"></div></div>
+        </div>
+    </section>
+
+    <section id="trace" class="panel">
+        <header>
+            <h2>产品追溯</h2>
+            <button id="refresh-trace">刷新</button>
+        </header>
+        <div class="grid">
+            <form id="trace-form" class="tool">
+                <h3>新增追溯</h3>
+                <label>追溯码 <input name="traceCode" value="TRACE-DEMO-001" required></label>
+                <label>订单ID <input name="orderId" type="number" value="1" required></label>
+                <label>任务ID <input name="taskId" type="number" value="1" required></label>
+                <label>工单ID <input name="workOrderId" type="number" value="1" required></label>
+                <label>批次号 <input name="batchNo" value="BATCH-DEMO-001" required></label>
+                <label>状态 <input name="traceStatus" value="NORMAL"></label>
+                <button type="submit">创建</button>
+            </form>
+            <form id="trace-search-form" class="tool">
+                <h3>追溯查询</h3>
+                <label>追溯码或ID <input name="traceCode" value="TRACE-DEMO-001"></label>
+                <button type="submit">查询</button>
+                <div id="trace-detail"></div>
+            </form>
+            <div class="tool wide"><h3>追溯记录</h3><div id="trace-table"></div></div>
+        </div>
+    </section>
+
+    <section id="feedback" class="panel">
+        <header>
+            <h2>管理反馈</h2>
+            <button id="refresh-feedback">刷新</button>
+        </header>
+        <div class="grid">
+            <form id="feedback-filter-form" class="tool">
+                <h3>查询反馈</h3>
+                <label>工单ID <input name="workOrderId" type="number" value="1"></label>
+                <button type="submit">查询</button>
+            </form>
+            <form id="feedback-form" class="tool">
+                <h3>新增反馈</h3>
+                <label>反馈编号 <input name="feedbackNo" value="FB-DEMO-001" required></label>
+                <label>订单ID <input name="orderId" type="number" value="1" required></label>
+                <label>任务ID <input name="taskId" type="number" value="1" required></label>
+                <label>工单ID <input name="workOrderId" type="number" value="1" required></label>
+                <label>反馈类型 <input name="feedbackType" value="QUALITY"></label>
+                <label>反馈内容 <input name="feedbackContent" value="关注返工批次"></label>
+                <button type="submit">创建</button>
+            </form>
+            <div class="tool wide"><h3>反馈列表</h3><div id="feedback-table"></div></div>
         </div>
     </section>
 </main>
+
 <div id="message"></div>
 <script src="js/api.js"></script>
 <script src="js/planning.js"></script>
 <script src="js/warehouse.js"></script>
 <script src="js/production.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/quality.js"></script>
+<script src="js/equipment.js"></script>
+<script src="js/app.js"></script>
 </body>
 </html>

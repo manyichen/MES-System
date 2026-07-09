@@ -7,8 +7,14 @@
     <groupId>com.example</groupId>
     <artifactId>MESSystem</artifactId>
     <version>1.0-SNAPSHOT</version>
-    <name>MES System</name>
     <packaging>war</packaging>
+    <name>MES System</name>
+    <parent>
+        <groupId>com.mes</groupId>
+        <artifactId>mes-jdbc-demo</artifactId>
+        <version>1.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -52,6 +58,21 @@
             <artifactId>junit-jupiter-engine</artifactId>
             <version>${junit.version}</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <version>8.4.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.17.2</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.jaxrs</groupId>
+            <artifactId>jackson-jaxrs-json-provider</artifactId>
+            <version>2.17.2</version>
         </dependency>
     </dependencies>
 

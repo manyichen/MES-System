@@ -52,6 +52,7 @@ header {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 12px;
     margin-bottom: 18px;
 }
 
@@ -85,7 +86,7 @@ h3 {
 }
 
 .tool {
-    min-height: 220px;
+    min-height: 160px;
     padding: 18px;
     border: 1px solid #d8dee7;
     border-radius: 8px;
@@ -104,8 +105,10 @@ label {
     font-size: 14px;
 }
 
-input {
+input,
+select {
     height: 36px;
+    width: 100%;
     border: 1px solid #cbd5e1;
     border-radius: 6px;
     padding: 0 10px;
@@ -118,13 +121,19 @@ button {
     border-radius: 6px;
     padding: 0 14px;
     color: #fff;
-    background: #0f766e;
+    background: #2563eb;
     cursor: pointer;
+    font: inherit;
+}
+
+button:hover {
+    background: #1d4ed8;
 }
 
 .actions {
     display: flex;
-    gap: 8px;
+    gap: 10px;
+    flex-wrap: wrap;
 }
 
 table {
@@ -136,9 +145,9 @@ table {
 th,
 td {
     border-bottom: 1px solid #e5e7eb;
-    padding: 9px 8px;
+    padding: 9px;
     text-align: left;
-    vertical-align: middle;
+    vertical-align: top;
 }
 
 th {
@@ -146,25 +155,67 @@ th {
     background: #f8fafc;
 }
 
-td button {
+.row-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.row-actions button {
     height: 30px;
-    margin-right: 6px;
-    background: #2563eb;
+    padding: 0 10px;
+    font-size: 12px;
+}
+
+.metric-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+}
+
+.metric {
+    min-height: 120px;
+    padding: 18px;
+    border: 1px solid #d8dee7;
+    border-radius: 8px;
+    background: #fff;
+}
+
+.metric span {
+    display: block;
+    color: #64748b;
+    font-size: 14px;
+}
+
+.metric strong {
+    display: block;
+    margin-top: 8px;
+    color: #16324f;
+    font-size: 26px;
+}
+
+.detail {
+    margin-top: 14px;
+    padding: 12px;
+    border: 1px solid #d8dee7;
+    border-radius: 8px;
+    background: #f8fafc;
+    font-size: 13px;
 }
 
 #message {
     position: fixed;
-    right: 18px;
-    bottom: 18px;
-    min-width: 220px;
-    max-width: 360px;
+    right: 20px;
+    bottom: 20px;
+    max-width: 380px;
     padding: 12px 14px;
     border-radius: 8px;
     color: #fff;
-    background: #334155;
+    background: #111827;
     opacity: 0;
-    transform: translateY(10px);
-    transition: 0.2s ease;
+    transform: translateY(12px);
+    pointer-events: none;
+    transition: opacity .18s ease, transform .18s ease;
 }
 
 #message.show {
@@ -176,26 +227,33 @@ td button {
     background: #b91c1c;
 }
 
-@media (max-width: 760px) {
+#message.ok,
+#message.info {
+    background: #166534;
+}
+
+@media (max-width: 860px) {
     body {
-        grid-template-columns: 1fr;
+        display: block;
     }
 
     .sidebar {
         display: flex;
-        align-items: center;
         gap: 8px;
-        padding: 12px;
+        overflow-x: auto;
+        padding: 14px;
     }
 
     .sidebar h1 {
         margin: 0 10px 0 0;
-        font-size: 20px;
+        font-size: 22px;
     }
 
     .sidebar button {
         width: auto;
-        margin: 0;
+        min-width: 92px;
+        margin-bottom: 0;
+        text-align: center;
     }
 
     main {
