@@ -14,3 +14,4 @@ INSERT INTO mes_production_line(line_code, line_name, line_type, daily_capacity)
 ('LINE-MIX-01','炼胶一线','MIXING',800),
 ('LINE-BLD-01','成型一线','BUILDING',600),
 ('LINE-CUR-01','硫化一线','CURING',500);
+//1111
