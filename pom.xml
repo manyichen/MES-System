@@ -6,10 +6,11 @@
     <groupId>com.mes</groupId>
     <artifactId>mes-jdbc-demo</artifactId>
     <version>1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
     <name>MES JDBC Demo</name>
 
     <properties>
-        <maven.compiler.release>25</maven.compiler.release>
+        <maven.compiler.release>21</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <junit.jupiter.version>5.10.3</junit.jupiter.version>
         <mysql.connector.version>8.4.0</mysql.connector.version>
@@ -28,6 +29,10 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <modules>
+        <module>MES System</module>
+    </modules>
 
     <build>
         <plugins>
