@@ -1,0 +1,259 @@
+:root {
+    color-scheme: light;
+    --bg: #f4f6f8;
+    --panel: #ffffff;
+    --text: #1f2933;
+    --muted: #65758b;
+    --line: #d8dee6;
+    --accent: #176b5b;
+    --accent-dark: #0f5145;
+    --warn: #a75d00;
+    --danger: #a33232;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
+}
+
+.app-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 22px 28px 16px;
+    background: #ffffff;
+    border-bottom: 1px solid var(--line);
+}
+
+h1, h2, h3, p {
+    margin: 0;
+}
+
+h1 {
+    font-size: 24px;
+    font-weight: 700;
+}
+
+h2 {
+    font-size: 20px;
+}
+
+h3 {
+    margin-top: 24px;
+    margin-bottom: 12px;
+    font-size: 16px;
+}
+
+.app-header p {
+    margin-top: 6px;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.message {
+    min-height: 32px;
+    max-width: 460px;
+    padding: 7px 10px;
+    border-radius: 6px;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.message.ok {
+    color: var(--accent-dark);
+    background: #e5f4ef;
+}
+
+.message.error {
+    color: var(--danger);
+    background: #fdecec;
+}
+
+.tabs {
+    display: flex;
+    gap: 8px;
+    padding: 12px 28px;
+    background: #ffffff;
+    border-bottom: 1px solid var(--line);
+    overflow-x: auto;
+}
+
+.tab, button {
+    min-height: 34px;
+    border: 1px solid var(--accent);
+    border-radius: 6px;
+    background: var(--accent);
+    color: #ffffff;
+    padding: 0 13px;
+    cursor: pointer;
+    font: inherit;
+    white-space: nowrap;
+}
+
+.tab {
+    background: transparent;
+    color: var(--accent-dark);
+}
+
+.tab.is-active, button:hover {
+    background: var(--accent-dark);
+    color: #ffffff;
+}
+
+button.secondary {
+    background: #ffffff;
+    color: var(--accent-dark);
+}
+
+main {
+    padding: 22px 28px 36px;
+}
+
+.view {
+    display: none;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 18px;
+}
+
+.view.is-active {
+    display: block;
+}
+
+.section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.inline-form {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+input, select {
+    width: 100%;
+    min-height: 34px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: #ffffff;
+    color: var(--text);
+    padding: 0 10px;
+    font: inherit;
+}
+
+.table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 760px;
+}
+
+th, td {
+    padding: 10px;
+    border-bottom: 1px solid var(--line);
+    text-align: left;
+    vertical-align: middle;
+    font-size: 13px;
+}
+
+th {
+    background: #eef2f5;
+    color: #394757;
+    font-weight: 700;
+}
+
+tr:last-child td {
+    border-bottom: 0;
+}
+
+.row-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.row-actions button {
+    min-height: 30px;
+    padding: 0 9px;
+    font-size: 12px;
+}
+
+.metric-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+}
+
+.metric {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 14px;
+    background: #fbfcfd;
+}
+
+.metric strong {
+    display: block;
+    margin-top: 8px;
+    font-size: 24px;
+    color: var(--accent-dark);
+}
+
+.empty {
+    padding: 18px;
+    color: var(--muted);
+    border: 1px dashed var(--line);
+    border-radius: 8px;
+}
+
+.detail {
+    margin-bottom: 16px;
+    padding: 14px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fbfcfd;
+    font-size: 13px;
+}
+
+@media (max-width: 720px) {
+    .app-header {
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 18px;
+    }
+
+    .tabs, main {
+        padding-left: 18px;
+        padding-right: 18px;
+    }
+
+    .view {
+        padding: 14px;
+    }
+}
