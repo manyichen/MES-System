@@ -1,4 +1,4 @@
-package com.mes.jdbc;
+package com.example.messystem.common;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -42,11 +42,16 @@ public final class DbConfig {
 
     private static Map<String, String> loadDotEnv() {
         Map<String, String> values = new HashMap<>();
-        Path path = Path.of(".env");
-        if (!Files.isRegularFile(path)) {
-            return values;
+        for (Path path : List.of(Path.of(".env"), Path.of("..", ".env"))) {
+            if (Files.isRegularFile(path)) {
+                readDotEnv(path, values);
+                break;
+            }
         }
+        return values;
+    }
 
+    private static void readDotEnv(Path path, Map<String, String> values) {
         try {
             List<String> lines = Files.readAllLines(path, StandardCharsets.UTF_8);
             for (String line : lines) {
@@ -63,9 +68,8 @@ public final class DbConfig {
                 values.put(key, unquote(rawValue));
             }
         } catch (IOException e) {
-            throw new IllegalStateException("Failed to read .env file.", e);
+            throw new IllegalStateException("Failed to read .env file: " + path, e);
         }
-        return values;
     }
 
     private static String unquote(String value) {
