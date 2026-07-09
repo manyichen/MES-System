@@ -5,17 +5,30 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public final class Db {
-
     private Db() {
     }
 
     public static Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(DbConfig.getJdbcUrl(), DbConfig.getUser(), DbConfig.getPassword());
+        loadDriver();
+        return DriverManager.getConnection(DbConfig.databaseUrl(), DbConfig.USER, DbConfig.PASSWORD);
+    }
+
+    public static Connection getServerConnection() throws SQLException {
+        loadDriver();
+        return DriverManager.getConnection(DbConfig.serverUrl(), DbConfig.USER, DbConfig.PASSWORD);
     }
 
     public static void initializeDatabase() throws SQLException {
         try (Connection ignored = getConnection()) {
             // Verifies the configured database connection.
+        }
+    }
+
+    private static void loadDriver() {
+        try {
+            Class.forName("org.postgresql.Driver");
+        } catch (ClassNotFoundException e) {
+            throw new IllegalStateException("PostgreSQL JDBC driver is missing from the classpath.", e);
         }
     }
 }
