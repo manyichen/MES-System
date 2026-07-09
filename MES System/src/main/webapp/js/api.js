@@ -1,12 +1,5 @@
 const API_BASE = "./api";
 
-function showMessage(message, type = "ok") {
-    const el = document.getElementById("message");
-    if (!el) return;
-    el.textContent = message || "";
-    el.className = `message ${type}`;
-}
-
 async function requestJson(path, options = {}) {
     const response = await fetch(`${API_BASE}${path}`, {
         headers: {
@@ -20,7 +13,7 @@ async function requestJson(path, options = {}) {
         throw new Error(payload?.message || `HTTP ${response.status}`);
     }
     if (payload && payload.success === false) {
-        throw new Error(payload.message || "操作失败");
+        throw new Error(payload.message || "请求失败");
     }
     return payload?.data ?? payload;
 }
@@ -62,28 +55,31 @@ function nowIsoLocal() {
     return new Date().toISOString().slice(0, 19);
 }
 
-function renderTable(containerId, rows, columns, actions = []) {
+function renderTable(containerId, rows = [], columns = [], actions = []) {
     const container = document.getElementById(containerId);
     if (!container) return;
     if (!rows || rows.length === 0) {
-        container.innerHTML = '<div class="empty">暂无数据</div>';
+        container.innerHTML = "<p>暂无数据</p>";
         return;
     }
 
-    const actionHead = actions.length ? "<th>操作</th>" : "";
-    const head = columns.map(col => `<th>${col.label}</th>`).join("") + actionHead;
+    const head = columns.map(col => `<th>${col.title || col.label}</th>`).join("")
+        + (actions.length ? "<th>操作</th>" : "");
     const body = rows.map(row => {
-        const cells = columns.map(col => `<td>${formatCell(row[col.key])}</td>`).join("");
-        const buttons = actions.length
+        const cells = columns.map(col => {
+            const value = col.render ? col.render(row) : row[col.key];
+            return `<td>${formatCell(value)}</td>`;
+        }).join("");
+        const actionCells = actions.length
             ? `<td><div class="row-actions">${actions.map(action => {
-                const value = row[action.idKey];
-                return `<button type="button" data-action="${action.name}" data-id="${value}">${action.label}</button>`;
+                const id = row[action.idKey];
+                return `<button type="button" data-action="${action.name}" data-id="${id}">${action.label}</button>`;
             }).join("")}</div></td>`
             : "";
-        return `<tr>${cells}${buttons}</tr>`;
+        return `<tr>${cells}${actionCells}</tr>`;
     }).join("");
 
-    container.innerHTML = `<div class="table-wrap"><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+    container.innerHTML = `<table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
     actions.forEach(action => {
         container.querySelectorAll(`[data-action="${action.name}"]`).forEach(button => {
             button.addEventListener("click", () => action.handler(button.dataset.id));
@@ -95,4 +91,15 @@ function formatCell(value) {
     if (value === null || value === undefined) return "";
     if (typeof value === "boolean") return value ? "是" : "否";
     return String(value);
+}
+
+function showMessage(message, type = "info") {
+    const box = document.getElementById("message");
+    if (!box) return;
+    box.textContent = message;
+    box.className = `show ${type}`;
+    window.clearTimeout(showMessage.timer);
+    showMessage.timer = window.setTimeout(() => {
+        box.className = "";
+    }, 2600);
 }

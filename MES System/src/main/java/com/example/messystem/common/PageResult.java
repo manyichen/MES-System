@@ -2,9 +2,19 @@ package com.example.messystem.common;
 
 import java.util.List;
 
-public record PageResult<T>(List<T> items, int page, int pageSize, long total) {
+public class PageResult<T> {
+    public List<T> items;
+    public int page;
+    public int pageSize;
+    public long total;
 
-    public static <T> PageResult<T> of(List<T> items, int page, int pageSize, long total) {
-        return new PageResult<>(items, page, pageSize, total);
+    public PageResult() {
+    }
+
+    public PageResult(List<T> items, int page, int pageSize, long total) {
+        this.items = items;
+        this.page = page;
+        this.pageSize = pageSize;
+        this.total = total;
     }
 }
