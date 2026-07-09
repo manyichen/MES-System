@@ -20,9 +20,9 @@ public final class Db {
 
     private static void loadDriver() {
         try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
+            Class.forName("org.postgresql.Driver");
         } catch (ClassNotFoundException e) {
-            throw new IllegalStateException("MySQL JDBC driver is missing from the classpath.", e);
+            throw new IllegalStateException("PostgreSQL JDBC driver is missing from the classpath.", e);
         }
     }
 }

@@ -12,23 +12,22 @@ public final class DbConfig {
     private static final Map<String, String> DOT_ENV = loadDotEnv();
 
     public static final String HOST = value("MES_DB_HOST", "localhost");
-    public static final String PORT = value("MES_DB_PORT", "3306");
-    public static final String DATABASE = value("MES_DB_NAME", "MES");
-    public static final String USER = value("MES_DB_USER", "root");
+    public static final String PORT = value("MES_DB_PORT", "5432");
+    public static final String DATABASE = value("MES_DB_NAME", "MESSystem");
+    public static final String USER = value("MES_DB_USER", "MESSystem");
     public static final String PASSWORD = value("MES_DB_PASSWORD", "");
 
-    private static final String OPTIONS =
-            "useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai";
+    private static final String OPTIONS = "sslmode=prefer";
 
     private DbConfig() {
     }
 
     public static String serverUrl() {
-        return "jdbc:mysql://" + HOST + ":" + PORT + "/?" + OPTIONS;
+        return "jdbc:postgresql://" + HOST + ":" + PORT + "/postgres?" + OPTIONS;
     }
 
     public static String databaseUrl() {
-        return "jdbc:mysql://" + HOST + ":" + PORT + "/" + DATABASE + "?" + OPTIONS;
+        return "jdbc:postgresql://" + HOST + ":" + PORT + "/" + DATABASE + "?" + OPTIONS;
     }
 
     private static String value(String name, String fallback) {
