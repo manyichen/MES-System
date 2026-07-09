@@ -1,6 +1,5 @@
 package com.mes.jdbc;
-/*1111111*/
-/*22222222*/
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;

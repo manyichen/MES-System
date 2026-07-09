@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>双星轮胎 MES 工作台</title>
+    <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<aside class="sidebar">
+    <h1>MES</h1>
+    <button data-tab="warehouse" class="active">仓储物流</button>
+    <button data-tab="production">生产报工</button>
+</aside>
+<main>
+    <section id="warehouse" class="panel active">
+        <header>
+            <h2>仓储物流</h2>
+            <div class="actions">
+                <button id="seedWarehouse">生成演示数据</button>
+                <button id="refreshWarehouse">刷新</button>
+            </div>
+        </header>
+        <div class="grid">
+            <form id="requisitionForm" class="tool">
+                <h3>创建领料任务</h3>
+                <label>工单ID <input name="workOrderId" type="number" value="1" min="1" required></label>
+                <label>物料ID <input name="materialId" type="number" value="1" min="1" required></label>
+                <label>数量 <input name="requiredQty" type="number" value="10" min="0" step="0.01" required></label>
+                <button type="submit">创建</button>
+            </form>
+            <div class="tool">
+                <h3>领料任务</h3>
+                <div id="requisitionTable"></div>
+            </div>
+            <div class="tool">
+                <h3>拣货任务</h3>
+                <div id="pickingTable"></div>
+            </div>
+            <div class="tool">
+                <h3>配送任务</h3>
+                <div id="deliveryTable"></div>
+            </div>
+            <div class="tool wide">
+                <h3>库存流水</h3>
+                <div id="transactionTable"></div>
+            </div>
+        </div>
+    </section>
+    <section id="production" class="panel">
+        <header>
+            <h2>生产报工</h2>
+            <button id="refreshProduction">刷新</button>
+        </header>
+        <div class="grid">
+            <form id="reportForm" class="tool">
+                <h3>提交报工</h3>
+                <label>工单ID <input name="workOrderId" type="number" value="1" min="1" required></label>
+                <label>操作工ID <input name="operatorId" type="number" value="1" min="1"></label>
+                <label>报工数量 <input name="reportQty" type="number" value="100" min="0" required></label>
+                <label>合格数量 <input name="qualifiedQty" type="number" value="95" min="0" required></label>
+                <label>不合格数量 <input name="defectQty" type="number" value="5" min="0" required></label>
+                <label>工时 <input name="workHours" type="number" value="8" min="0" step="0.1"></label>
+                <button type="submit">提交</button>
+            </form>
+            <div class="tool">
+                <h3>报工单</h3>
+                <div id="reportTable"></div>
+            </div>
+            <div class="tool">
+                <h3>计件工资</h3>
+                <div id="wageTable"></div>
+            </div>
+        </div>
+    </section>
+</main>
+<div id="message"></div>
+<script src="js/api.js"></script>
+<script src="js/warehouse.js"></script>
+<script src="js/production.js"></script>
+</body>
+</html>
