@@ -8,8 +8,9 @@ import java.util.List;
 import java.util.Map;
 
 public final class DbConfig {
-
     private static final Map<String, String> DOT_ENV = loadDotEnv();
+
+    
 
     public static final String HOST = value("MES_DB_HOST", "localhost");
     public static final String PORT = value("MES_DB_PORT", "5432");

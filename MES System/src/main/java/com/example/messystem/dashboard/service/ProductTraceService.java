@@ -39,6 +39,7 @@ public class ProductTraceService {
                 orderId,
                 taskId,
                 workOrderId,
+                null,
                 batchNo,
                 status,
                 LocalDateTime.now()

@@ -14,6 +14,7 @@ import com.example.messystem.warehouse.service.WarehouseService;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
@@ -80,9 +81,10 @@ class WarehouseProductionServiceTest {
     @Test
     void approveWorkReportShouldCreatePieceworkWage() {
         String suffix = "TEST-" + System.nanoTime();
+        long workOrderId = createTestWorkOrder("WO-" + suffix, 100);
         MesWorkReport report = new MesWorkReport();
         report.reportNo = "WR-" + suffix;
-        report.workOrderId = 1L;
+        report.workOrderId = workOrderId;
         report.operatorId = 9L;
         report.reportQty = 100;
         report.qualifiedQty = 96;
@@ -103,7 +105,7 @@ class WarehouseProductionServiceTest {
 
     @Test
     void byWorkOrderApisShouldReturnBModuleRecordsOnly() {
-        long workOrderId = System.nanoTime();
+        long workOrderId = createTestWorkOrder("WO-TEST-" + System.nanoTime(), 100);
         MesMaterialRequisition requisition = createDatabaseRequisition(new BigDecimal("100"), workOrderId);
 
         MesWorkReport report = new MesWorkReport();
@@ -143,9 +145,10 @@ class WarehouseProductionServiceTest {
 
     @Test
     void approveWorkReportShouldFailWhenRepeatedAndNotCreateDuplicateWage() {
+        long workOrderId = createTestWorkOrder("WO-TEST-" + System.nanoTime(), 100);
         MesWorkReport report = new MesWorkReport();
         report.reportNo = "WR-TEST-" + System.nanoTime();
-        report.workOrderId = 1L;
+        report.workOrderId = workOrderId;
         report.operatorId = 9L;
         report.reportQty = 20;
         report.qualifiedQty = 18;
@@ -161,7 +164,7 @@ class WarehouseProductionServiceTest {
     }
 
     private MesMaterialRequisition createDatabaseRequisition(BigDecimal inventoryQty) {
-        return createDatabaseRequisition(inventoryQty, 1L);
+        return createDatabaseRequisition(inventoryQty, createTestWorkOrder("WO-TEST-" + System.nanoTime(), 100));
     }
 
     private long pickingTaskIdFor(long requisitionId) {
@@ -229,10 +232,20 @@ class WarehouseProductionServiceTest {
             delete(connection, """
                     delete from mes_piecework_wage
                     where report_id in (
-                        select report_id from mes_work_report where report_no like 'WR-TEST-%'
+                        select report_id from mes_work_report
+                        where report_no like 'WR-TEST-%'
+                           or work_order_id in (
+                               select work_order_id from mes_work_order where work_order_no like 'WO-TEST-%'
+                           )
                     )
                     """);
-            delete(connection, "delete from mes_work_report where report_no like 'WR-TEST-%'");
+            delete(connection, """
+                    delete from mes_work_report
+                    where report_no like 'WR-TEST-%'
+                       or work_order_id in (
+                           select work_order_id from mes_work_order where work_order_no like 'WO-TEST-%'
+                       )
+                    """);
             delete(connection, """
                     delete from mes_inventory_transaction
                     where inventory_id in (
@@ -272,6 +285,35 @@ class WarehouseProductionServiceTest {
             delete(connection, "delete from mes_warehouse where warehouse_code like 'WH-TEST-%'");
             delete(connection, "delete from mes_robot where robot_code like 'ROB-TEST-%'");
             delete(connection, "delete from mes_material where material_code like 'MAT-TEST-%'");
+            delete(connection, """
+                    delete from mes_work_order_operation_log
+                    where work_order_id in (
+                        select work_order_id from mes_work_order where work_order_no like 'WO-TEST-%'
+                    )
+                    """);
+            delete(connection, "delete from mes_work_order where work_order_no like 'WO-TEST-%'");
+        }
+    }
+
+    private static long createTestWorkOrder(String workOrderNo, int plannedQty) {
+        String sql = """
+                insert into mes_work_order
+                    (work_order_no, task_id, product_id, line_id, process_id, planned_qty,
+                     actual_qty, priority_level, work_order_status, batch_no)
+                values (?, 1, 1, 1, 1, ?, 0, 3, 'RECEIVED', ?)
+                returning work_order_id
+                """;
+        try (Connection connection = Db.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, workOrderNo);
+            statement.setInt(2, plannedQty);
+            statement.setString(3, "BATCH-" + workOrderNo.replace("WO-", ""));
+            try (ResultSet rs = statement.executeQuery()) {
+                rs.next();
+                return rs.getLong(1);
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException(e);
         }
     }
 

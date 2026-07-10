@@ -22,6 +22,16 @@ public class PieceworkWageResource {
     }
 
     @GET
+    @Path("/by-report/{workReportId}")
+    public Response listByReport(@PathParam("workReportId") long workReportId) {
+        try {
+            return ResourceSupport.ok(service.listWagesByReport(workReportId));
+        } catch (RuntimeException ex) {
+            return ResourceSupport.handle(ex);
+        }
+    }
+
+    @GET
     @Path("/{id}")
     public Response get(@PathParam("id") long id) {
         try {

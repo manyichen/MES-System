@@ -4,8 +4,10 @@ import com.example.messystem.common.ResourceSupport;
 import com.example.messystem.warehouse.entity.MesRobot;
 import com.example.messystem.warehouse.service.WarehouseService;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
@@ -37,6 +39,27 @@ public class RobotResource {
     public Response create(MesRobot robot) {
         try {
             return ResourceSupport.created("robot created", service.createRobot(robot));
+        } catch (RuntimeException ex) {
+            return ResourceSupport.handle(ex);
+        }
+    }
+
+    @PUT
+    @Path("/{id}")
+    public Response update(@PathParam("id") long id, MesRobot robot) {
+        try {
+            return ResourceSupport.action("robot updated", service.updateRobot(id, robot));
+        } catch (RuntimeException ex) {
+            return ResourceSupport.handle(ex);
+        }
+    }
+
+    @DELETE
+    @Path("/{id}")
+    public Response delete(@PathParam("id") long id) {
+        try {
+            service.deleteRobot(id);
+            return ResourceSupport.action("robot deleted", null);
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }

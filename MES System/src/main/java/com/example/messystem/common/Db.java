@@ -5,7 +5,6 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public final class Db {
-
     private Db() {
     }
 
@@ -31,4 +30,6 @@ public final class Db {
             // Verifies the configured database connection.
         }
     }
+
+    
 }
