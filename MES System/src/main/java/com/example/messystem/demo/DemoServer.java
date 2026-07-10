@@ -2,6 +2,15 @@ package com.example.messystem.demo;
 
 import com.example.messystem.common.BadRequestException;
 import com.example.messystem.common.NotFoundException;
+import com.example.messystem.dashboard.entity.MesManagementFeedback;
+import com.example.messystem.dashboard.entity.MesProductTrace;
+import com.example.messystem.dashboard.service.DashboardService;
+import com.example.messystem.dashboard.service.ManagementFeedbackService;
+import com.example.messystem.dashboard.service.ProductTraceService;
+import com.example.messystem.equipment.entity.MesEquipment;
+import com.example.messystem.equipment.entity.MesEquipmentRepairReport;
+import com.example.messystem.equipment.entity.MesMaintenancePlan;
+import com.example.messystem.equipment.service.EquipmentService;
 import com.example.messystem.master.entity.MesProcessRoute;
 import com.example.messystem.master.entity.MesProduct;
 import com.example.messystem.master.entity.MesProductBom;
@@ -18,6 +27,11 @@ import com.example.messystem.planning.service.ProductionTaskService;
 import com.example.messystem.planning.service.WorkOrderService;
 import com.example.messystem.production.entity.MesWorkReport;
 import com.example.messystem.production.service.ProductionService;
+import com.example.messystem.quality.entity.MesQualityInspection;
+import com.example.messystem.quality.entity.MesQualityInspectionItem;
+import com.example.messystem.quality.entity.MesReworkOrder;
+import com.example.messystem.quality.service.QualityInspectionService;
+import com.example.messystem.quality.service.ReworkOrderService;
 import com.example.messystem.warehouse.entity.MesInventory;
 import com.example.messystem.warehouse.entity.MesMaterial;
 import com.example.messystem.warehouse.entity.MesMaterialRequisition;
@@ -50,6 +64,12 @@ public class DemoServer {
     private static final WorkOrderService WORK_ORDER_SERVICE = new WorkOrderService();
     private static final WarehouseService WAREHOUSE_SERVICE = new WarehouseService();
     private static final ProductionService PRODUCTION_SERVICE = new ProductionService();
+    private static final QualityInspectionService QUALITY_SERVICE = new QualityInspectionService();
+    private static final ReworkOrderService REWORK_SERVICE = new ReworkOrderService();
+    private static final EquipmentService EQUIPMENT_SERVICE = new EquipmentService();
+    private static final ProductTraceService PRODUCT_TRACE_SERVICE = new ProductTraceService();
+    private static final DashboardService DASHBOARD_SERVICE = new DashboardService();
+    private static final ManagementFeedbackService FEEDBACK_SERVICE = new ManagementFeedbackService();
 
     private final Path webRoot;
 
@@ -137,14 +157,14 @@ public class DemoServer {
         send(exchange, 200, contentType(file), Files.readAllBytes(file));
     }
 
-    private void handleApi(HttpExchange exchange, String path) throws IOException {
+    private void handleApi(HttpExchange exchange, String path) throws Exception {
         String method = exchange.getRequestMethod();
         Map<String, String> query = parseQuery(exchange.getRequestURI().getRawQuery());
         String json = switchApi(method, path.isBlank() ? "/" : path, query, readBody(exchange));
         sendJson(exchange, 200, json);
     }
 
-    private String switchApi(String method, String path, Map<String, String> query, String body) {
+    private String switchApi(String method, String path, Map<String, String> query, String body) throws Exception {
         if (path.equals("/users")) {
             if (isGet(method)) return ok(USER_SERVICE.listUsers());
             if (isPost(method)) return created(USER_SERVICE.createUser(parse(body, MesUser.class)));
@@ -236,6 +256,83 @@ public class DemoServer {
         if (path.matches("/work-reports/\\d+/approve") && isPost(method)) return ok(PRODUCTION_SERVICE.approveWorkReport(idAt(path, 1)));
         if (path.equals("/piecework-wages") && isGet(method)) return ok(PRODUCTION_SERVICE.listWages());
 
+        if (path.equals("/quality-inspections")) {
+            if (isGet(method)) return ok(QUALITY_SERVICE.listInspections());
+            if (isPost(method)) return created(QUALITY_SERVICE.createInspection(parse(body, MesQualityInspection.class)));
+        }
+        if (path.matches("/quality-inspections/\\d+") && isGet(method)) {
+            return ok(QUALITY_SERVICE.getInspectionById(idAt(path, 1)).orElseThrow(() -> new NotFoundException("inspection not found")));
+        }
+        if (path.matches("/quality-inspections/\\d+/items") && isPost(method)) {
+            long inspectionId = idAt(path, 1);
+            MesQualityInspectionItem item = parse(body, MesQualityInspectionItem.class);
+            item = new MesQualityInspectionItem(null, inspectionId, item.itemCode(), item.itemName(), item.standardValue(), item.actualValue(), item.itemResult(), item.remark());
+            return created(QUALITY_SERVICE.addInspectionItem(item));
+        }
+        if (path.matches("/quality-inspections/\\d+/judge") && isPost(method)) {
+            Map<String, Object> payload = JsonCodec.parseMap(body);
+            String status = String.valueOf(payload.getOrDefault("status", "REWORK"));
+            String result = String.valueOf(payload.getOrDefault("result", status));
+            return ok(QUALITY_SERVICE.judgeInspection(idAt(path, 1), status, result));
+        }
+        if (path.equals("/quality-traces") && isGet(method)) return ok(QUALITY_SERVICE.listAllTraces());
+        if (path.matches("/quality-traces/by-work-order/\\d+") && isGet(method)) return ok(QUALITY_SERVICE.listTracesByWorkOrder(idAt(path, 2)));
+        if (path.matches("/quality-traces/by-inspection/\\d+") && isGet(method)) return ok(QUALITY_SERVICE.listTracesByInspection(idAt(path, 2)));
+
+        if (path.equals("/rework-orders")) {
+            if (isGet(method)) {
+                Long inspectionId = longQuery(query, "inspectionId");
+                return ok(inspectionId == null ? REWORK_SERVICE.listReworkOrders() : REWORK_SERVICE.listReworkOrdersByInspection(inspectionId));
+            }
+            if (isPost(method)) return created(REWORK_SERVICE.createReworkOrder(parse(body, MesReworkOrder.class)));
+        }
+        if (path.matches("/rework-orders/\\d+/dispatch") && isPost(method)) return ok(REWORK_SERVICE.updateStatus(idAt(path, 1), "DISPATCHED"));
+        if (path.matches("/rework-orders/\\d+/finish") && isPost(method)) return ok(REWORK_SERVICE.updateStatus(idAt(path, 1), "FINISHED"));
+
+        if (path.equals("/equipment")) {
+            if (isGet(method)) return ok(EQUIPMENT_SERVICE.listEquipment());
+            if (isPost(method)) return created(EQUIPMENT_SERVICE.createEquipment(parse(body, MesEquipment.class)));
+        }
+        if (path.matches("/equipment/by-line/\\d+") && isGet(method)) return ok(EQUIPMENT_SERVICE.listEquipmentByLine(idAt(path, 2)));
+        if (path.matches("/equipment/\\d+/status") && isPost(method)) {
+            Map<String, Object> payload = JsonCodec.parseMap(body);
+            return ok(EQUIPMENT_SERVICE.updateEquipmentStatus(idAt(path, 1), String.valueOf(payload.get("status"))));
+        }
+        if (path.equals("/equipment-repair-reports")) {
+            if (isGet(method)) return ok(EQUIPMENT_SERVICE.listRepairReports());
+            if (isPost(method)) return created(EQUIPMENT_SERVICE.createRepairReport(parse(body, MesEquipmentRepairReport.class)));
+        }
+        if (path.matches("/equipment-repair-reports/\\d+/approve") && isPost(method)) return ok(EQUIPMENT_SERVICE.approveRepairReport(idAt(path, 1)));
+        if (path.matches("/equipment-repair-reports/\\d+/to-maintenance-order") && isPost(method)) return created(EQUIPMENT_SERVICE.convertRepairReportToMaintenanceOrder(idAt(path, 1)));
+        if (path.equals("/maintenance-orders") && isGet(method)) return ok(EQUIPMENT_SERVICE.listMaintenanceOrders());
+        if (path.matches("/maintenance-orders/\\d+/assign") && isPost(method)) return ok(EQUIPMENT_SERVICE.updateMaintenanceOrderStatus(idAt(path, 1), "ASSIGNED"));
+        if (path.matches("/maintenance-orders/\\d+/finish") && isPost(method)) return ok(EQUIPMENT_SERVICE.updateMaintenanceOrderStatus(idAt(path, 1), "FINISHED"));
+        if (path.matches("/maintenance-orders/\\d+/accept") && isPost(method)) return ok(EQUIPMENT_SERVICE.updateMaintenanceOrderStatus(idAt(path, 1), "ACCEPTED"));
+        if (path.equals("/maintenance-plans")) {
+            if (isGet(method)) return ok(EQUIPMENT_SERVICE.listMaintenancePlans());
+            if (isPost(method)) return created(EQUIPMENT_SERVICE.createMaintenancePlan(parse(body, MesMaintenancePlan.class)));
+        }
+
+        if (path.equals("/product-traces")) {
+            if (isGet(method)) return ok(PRODUCT_TRACE_SERVICE.listProductTraces());
+            if (isPost(method)) return created(PRODUCT_TRACE_SERVICE.createProductTrace(parse(body, MesProductTrace.class)));
+        }
+        if (path.matches("/product-traces/[^/]+") && isGet(method)) return ok(PRODUCT_TRACE_SERVICE.getProductTrace(partAt(path, 1)).orElseThrow(() -> new NotFoundException("product trace not found")));
+        if (path.matches("/product-traces/work-orders/\\d+") && isGet(method)) return ok(PRODUCT_TRACE_SERVICE.listTracesByWorkOrder(idAt(path, 2)));
+        if (path.equals("/dashboard/summary") && isGet(method)) return ok(DASHBOARD_SERVICE.listMetrics());
+        if (path.equals("/dashboard/quality") && isGet(method)) return ok(DASHBOARD_SERVICE.listMetrics());
+        if (path.equals("/dashboard/equipment") && isGet(method)) return ok(DASHBOARD_SERVICE.listMetrics());
+        if (path.equals("/dashboard/production") && isGet(method)) return ok(DASHBOARD_SERVICE.listMetrics());
+        if (path.equals("/dashboard/metrics")) {
+            if (isGet(method)) return ok(DASHBOARD_SERVICE.listMetrics());
+            if (isPost(method)) return created(DASHBOARD_SERVICE.createMetric(parse(body, com.example.messystem.dashboard.entity.MesDashboardMetric.class)));
+        }
+        if (path.equals("/management-feedback")) {
+            if (isGet(method)) return ok(FEEDBACK_SERVICE.listFeedbackForWorkOrder(longQuery(query, "workOrderId") == null ? 1L : longQuery(query, "workOrderId")));
+            if (isPost(method)) return created(FEEDBACK_SERVICE.createFeedback(parse(body, MesManagementFeedback.class)));
+        }
+        if (path.matches("/management-feedback/\\d+/close") && isPost(method)) return ok(FEEDBACK_SERVICE.closeFeedback(idAt(path, 1)));
+
         throw new NotFoundException("api not found: " + path);
     }
 
@@ -265,8 +362,12 @@ public class DemoServer {
     }
 
     private static long idAt(String path, int index) {
+        return Long.parseLong(partAt(path, index));
+    }
+
+    private static String partAt(String path, int index) {
         String[] parts = path.substring(1).split("/");
-        return Long.parseLong(parts[index]);
+        return parts[index];
     }
 
     private static Map<String, String> parseQuery(String rawQuery) {

@@ -8,6 +8,7 @@ public record MesProductTrace(
         Long orderId,
         Long taskId,
         Long workOrderId,
+        Long productId,
         String batchNo,
         String traceStatus,
         LocalDateTime createdAt

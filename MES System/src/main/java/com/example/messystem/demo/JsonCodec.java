@@ -1,6 +1,7 @@
 package com.example.messystem.demo;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.RecordComponent;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
@@ -41,8 +42,23 @@ final class JsonCodec {
         return mapToObject(map, type);
     }
 
+    static Map<String, Object> parseMap(String json) {
+        Object value = new Parser(json == null || json.isBlank() ? "{}" : json).parseValue();
+        if (!(value instanceof Map<?, ?> source)) {
+            throw new IllegalArgumentException("request body must be a JSON object");
+        }
+        Map<String, Object> result = new LinkedHashMap<>();
+        for (Map.Entry<?, ?> entry : source.entrySet()) {
+            result.put(String.valueOf(entry.getKey()), entry.getValue());
+        }
+        return result;
+    }
+
     private static <T> T mapToObject(Map<?, ?> map, Class<T> type) {
         try {
+            if (type.isRecord()) {
+                return mapToRecord(map, type);
+            }
             T instance = type.getDeclaredConstructor().newInstance();
             for (Field field : type.getFields()) {
                 if (map.containsKey(field.getName())) {
@@ -53,6 +69,18 @@ final class JsonCodec {
         } catch (ReflectiveOperationException ex) {
             throw new IllegalArgumentException("cannot parse request body", ex);
         }
+    }
+
+    private static <T> T mapToRecord(Map<?, ?> map, Class<T> type) throws ReflectiveOperationException {
+        RecordComponent[] components = type.getRecordComponents();
+        Class<?>[] parameterTypes = new Class<?>[components.length];
+        Object[] values = new Object[components.length];
+        for (int i = 0; i < components.length; i++) {
+            RecordComponent component = components[i];
+            parameterTypes[i] = component.getType();
+            values[i] = convert(map.get(component.getName()), component.getType(), component.getGenericType());
+        }
+        return type.getDeclaredConstructor(parameterTypes).newInstance(values);
     }
 
     private static Object convert(Object value, Class<?> targetType, Type genericType) {
@@ -144,6 +172,25 @@ final class JsonCodec {
                 first = false;
             }
             out.append(']');
+            return;
+        }
+        if (value.getClass().isRecord()) {
+            out.append('{');
+            boolean first = true;
+            for (RecordComponent component : value.getClass().getRecordComponents()) {
+                try {
+                    if (!first) {
+                        out.append(',');
+                    }
+                    writeString(out, component.getName());
+                    out.append(':');
+                    writeJson(out, component.getAccessor().invoke(value));
+                    first = false;
+                } catch (ReflectiveOperationException ex) {
+                    throw new IllegalStateException(ex);
+                }
+            }
+            out.append('}');
             return;
         }
         out.append('{');

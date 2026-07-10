@@ -14,17 +14,17 @@ import java.util.Optional;
 public class ManagementFeedbackDao {
 
     public long insert(MesManagementFeedback feedback) throws SQLException {
-        String sql = "INSERT INTO mes_management_feedback (feedback_no, order_id, task_id, work_order_id, feedback_type, feedback_content, feedback_status, created_at, closed_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO mes_management_feedback (feedback_no, feedback_type, related_doc_type, related_doc_id, feedback_content, decision_action, feedback_status, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = Db.getConnection(); PreparedStatement ps = conn.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, feedback.feedbackNo());
-            ps.setLong(2, feedback.orderId());
-            ps.setLong(3, feedback.taskId());
-            ps.setLong(4, feedback.workOrderId());
-            ps.setString(5, feedback.feedbackType());
-            ps.setString(6, feedback.feedbackContent());
+            ps.setString(2, feedback.feedbackType());
+            ps.setString(3, "WORK_ORDER");
+            ps.setLong(4, feedback.workOrderId() == null ? 0L : feedback.workOrderId());
+            ps.setString(5, feedback.feedbackContent());
+            ps.setString(6, "");
             ps.setString(7, feedback.feedbackStatus());
-            ps.setObject(8, feedback.createdAt());
-            ps.setObject(9, feedback.closedAt());
+            ps.setLong(8, 1L);
+            ps.setObject(9, feedback.createdAt());
             ps.executeUpdate();
             try (ResultSet rs = ps.getGeneratedKeys()) {
                 if (rs.next()) {
@@ -36,7 +36,7 @@ public class ManagementFeedbackDao {
     }
 
     public Optional<MesManagementFeedback> findById(long id) throws SQLException {
-        String sql = "SELECT feedback_id, feedback_no, order_id, task_id, work_order_id, feedback_type, feedback_content, feedback_status, created_at, closed_at FROM mes_management_feedback WHERE feedback_id = ?";
+        String sql = "SELECT feedback_id, feedback_no, related_doc_id AS work_order_id, feedback_type, feedback_content, feedback_status, created_at FROM mes_management_feedback WHERE feedback_id = ?";
         try (Connection conn = Db.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, id);
             try (ResultSet rs = ps.executeQuery()) {
@@ -49,7 +49,7 @@ public class ManagementFeedbackDao {
     }
 
     public List<MesManagementFeedback> findByWorkOrderId(long workOrderId) throws SQLException {
-        String sql = "SELECT feedback_id, feedback_no, order_id, task_id, work_order_id, feedback_type, feedback_content, feedback_status, created_at, closed_at FROM mes_management_feedback WHERE work_order_id = ?";
+        String sql = "SELECT feedback_id, feedback_no, related_doc_id AS work_order_id, feedback_type, feedback_content, feedback_status, created_at FROM mes_management_feedback WHERE related_doc_type = 'WORK_ORDER' AND related_doc_id = ?";
         try (Connection conn = Db.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, workOrderId);
             try (ResultSet rs = ps.executeQuery()) {
@@ -63,7 +63,7 @@ public class ManagementFeedbackDao {
     }
 
     public boolean close(long id) throws SQLException {
-        String sql = "UPDATE mes_management_feedback SET feedback_status = 'CLOSED', closed_at = NOW() WHERE feedback_id = ?";
+        String sql = "UPDATE mes_management_feedback SET feedback_status = 'CLOSED' WHERE feedback_id = ?";
         try (Connection conn = Db.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, id);
             return ps.executeUpdate() > 0;
@@ -74,14 +74,14 @@ public class ManagementFeedbackDao {
         return new MesManagementFeedback(
                 rs.getLong("feedback_id"),
                 rs.getString("feedback_no"),
-                rs.getLong("order_id"),
-                rs.getLong("task_id"),
+                null,
+                null,
                 rs.getLong("work_order_id"),
                 rs.getString("feedback_type"),
                 rs.getString("feedback_content"),
                 rs.getString("feedback_status"),
                 rs.getObject("created_at", java.time.LocalDateTime.class),
-                rs.getObject("closed_at", java.time.LocalDateTime.class)
+                null
         );
     }
 }

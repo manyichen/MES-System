@@ -14,13 +14,14 @@ import java.util.Optional;
 public class DashboardMetricDao {
 
     public long insert(MesDashboardMetric metric) throws SQLException {
-        String sql = "INSERT INTO mes_dashboard_metric (metric_key, metric_name, metric_value, metric_type, created_at) VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO mes_dashboard_metric (metric_date, metric_type, metric_name, metric_value, metric_unit, dimension_key, generated_at) VALUES (CURRENT_DATE, ?, ?, ?::numeric, ?, ?, ?)";
         try (Connection conn = Db.getConnection(); PreparedStatement ps = conn.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
-            ps.setString(1, metric.metricKey());
+            ps.setString(1, metric.metricType());
             ps.setString(2, metric.metricName());
             ps.setString(3, metric.metricValue());
-            ps.setString(4, metric.metricType());
-            ps.setObject(5, metric.createdAt());
+            ps.setString(4, "");
+            ps.setString(5, metric.metricKey());
+            ps.setObject(6, metric.createdAt());
             ps.executeUpdate();
             try (ResultSet rs = ps.getGeneratedKeys()) {
                 if (rs.next()) {
@@ -32,7 +33,7 @@ public class DashboardMetricDao {
     }
 
     public Optional<MesDashboardMetric> findById(long id) throws SQLException {
-        String sql = "SELECT metric_id, metric_key, metric_name, metric_value, metric_type, created_at FROM mes_dashboard_metric WHERE metric_id = ?";
+        String sql = "SELECT metric_id, dimension_key AS metric_key, metric_name, metric_value::text AS metric_value, metric_type, generated_at AS created_at FROM mes_dashboard_metric WHERE metric_id = ?";
         try (Connection conn = Db.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, id);
             try (ResultSet rs = ps.executeQuery()) {
@@ -45,7 +46,7 @@ public class DashboardMetricDao {
     }
 
     public List<MesDashboardMetric> findAll() throws SQLException {
-        String sql = "SELECT metric_id, metric_key, metric_name, metric_value, metric_type, created_at FROM mes_dashboard_metric";
+        String sql = "SELECT metric_id, dimension_key AS metric_key, metric_name, metric_value::text AS metric_value, metric_type, generated_at AS created_at FROM mes_dashboard_metric ORDER BY metric_id DESC";
         try (Connection conn = Db.getConnection(); PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
             List<MesDashboardMetric> results = new ArrayList<>();
             while (rs.next()) {
