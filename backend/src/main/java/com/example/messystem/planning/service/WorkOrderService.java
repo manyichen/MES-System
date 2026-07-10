@@ -4,6 +4,7 @@ import com.example.messystem.common.BadRequestException;
 import com.example.messystem.common.Db;
 import com.example.messystem.common.IdGenerator;
 import com.example.messystem.common.NotFoundException;
+import com.example.messystem.planning.dao.PlanningDao;
 import com.example.messystem.planning.entity.MesProductionTask;
 import com.example.messystem.planning.entity.MesWorkOrder;
 import com.example.messystem.planning.entity.MesWorkOrderOperationLog;
@@ -17,6 +18,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class WorkOrderService {
+    private final PlanningDao planningDao = new PlanningDao();
+
     public List<MesWorkOrder> listWorkOrders() {
         String sql = """
                 select work_order_id, work_order_no, task_id, product_id, line_id, process_id,
@@ -62,10 +65,8 @@ public class WorkOrderService {
 
     public MesWorkOrder createWorkOrder(MesWorkOrder workOrder) {
         requireId(workOrder.taskId, "taskId is required");
-        MesProductionTask task = PlanningStore.tasks.get(workOrder.taskId);
-        if (task == null) {
-            throw new BadRequestException("production task not found");
-        }
+        MesProductionTask task = database(() -> planningDao.findTask(workOrder.taskId))
+                .orElseThrow(() -> new BadRequestException("production task not found"));
         if (!"RELEASED".equals(task.taskStatus)) {
             throw new BadRequestException("production task must be RELEASED before creating work order");
         }
@@ -196,11 +197,25 @@ public class WorkOrderService {
     }
 
     private static Long firstProcessId(Long productId) {
-        return PlanningStore.processRoutes.values().stream()
-                .filter(item -> productId == null || item.productId == null || productId.equals(item.productId))
-                .map(item -> item.processId)
-                .findFirst()
-                .orElse(null);
+        try {
+            long processId = new PlanningDao().firstProcessId(productId);
+            return processId == 0L ? null : processId;
+        } catch (SQLException e) {
+            throw new IllegalStateException("database operation failed: " + e.getMessage(), e);
+        }
+    }
+
+    private static <T> T database(SqlCall<T> call) {
+        try {
+            return call.execute();
+        } catch (SQLException e) {
+            throw new IllegalStateException("database operation failed: " + e.getMessage(), e);
+        }
+    }
+
+    @FunctionalInterface
+    private interface SqlCall<T> {
+        T execute() throws SQLException;
     }
 
     private static void addLog(Connection connection, long workOrderId, String operationType, String fromStatus, String toStatus,

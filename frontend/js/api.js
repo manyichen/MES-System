@@ -17,9 +17,17 @@ async function requestJson(path, options = {}) {
         },
         ...options
     });
-    const payload = await response.json().catch(() => null);
+    const text = await response.text();
+    let payload = null;
+    if (text) {
+        try {
+            payload = JSON.parse(text);
+        } catch {
+            payload = null;
+        }
+    }
     if (!response.ok) {
-        throw new Error(payload?.message || `HTTP ${response.status}`);
+        throw new Error(payload?.message || text || `HTTP ${response.status}`);
     }
     if (payload && payload.success === false) {
         throw new Error(payload.message || "请求失败");
