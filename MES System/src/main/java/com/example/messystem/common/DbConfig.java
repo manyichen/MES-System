@@ -34,6 +34,14 @@ public final class DbConfig {
         return "jdbc:postgresql://" + HOST + ":" + PORT + "/" + DATABASE + "?" + OPTIONS;
     }
 
+    public static String getUser() {
+        return USER;
+    }
+
+    public static String getPassword() {
+        return PASSWORD;
+    }
+
     private static String value(String name, String fallback) {
         String value = System.getenv(name);
         if (value != null && !value.isBlank()) {

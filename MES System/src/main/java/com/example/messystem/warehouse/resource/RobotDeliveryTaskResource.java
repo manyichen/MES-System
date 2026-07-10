@@ -1,6 +1,7 @@
 package com.example.messystem.warehouse.resource;
 
 import com.example.messystem.common.ResourceSupport;
+import com.example.messystem.warehouse.entity.MesRobotDeliveryTask;
 import com.example.messystem.warehouse.service.WarehouseService;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
@@ -27,6 +28,15 @@ public class RobotDeliveryTaskResource {
     public Response get(@PathParam("id") long id) {
         try {
             return ResourceSupport.ok(service.getDeliveryTask(id));
+        } catch (RuntimeException ex) {
+            return ResourceSupport.handle(ex);
+        }
+    }
+
+    @POST
+    public Response create(MesRobotDeliveryTask task) {
+        try {
+            return ResourceSupport.created("delivery task created", service.createDeliveryTask(task));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }

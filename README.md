@@ -53,3 +53,36 @@ database_design_output/mes_schema_postgresql.sql
 ```
 
 该脚本已根据 `database_design_output/mes_table_metadata.json` 生成。
+
+如果云数据库中已经建过旧表，还需要执行一次共享字段迁移脚本：
+
+```text
+database_design_output/mes_shared_field_migration.sql
+```
+
+## ABC 联调约定
+
+本项目采用“统一云数据库 + 约定表字段”的方式衔接三人模块：
+
+- A 负责创建和维护订单、生产任务、生产工单等计划数据。
+- B 负责仓储物流、领料、配送、报工和计件工资。
+- C 负责质检、设备、追溯和看板。
+- 模块之间不强制互相调用业务接口，统一通过云数据库业务表读取必要数据。
+- 各模块默认只写自己负责的表；确需跨模块回写时，只写约定字段。
+
+B 与 A 的约定字段：
+
+- B 创建领料、提交报工前读取 `mes_work_order.work_order_status`、`planned_qty`、`actual_qty`、`batch_no`。
+- B 只允许对 `DISPATCHED`、`RECEIVED`、`RUNNING` 状态的工单执行领料和报工。
+- B 审核报工后回写 `mes_work_order.actual_qty`，并按产量推进 `work_order_status` 为 `RUNNING` 或 `FINISHED`。
+
+B 与 C 的约定字段：
+
+- C 通过 `mes_work_report.report_id` 或 `work_order_id` 读取 B 已审核报工。
+- C 使用 `mes_work_report.batch_no` 作为质检和追溯批次来源。
+
+本轮已补充的关键字段：
+
+- `mes_work_order.product_id`
+- `mes_work_order.batch_no`
+- `mes_work_report.batch_no`

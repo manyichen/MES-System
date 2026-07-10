@@ -7,6 +7,7 @@ async function refreshProduction() {
         { title: "ID", key: "reportId" },
         { title: "编号", key: "reportNo" },
         { title: "工单", key: "workOrderId" },
+        { title: "批次", key: "batchNo" },
         { title: "合格", key: "qualifiedQty" },
         { title: "状态", key: "reportStatus" },
         { title: "操作", render: renderReportActions }
@@ -62,6 +63,7 @@ document.getElementById("reportForm").addEventListener("submit", async event => 
     try {
         await postJson("/work-reports", {
             workOrderId: Number(form.get("workOrderId")),
+            batchNo: String(form.get("batchNo") || ""),
             operatorId: Number(form.get("operatorId")),
             reportQty: Number(form.get("reportQty")),
             qualifiedQty: Number(form.get("qualifiedQty")),

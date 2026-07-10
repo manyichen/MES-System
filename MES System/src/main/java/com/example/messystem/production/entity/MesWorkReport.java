@@ -7,6 +7,7 @@ public class MesWorkReport {
     public Long reportId;
     public String reportNo;
     public Long workOrderId;
+    public String batchNo;
     public Long operatorId;
     public Integer reportQty;
     public Integer qualifiedQty;
