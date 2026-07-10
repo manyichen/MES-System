@@ -10,7 +10,20 @@ public final class Db {
     }
 
     public static Connection getConnection() throws SQLException {
+        loadDriver();
         return DriverManager.getConnection(DbConfig.getJdbcUrl(), DbConfig.getUser(), DbConfig.getPassword());
+    }
+
+    private static void loadDriver() throws SQLException {
+        String driverClassName = DbConfig.getDriverClassName();
+        if (driverClassName == null || driverClassName.isBlank()) {
+            return;
+        }
+        try {
+            Class.forName(driverClassName);
+        } catch (ClassNotFoundException ex) {
+            throw new SQLException("JDBC driver not found: " + driverClassName, ex);
+        }
     }
 
     public static void initializeDatabase() throws SQLException {

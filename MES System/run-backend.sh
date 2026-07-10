@@ -15,8 +15,8 @@ MAVEN_CMD="${MAVEN_CMD:-mvn}"
 HOST="${MES_HOST:-127.0.0.1}"
 PORT="${MES_PORT:-8080}"
 
-"$MAVEN_CMD" -DskipTests package
-
 echo
 echo "Starting MES backend on ${HOST}:${PORT}"
-exec java -cp target/classes com.example.messystem.demo.DemoServer "$PORT" "$HOST"
+exec "$MAVEN_CMD" -DskipTests compile exec:java \
+    -Dexec.mainClass=com.example.messystem.MesBackendApplication \
+    -Dexec.args="${PORT} ${HOST}"
