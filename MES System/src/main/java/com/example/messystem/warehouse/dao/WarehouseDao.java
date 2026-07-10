@@ -80,6 +80,44 @@ public class WarehouseDao {
         }
     }
 
+    public MesMaterial updateMaterial(long materialId, MesMaterial material) throws SQLException {
+        String sql = """
+                update mes_material
+                set material_code = ?,
+                    material_name = ?,
+                    material_type = ?,
+                    specification = ?,
+                    unit = ?,
+                    shelf_life_days = ?,
+                    enabled = ?
+                where material_id = ?
+                returning material_id, material_code, material_name, material_type, specification,
+                          unit, shelf_life_days, enabled, created_at
+                """;
+        try (Connection connection = Db.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            MesMaterial current = findMaterial(materialId);
+            statement.setString(1, defaultText(material.materialCode, current.materialCode));
+            statement.setString(2, defaultText(material.materialName, current.materialName));
+            statement.setString(3, defaultText(material.materialType, current.materialType));
+            statement.setString(4, material.specification == null ? current.specification : material.specification);
+            statement.setString(5, defaultText(material.unit, current.unit));
+            setInteger(statement, 6, material.shelfLifeDays == null ? current.shelfLifeDays : material.shelfLifeDays);
+            statement.setInt(7, material.enabled == null ? current.enabled : material.enabled);
+            statement.setLong(8, materialId);
+            try (ResultSet rs = statement.executeQuery()) {
+                if (!rs.next()) {
+                    throw new NotFoundException("material not found");
+                }
+                return mapMaterial(rs);
+            }
+        }
+    }
+
+    public void deleteMaterial(long materialId) throws SQLException {
+        deleteById("delete from mes_material where material_id = ?", materialId, "material not found");
+    }
+
     public List<MesWarehouse> listWarehouses() throws SQLException {
         String sql = """
                 select warehouse_id, warehouse_code, warehouse_name, warehouse_type, enabled
@@ -123,6 +161,37 @@ public class WarehouseDao {
                 return mapWarehouse(rs);
             }
         }
+    }
+
+    public MesWarehouse updateWarehouse(long warehouseId, MesWarehouse warehouse) throws SQLException {
+        String sql = """
+                update mes_warehouse
+                set warehouse_code = ?,
+                    warehouse_name = ?,
+                    warehouse_type = ?,
+                    enabled = ?
+                where warehouse_id = ?
+                returning warehouse_id, warehouse_code, warehouse_name, warehouse_type, enabled
+                """;
+        try (Connection connection = Db.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            MesWarehouse current = findWarehouse(warehouseId);
+            statement.setString(1, defaultText(warehouse.warehouseCode, current.warehouseCode));
+            statement.setString(2, defaultText(warehouse.warehouseName, current.warehouseName));
+            statement.setString(3, defaultText(warehouse.warehouseType, current.warehouseType));
+            statement.setInt(4, warehouse.enabled == null ? current.enabled : warehouse.enabled);
+            statement.setLong(5, warehouseId);
+            try (ResultSet rs = statement.executeQuery()) {
+                if (!rs.next()) {
+                    throw new NotFoundException("warehouse not found");
+                }
+                return mapWarehouse(rs);
+            }
+        }
+    }
+
+    public void deleteWarehouse(long warehouseId) throws SQLException {
+        deleteById("delete from mes_warehouse where warehouse_id = ?", warehouseId, "warehouse not found");
     }
 
     public List<MesWarehouseLocation> listLocations() throws SQLException {
@@ -170,6 +239,37 @@ public class WarehouseDao {
         }
     }
 
+    public MesWarehouseLocation updateLocation(long locationId, MesWarehouseLocation location) throws SQLException {
+        String sql = """
+                update mes_warehouse_location
+                set warehouse_id = ?,
+                    location_code = ?,
+                    location_name = ?,
+                    enabled = ?
+                where location_id = ?
+                returning location_id, warehouse_id, location_code, location_name, enabled
+                """;
+        try (Connection connection = Db.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            MesWarehouseLocation current = findLocation(locationId);
+            statement.setLong(1, location.warehouseId == null ? current.warehouseId : location.warehouseId);
+            statement.setString(2, defaultText(location.locationCode, current.locationCode));
+            statement.setString(3, defaultText(location.locationName, current.locationName));
+            statement.setInt(4, location.enabled == null ? current.enabled : location.enabled);
+            statement.setLong(5, locationId);
+            try (ResultSet rs = statement.executeQuery()) {
+                if (!rs.next()) {
+                    throw new NotFoundException("warehouse location not found");
+                }
+                return mapLocation(rs);
+            }
+        }
+    }
+
+    public void deleteLocation(long locationId) throws SQLException {
+        deleteById("delete from mes_warehouse_location where location_id = ?", locationId, "warehouse location not found");
+    }
+
     public List<MesInventory> listInventory() throws SQLException {
         String sql = """
                 select inventory_id, material_id, warehouse_id, location_id, batch_no,
@@ -198,6 +298,27 @@ public class WarehouseDao {
         return findOne(sql, inventoryId, this::mapInventory, "inventory not found");
     }
 
+    public List<MesInventory> listInventoryByMaterial(long materialId) throws SQLException {
+        String sql = """
+                select inventory_id, material_id, warehouse_id, location_id, batch_no,
+                       available_qty, reserved_qty, frozen_qty, quality_status, last_check_time
+                from mes_inventory
+                where material_id = ?
+                order by inventory_id desc
+                """;
+        try (Connection connection = Db.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, materialId);
+            try (ResultSet rs = statement.executeQuery()) {
+                List<MesInventory> rows = new ArrayList<>();
+                while (rs.next()) {
+                    rows.add(mapInventory(rs));
+                }
+                return rows;
+            }
+        }
+    }
+
     public MesInventory insertInventory(MesInventory item) throws SQLException {
         String sql = """
                 insert into mes_inventory
@@ -222,6 +343,47 @@ public class WarehouseDao {
                 return mapInventory(rs);
             }
         }
+    }
+
+    public MesInventory updateInventory(long inventoryId, MesInventory item) throws SQLException {
+        String sql = """
+                update mes_inventory
+                set material_id = ?,
+                    warehouse_id = ?,
+                    location_id = ?,
+                    batch_no = ?,
+                    available_qty = ?,
+                    reserved_qty = ?,
+                    frozen_qty = ?,
+                    quality_status = ?,
+                    last_check_time = current_timestamp
+                where inventory_id = ?
+                returning inventory_id, material_id, warehouse_id, location_id, batch_no,
+                          available_qty, reserved_qty, frozen_qty, quality_status, last_check_time
+                """;
+        try (Connection connection = Db.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            MesInventory current = findInventory(inventoryId);
+            statement.setLong(1, item.materialId == null ? current.materialId : item.materialId);
+            statement.setLong(2, item.warehouseId == null ? current.warehouseId : item.warehouseId);
+            statement.setLong(3, item.locationId == null ? current.locationId : item.locationId);
+            statement.setString(4, defaultText(item.batchNo, current.batchNo));
+            statement.setBigDecimal(5, item.availableQty == null ? current.availableQty : item.availableQty);
+            statement.setBigDecimal(6, item.reservedQty == null ? current.reservedQty : item.reservedQty);
+            statement.setBigDecimal(7, item.frozenQty == null ? current.frozenQty : item.frozenQty);
+            statement.setString(8, defaultText(item.qualityStatus, current.qualityStatus));
+            statement.setLong(9, inventoryId);
+            try (ResultSet rs = statement.executeQuery()) {
+                if (!rs.next()) {
+                    throw new NotFoundException("inventory not found");
+                }
+                return mapInventory(rs);
+            }
+        }
+    }
+
+    public void deleteInventory(long inventoryId) throws SQLException {
+        deleteById("delete from mes_inventory where inventory_id = ?", inventoryId, "inventory not found");
     }
 
     public List<MesInventoryTransaction> listTransactions() throws SQLException {
@@ -250,6 +412,32 @@ public class WarehouseDao {
                 where transaction_id = ?
                 """;
         return findOne(sql, transactionId, this::mapTransaction, "inventory transaction not found");
+    }
+
+    public MesInventoryTransaction insertTransaction(MesInventoryTransaction transaction) throws SQLException {
+        String sql = """
+                insert into mes_inventory_transaction
+                    (transaction_no, material_id, inventory_id, transaction_type, qty,
+                     source_doc_type, source_doc_id, operator_id)
+                values (?, ?, ?, ?, ?, ?, ?, ?)
+                returning transaction_id, transaction_no, material_id, inventory_id, transaction_type,
+                          qty, source_doc_type, source_doc_id, operator_id, created_at
+                """;
+        try (Connection connection = Db.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, defaultCode(transaction.transactionNo, "TX"));
+            statement.setLong(2, transaction.materialId);
+            setLong(statement, 3, transaction.inventoryId);
+            statement.setString(4, defaultText(transaction.transactionType, "ADJUST"));
+            statement.setBigDecimal(5, nvl(transaction.qty));
+            statement.setString(6, defaultText(transaction.sourceDocType, "MANUAL"));
+            setLong(statement, 7, transaction.sourceDocId);
+            statement.setLong(8, transaction.operatorId == null ? 1L : transaction.operatorId);
+            try (ResultSet rs = statement.executeQuery()) {
+                rs.next();
+                return mapTransaction(rs);
+            }
+        }
     }
 
     public List<MesMaterialRequisition> listRequisitions() throws SQLException {
@@ -351,6 +539,7 @@ public class WarehouseDao {
             connection.setAutoCommit(false);
             try {
                 MesMaterialRequisition created;
+                ensureWorkOrderExecutable(connection, requisition.workOrderId);
                 try (PreparedStatement statement = connection.prepareStatement(requisitionSql)) {
                     statement.setString(1, defaultCode(requisition.requisitionNo, "REQ"));
                     statement.setLong(2, requisition.workOrderId);
@@ -498,6 +687,28 @@ public class WarehouseDao {
         return findOne(sql, pickingTaskId, this::mapPickingTask, "picking task not found");
     }
 
+    public MesPickingTask insertPickingTask(MesPickingTask task) throws SQLException {
+        String sql = """
+                insert into mes_picking_task
+                    (picking_task_no, requisition_id, warehouse_id, task_status, assigned_to, start_time)
+                values (?, ?, ?, ?, ?, current_timestamp)
+                returning picking_task_id, picking_task_no, requisition_id, warehouse_id,
+                          task_status, assigned_to, start_time, finish_time
+                """;
+        try (Connection connection = Db.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, defaultCode(task.pickingTaskNo, "PICK"));
+            statement.setLong(2, task.requisitionId);
+            statement.setLong(3, task.warehouseId);
+            statement.setString(4, defaultText(task.taskStatus, "CREATED"));
+            setLong(statement, 5, task.assignedTo);
+            try (ResultSet rs = statement.executeQuery()) {
+                rs.next();
+                return mapPickingTask(rs);
+            }
+        }
+    }
+
     public MesPickingTask completePicking(long pickingTaskId) throws SQLException {
         String updateSql = """
                 update mes_picking_task
@@ -597,6 +808,41 @@ public class WarehouseDao {
         }
     }
 
+    public MesRobot updateRobot(long robotId, MesRobot robot) throws SQLException {
+        String sql = """
+                update mes_robot
+                set robot_code = ?,
+                    robot_name = ?,
+                    robot_status = ?,
+                    battery_level = ?,
+                    current_location = ?,
+                    enabled = ?
+                where robot_id = ?
+                returning robot_id, robot_code, robot_name, robot_status, battery_level, current_location, enabled
+                """;
+        try (Connection connection = Db.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            MesRobot current = findRobot(robotId);
+            statement.setString(1, defaultText(robot.robotCode, current.robotCode));
+            statement.setString(2, defaultText(robot.robotName, current.robotName));
+            statement.setString(3, defaultText(robot.robotStatus, current.robotStatus));
+            statement.setBigDecimal(4, robot.batteryLevel == null ? current.batteryLevel : robot.batteryLevel);
+            statement.setString(5, robot.currentLocation == null ? current.currentLocation : robot.currentLocation);
+            statement.setInt(6, robot.enabled == null ? current.enabled : robot.enabled);
+            statement.setLong(7, robotId);
+            try (ResultSet rs = statement.executeQuery()) {
+                if (!rs.next()) {
+                    throw new NotFoundException("robot not found");
+                }
+                return mapRobot(rs);
+            }
+        }
+    }
+
+    public void deleteRobot(long robotId) throws SQLException {
+        deleteById("delete from mes_robot where robot_id = ?", robotId, "robot not found");
+    }
+
     public List<MesRobotDeliveryTask> listDeliveryTasks() throws SQLException {
         String sql = """
                 select delivery_task_id, delivery_task_no, picking_task_id, robot_id,
@@ -623,6 +869,30 @@ public class WarehouseDao {
                 where delivery_task_id = ?
                 """;
         return findOne(sql, deliveryTaskId, this::mapDeliveryTask, "delivery task not found");
+    }
+
+    public MesRobotDeliveryTask insertDeliveryTask(MesRobotDeliveryTask task) throws SQLException {
+        String sql = """
+                insert into mes_robot_delivery_task
+                    (delivery_task_no, picking_task_id, robot_id, from_location_id,
+                     to_line_id, delivery_status, load_time)
+                values (?, ?, ?, ?, ?, ?, current_timestamp)
+                returning delivery_task_id, delivery_task_no, picking_task_id, robot_id,
+                          from_location_id, to_line_id, delivery_status, load_time, handover_time
+                """;
+        try (Connection connection = Db.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, defaultCode(task.deliveryTaskNo, "RBT"));
+            statement.setLong(2, task.pickingTaskId);
+            setLong(statement, 3, task.robotId);
+            statement.setLong(4, task.fromLocationId);
+            statement.setLong(5, task.toLineId == null ? 1L : task.toLineId);
+            statement.setString(6, defaultText(task.deliveryStatus, "PENDING"));
+            try (ResultSet rs = statement.executeQuery()) {
+                rs.next();
+                return mapDeliveryTask(rs);
+            }
+        }
     }
 
     public MesRobotDeliveryTask markDeliveryArrived(long deliveryTaskId) throws SQLException {
@@ -806,6 +1076,22 @@ public class WarehouseDao {
         }
     }
 
+    private void ensureWorkOrderExecutable(Connection connection, long workOrderId) throws SQLException {
+        String sql = "select work_order_status from mes_work_order where work_order_id = ?";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, workOrderId);
+            try (ResultSet rs = statement.executeQuery()) {
+                if (!rs.next()) {
+                    throw new NotFoundException("work order not found");
+                }
+                String status = rs.getString("work_order_status");
+                if (!"DISPATCHED".equals(status) && !"RECEIVED".equals(status) && !"RUNNING".equals(status)) {
+                    throw new BadRequestException("work order status does not allow requisition: " + status);
+                }
+            }
+        }
+    }
+
     private void ensurePickingExistsAndCreated(Connection connection, long pickingTaskId) throws SQLException {
         String sql = "select task_status from mes_picking_task where picking_task_id = ?";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -891,6 +1177,16 @@ public class WarehouseDao {
                     throw new NotFoundException(notFoundMessage);
                 }
                 return mapper.map(rs);
+            }
+        }
+    }
+
+    private void deleteById(String sql, long id, String notFoundMessage) throws SQLException {
+        try (Connection connection = Db.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, id);
+            if (statement.executeUpdate() == 0) {
+                throw new NotFoundException(notFoundMessage);
             }
         }
     }

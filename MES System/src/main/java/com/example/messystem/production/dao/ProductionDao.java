@@ -21,7 +21,7 @@ public class ProductionDao {
 
     public List<MesWorkReport> listWorkReports() throws SQLException {
         String sql = """
-                select report_id, report_no, work_order_id, operator_id, report_qty,
+                select report_id, report_no, work_order_id, batch_no, operator_id, report_qty,
                        qualified_qty, defect_qty, work_hours, report_time, report_status
                 from mes_work_report
                 order by report_id desc
@@ -40,21 +40,24 @@ public class ProductionDao {
     public MesWorkReport insertWorkReport(MesWorkReport report) throws SQLException {
         String sql = """
                 insert into mes_work_report
-                    (report_no, work_order_id, operator_id, report_qty, qualified_qty,
+                    (report_no, work_order_id, batch_no, operator_id, report_qty, qualified_qty,
                      defect_qty, work_hours, report_status)
-                values (?, ?, ?, ?, ?, ?, ?, 'SUBMITTED')
-                returning report_id, report_no, work_order_id, operator_id, report_qty,
+                values (?, ?, ?, ?, ?, ?, ?, ?, 'SUBMITTED')
+                returning report_id, report_no, work_order_id, batch_no, operator_id, report_qty,
                           qualified_qty, defect_qty, work_hours, report_time, report_status
         """;
         try (Connection connection = Db.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
+            WorkOrderSnapshot workOrder = findExecutableWorkOrder(connection, report.workOrderId, false);
+            validateReportQtyAgainstWorkOrder(workOrder, nvl(report.reportQty));
             statement.setString(1, defaultCode(report.reportNo, "WR"));
             statement.setLong(2, report.workOrderId);
-            statement.setLong(3, report.operatorId == null ? 1L : report.operatorId);
-            statement.setInt(4, nvl(report.reportQty));
-            statement.setInt(5, nvl(report.qualifiedQty));
-            statement.setInt(6, nvl(report.defectQty));
-            statement.setBigDecimal(7, report.workHours == null ? BigDecimal.ZERO : report.workHours);
+            statement.setString(3, defaultText(report.batchNo, workOrder.batchNo()));
+            statement.setLong(4, report.operatorId == null ? 1L : report.operatorId);
+            statement.setInt(5, nvl(report.reportQty));
+            statement.setInt(6, nvl(report.qualifiedQty));
+            statement.setInt(7, nvl(report.defectQty));
+            statement.setBigDecimal(8, report.workHours == null ? BigDecimal.ZERO : report.workHours);
             try (ResultSet rs = statement.executeQuery()) {
                 rs.next();
                 return mapWorkReport(rs);
@@ -64,7 +67,7 @@ public class ProductionDao {
 
     public MesWorkReport findWorkReport(long reportId) throws SQLException {
         String sql = """
-                select report_id, report_no, work_order_id, operator_id, report_qty,
+                select report_id, report_no, work_order_id, batch_no, operator_id, report_qty,
                        qualified_qty, defect_qty, work_hours, report_time, report_status
                 from mes_work_report
                 where report_id = ?
@@ -81,9 +84,63 @@ public class ProductionDao {
         }
     }
 
+    public MesWorkReport updateWorkReport(long reportId, MesWorkReport report) throws SQLException {
+        String sql = """
+                update mes_work_report
+                set report_no = ?,
+                    work_order_id = ?,
+                    batch_no = ?,
+                    operator_id = ?,
+                    report_qty = ?,
+                    qualified_qty = ?,
+                    defect_qty = ?,
+                    work_hours = ?,
+                    report_status = ?
+                where report_id = ?
+                returning report_id, report_no, work_order_id, batch_no, operator_id, report_qty,
+                          qualified_qty, defect_qty, work_hours, report_time, report_status
+                """;
+        try (Connection connection = Db.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            MesWorkReport current = findWorkReport(reportId);
+            WorkOrderSnapshot workOrder = findExecutableWorkOrder(
+                    connection,
+                    report.workOrderId == null ? current.workOrderId : report.workOrderId,
+                    false
+            );
+            validateReportQtyAgainstWorkOrder(workOrder, report.reportQty == null ? current.reportQty : report.reportQty);
+            statement.setString(1, defaultText(report.reportNo, current.reportNo));
+            statement.setLong(2, report.workOrderId == null ? current.workOrderId : report.workOrderId);
+            statement.setString(3, defaultText(report.batchNo, current.batchNo));
+            statement.setLong(4, report.operatorId == null ? current.operatorId : report.operatorId);
+            statement.setInt(5, report.reportQty == null ? current.reportQty : report.reportQty);
+            statement.setInt(6, report.qualifiedQty == null ? current.qualifiedQty : report.qualifiedQty);
+            statement.setInt(7, report.defectQty == null ? current.defectQty : report.defectQty);
+            statement.setBigDecimal(8, report.workHours == null ? current.workHours : report.workHours);
+            statement.setString(9, defaultText(report.reportStatus, current.reportStatus));
+            statement.setLong(10, reportId);
+            try (ResultSet rs = statement.executeQuery()) {
+                if (!rs.next()) {
+                    throw new NotFoundException("work report not found");
+                }
+                return mapWorkReport(rs);
+            }
+        }
+    }
+
+    public void deleteWorkReport(long reportId) throws SQLException {
+        try (Connection connection = Db.getConnection();
+             PreparedStatement statement = connection.prepareStatement("delete from mes_work_report where report_id = ?")) {
+            statement.setLong(1, reportId);
+            if (statement.executeUpdate() == 0) {
+                throw new NotFoundException("work report not found");
+            }
+        }
+    }
+
     public List<MesWorkReport> listWorkReportsByWorkOrder(long workOrderId) throws SQLException {
         String sql = """
-                select report_id, report_no, work_order_id, operator_id, report_qty,
+                select report_id, report_no, work_order_id, batch_no, operator_id, report_qty,
                        qualified_qty, defect_qty, work_hours, report_time, report_status
                 from mes_work_report
                 where work_order_id = ?
@@ -107,7 +164,7 @@ public class ProductionDao {
                 update mes_work_report
                 set report_status = 'APPROVED'
                 where report_id = ? and report_status = 'SUBMITTED'
-                returning report_id, report_no, work_order_id, operator_id, report_qty,
+                returning report_id, report_no, work_order_id, batch_no, operator_id, report_qty,
                           qualified_qty, defect_qty, work_hours, report_time, report_status
                 """;
         String wageSql = """
@@ -129,6 +186,8 @@ public class ProductionDao {
                         report = mapWorkReport(rs);
                     }
                 }
+                WorkOrderSnapshot workOrder = findExecutableWorkOrder(connection, report.workOrderId, true);
+                validateReportQtyAgainstWorkOrder(workOrder, report.reportQty);
                 BigDecimal wageAmount = DEFAULT_PIECE_RATE.multiply(BigDecimal.valueOf(report.qualifiedQty));
                 try (PreparedStatement statement = connection.prepareStatement(wageSql)) {
                     statement.setLong(1, report.reportId);
@@ -138,6 +197,7 @@ public class ProductionDao {
                     statement.setBigDecimal(5, wageAmount);
                     statement.executeUpdate();
                 }
+                updateWorkOrderActualQty(connection, report.workOrderId, report.qualifiedQty);
                 connection.commit();
                 return report;
             } catch (SQLException | RuntimeException ex) {
@@ -186,6 +246,27 @@ public class ProductionDao {
         }
     }
 
+    public List<MesPieceworkWage> listWagesByReport(long reportId) throws SQLException {
+        String sql = """
+                select wage_id, report_id, operator_id, piece_rate, qualified_qty,
+                       wage_amount, settlement_status, created_at
+                from mes_piecework_wage
+                where report_id = ?
+                order by wage_id desc
+                """;
+        try (Connection connection = Db.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, reportId);
+            try (ResultSet rs = statement.executeQuery()) {
+                List<MesPieceworkWage> rows = new ArrayList<>();
+                while (rs.next()) {
+                    rows.add(mapWage(rs));
+                }
+                return rows;
+            }
+        }
+    }
+
     private void ensureReportExistsAndSubmitted(Connection connection, long reportId) throws SQLException {
         String sql = "select report_status from mes_work_report where report_id = ?";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -198,11 +279,69 @@ public class ProductionDao {
         }
     }
 
+    private WorkOrderSnapshot findExecutableWorkOrder(Connection connection, long workOrderId, boolean forUpdate) throws SQLException {
+        String sql = """
+                select work_order_status, planned_qty, actual_qty, batch_no
+                from mes_work_order
+                where work_order_id = ?
+                """ + (forUpdate ? " for update" : "");
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, workOrderId);
+            try (ResultSet rs = statement.executeQuery()) {
+                if (!rs.next()) {
+                    throw new NotFoundException("work order not found");
+                }
+                String status = rs.getString("work_order_status");
+                if (!"DISPATCHED".equals(status) && !"RECEIVED".equals(status) && !"RUNNING".equals(status)) {
+                    throw new BadRequestException("work order status does not allow work report: " + status);
+                }
+                return new WorkOrderSnapshot(
+                        status,
+                        rs.getInt("planned_qty"),
+                        rs.getInt("actual_qty"),
+                        rs.getString("batch_no")
+                );
+            }
+        }
+    }
+
+    private void validateReportQtyAgainstWorkOrder(WorkOrderSnapshot workOrder, int reportQty) {
+        int maxAllowed = (int) Math.floor(workOrder.plannedQty() * 1.1);
+        if (workOrder.actualQty() + reportQty > maxAllowed) {
+            throw new BadRequestException("reported quantity exceeds work order planned quantity by more than 10%");
+        }
+    }
+
+    private void updateWorkOrderActualQty(Connection connection, long workOrderId, int qualifiedQty) throws SQLException {
+        String sql = """
+                update mes_work_order
+                set actual_qty = actual_qty + ?,
+                    work_order_status = case
+                        when actual_qty + ? >= planned_qty then 'FINISHED'
+                        else 'RUNNING'
+                    end,
+                    completed_time = case
+                        when actual_qty + ? >= planned_qty then current_timestamp
+                        else completed_time
+                    end,
+                    updated_at = current_timestamp
+                where work_order_id = ?
+                """;
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, qualifiedQty);
+            statement.setInt(2, qualifiedQty);
+            statement.setInt(3, qualifiedQty);
+            statement.setLong(4, workOrderId);
+            statement.executeUpdate();
+        }
+    }
+
     private MesWorkReport mapWorkReport(ResultSet rs) throws SQLException {
         MesWorkReport item = new MesWorkReport();
         item.reportId = rs.getLong("report_id");
         item.reportNo = rs.getString("report_no");
         item.workOrderId = rs.getLong("work_order_id");
+        item.batchNo = rs.getString("batch_no");
         item.operatorId = rs.getLong("operator_id");
         item.reportQty = rs.getInt("report_qty");
         item.qualifiedQty = rs.getInt("qualified_qty");
@@ -234,8 +373,15 @@ public class ProductionDao {
         return value == null || value.isBlank() ? IdGenerator.nextCode(prefix) : value;
     }
 
+    private static String defaultText(String value, String fallback) {
+        return value == null || value.isBlank() ? fallback : value;
+    }
+
     private static LocalDateTime getLocalDateTime(ResultSet rs, String column) throws SQLException {
         Timestamp value = rs.getTimestamp(column);
         return value == null ? null : value.toLocalDateTime();
+    }
+
+    private record WorkOrderSnapshot(String status, int plannedQty, int actualQty, String batchNo) {
     }
 }

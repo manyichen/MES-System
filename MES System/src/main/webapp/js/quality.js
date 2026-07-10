@@ -5,6 +5,7 @@ async function loadQuality() {
             { key: "inspectionId", label: "ID" },
             { key: "inspectionNo", label: "质检单" },
             { key: "workOrderId", label: "工单" },
+            { key: "workReportId", label: "报工" },
             { key: "sampleQty", label: "样本数" },
             { key: "inspectionStatus", label: "状态" },
             { key: "judgementResult", label: "判定" }

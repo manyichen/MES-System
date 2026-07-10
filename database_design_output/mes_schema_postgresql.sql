@@ -173,12 +173,14 @@ CREATE TABLE IF NOT EXISTS mes_work_order (
     work_order_id BIGSERIAL,
     work_order_no VARCHAR(40) NOT NULL,
     task_id BIGINT NOT NULL,
+    product_id BIGINT,
     line_id BIGINT NOT NULL,
     process_id BIGINT,
     planned_qty INTEGER NOT NULL DEFAULT 0,
     actual_qty INTEGER NOT NULL DEFAULT 0,
     priority_level SMALLINT NOT NULL DEFAULT 3,
     work_order_status VARCHAR(30) NOT NULL DEFAULT 'CREATED',
+    batch_no VARCHAR(50),
     dispatch_time TIMESTAMP,
     receive_time TIMESTAMP,
     completed_time TIMESTAMP,
@@ -190,12 +192,14 @@ COMMENT ON TABLE mes_work_order IS '生产工单表：存储由生产任务拆�
 COMMENT ON COLUMN mes_work_order.work_order_id IS '工单主键';
 COMMENT ON COLUMN mes_work_order.work_order_no IS '工单编号';
 COMMENT ON COLUMN mes_work_order.task_id IS '生产任务';
+COMMENT ON COLUMN mes_work_order.product_id IS '产品';
 COMMENT ON COLUMN mes_work_order.line_id IS '产线';
 COMMENT ON COLUMN mes_work_order.process_id IS '工序';
 COMMENT ON COLUMN mes_work_order.planned_qty IS '计划数量';
 COMMENT ON COLUMN mes_work_order.actual_qty IS '实际数量';
 COMMENT ON COLUMN mes_work_order.priority_level IS '优先级';
 COMMENT ON COLUMN mes_work_order.work_order_status IS '工单状态';
+COMMENT ON COLUMN mes_work_order.batch_no IS '生产批次';
 COMMENT ON COLUMN mes_work_order.dispatch_time IS '派发时间';
 COMMENT ON COLUMN mes_work_order.receive_time IS '接收时间';
 COMMENT ON COLUMN mes_work_order.completed_time IS '完成时间';
@@ -203,6 +207,7 @@ COMMENT ON COLUMN mes_work_order.created_at IS '创建时间';
 COMMENT ON COLUMN mes_work_order.updated_at IS '更新时间';
 CREATE UNIQUE INDEX IF NOT EXISTS uk_mes_work_order_work_order_no ON mes_work_order (work_order_no);
 CREATE INDEX IF NOT EXISTS idx_mes_work_order_work_order_status ON mes_work_order (work_order_status);
+CREATE INDEX IF NOT EXISTS idx_mes_work_order_batch_no ON mes_work_order (batch_no);
 
 CREATE TABLE IF NOT EXISTS mes_work_order_operation_log (
     operation_log_id BIGSERIAL,
@@ -459,6 +464,7 @@ CREATE TABLE IF NOT EXISTS mes_work_report (
     report_id BIGSERIAL,
     report_no VARCHAR(40) NOT NULL,
     work_order_id BIGINT NOT NULL,
+    batch_no VARCHAR(50),
     operator_id BIGINT NOT NULL,
     report_qty INTEGER NOT NULL DEFAULT 0,
     qualified_qty INTEGER NOT NULL DEFAULT 0,
@@ -472,6 +478,7 @@ COMMENT ON TABLE mes_work_report IS '生产报工表：存储操作工工单报�
 COMMENT ON COLUMN mes_work_report.report_id IS '报工主键';
 COMMENT ON COLUMN mes_work_report.report_no IS '报工编号';
 COMMENT ON COLUMN mes_work_report.work_order_id IS '工单';
+COMMENT ON COLUMN mes_work_report.batch_no IS '生产批次';
 COMMENT ON COLUMN mes_work_report.operator_id IS '操作工';
 COMMENT ON COLUMN mes_work_report.report_qty IS '报工数量';
 COMMENT ON COLUMN mes_work_report.qualified_qty IS '合格数量';
@@ -508,6 +515,7 @@ CREATE TABLE IF NOT EXISTS mes_quality_inspection (
     inspection_id BIGSERIAL,
     inspection_no VARCHAR(40) NOT NULL,
     work_order_id BIGINT NOT NULL,
+    work_report_id BIGINT,
     sample_qty INTEGER NOT NULL DEFAULT 0,
     inspection_status VARCHAR(30) NOT NULL DEFAULT 'CREATED',
     inspector_id BIGINT NOT NULL,
@@ -519,6 +527,7 @@ COMMENT ON TABLE mes_quality_inspection IS '质量抽检单表：存储抽检工
 COMMENT ON COLUMN mes_quality_inspection.inspection_id IS '抽检单主键';
 COMMENT ON COLUMN mes_quality_inspection.inspection_no IS '抽检单号';
 COMMENT ON COLUMN mes_quality_inspection.work_order_id IS '工单';
+COMMENT ON COLUMN mes_quality_inspection.work_report_id IS '报工';
 COMMENT ON COLUMN mes_quality_inspection.sample_qty IS '抽检数量';
 COMMENT ON COLUMN mes_quality_inspection.inspection_status IS '抽检状态';
 COMMENT ON COLUMN mes_quality_inspection.inspector_id IS '质检员';

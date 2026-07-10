@@ -8,6 +8,7 @@ All B module services use PostgreSQL through `com.example.messystem.common.Db`.
 
 Required tables:
 
+- `mes_work_order` (read status/planned quantity/batch, update actual quantity after report approval)
 - `mes_material`
 - `mes_inventory`
 - `mes_warehouse`
@@ -118,7 +119,9 @@ Example body:
 
 Approving a requisition first checks whether inventory is enough for every requisition item. If inventory is not enough, the approval fails and no picking task is created. If the check passes, approving changes the requisition from `CREATED` to `APPROVED` and creates a picking task. The detail endpoint returns the requisition header with `items`.
 
-`GET /api/requisitions/by-work-order/{workOrderId}` only queries B module tables. During independent B development, `workOrderId` can be a fixed or mock value. After module A is merged, this value should come from A's real work order.
+Creating a requisition validates `workOrderId` against the shared `mes_work_order` table. The work order must exist and its status must be `DISPATCHED`, `RECEIVED`, or `RUNNING`.
+
+`GET /api/requisitions/by-work-order/{workOrderId}` only queries B-owned requisition tables, but the `workOrderId` itself is the shared key created by A in `mes_work_order`.
 
 ### Picking And Delivery
 
@@ -165,6 +168,7 @@ Example body:
 ```json
 {
   "workOrderId": 1,
+  "batchNo": "BATCH-20260709-001",
   "operatorId": 1,
   "reportQty": 100,
   "qualifiedQty": 95,
@@ -173,9 +177,11 @@ Example body:
 }
 ```
 
-Approving a submitted work report changes it to `APPROVED` and creates one piecework wage record.
+Creating a work report validates the shared `mes_work_order` row. The work order must exist, its status must be `DISPATCHED`, `RECEIVED`, or `RUNNING`, and total reported quantity cannot exceed `planned_qty * 1.1`. If `batchNo` is omitted, B uses `mes_work_order.batch_no`.
 
-`GET /api/work-reports/by-work-order/{workOrderId}` is prepared for later A/C integration. It does not call A or C directly; it only returns work reports already stored by B for the given work order.
+Approving a submitted work report changes it to `APPROVED`, creates one piecework wage record, and updates `mes_work_order.actual_qty` by the approved qualified quantity. If actual quantity reaches planned quantity, the work order status is updated to `FINISHED`; otherwise it becomes `RUNNING`.
+
+`GET /api/work-reports/by-work-order/{workOrderId}` returns B-owned work reports for the shared A work order. C can read approved reports from this table or from the API for quality inspection and traceability.
 
 ### Piecework Wages
 

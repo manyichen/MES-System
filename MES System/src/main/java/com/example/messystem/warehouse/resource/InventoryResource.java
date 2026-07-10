@@ -2,10 +2,13 @@ package com.example.messystem.warehouse.resource;
 
 import com.example.messystem.common.ResourceSupport;
 import com.example.messystem.warehouse.entity.MesInventory;
+import com.example.messystem.warehouse.entity.MesInventoryTransaction;
 import com.example.messystem.warehouse.service.WarehouseService;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
@@ -33,10 +36,41 @@ public class InventoryResource {
         }
     }
 
+    @GET
+    @Path("/material/{materialId}")
+    public Response listByMaterial(@PathParam("materialId") long materialId) {
+        try {
+            return ResourceSupport.ok(service.listInventoryByMaterial(materialId));
+        } catch (RuntimeException ex) {
+            return ResourceSupport.handle(ex);
+        }
+    }
+
     @POST
     public Response create(MesInventory inventory) {
         try {
             return ResourceSupport.created("inventory created", service.createInventory(inventory));
+        } catch (RuntimeException ex) {
+            return ResourceSupport.handle(ex);
+        }
+    }
+
+    @PUT
+    @Path("/{id}")
+    public Response update(@PathParam("id") long id, MesInventory inventory) {
+        try {
+            return ResourceSupport.action("inventory updated", service.updateInventory(id, inventory));
+        } catch (RuntimeException ex) {
+            return ResourceSupport.handle(ex);
+        }
+    }
+
+    @DELETE
+    @Path("/{id}")
+    public Response delete(@PathParam("id") long id) {
+        try {
+            service.deleteInventory(id);
+            return ResourceSupport.action("inventory deleted", null);
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }
@@ -53,6 +87,16 @@ public class InventoryResource {
     public Response getTransaction(@PathParam("id") long id) {
         try {
             return ResourceSupport.ok(service.getTransaction(id));
+        } catch (RuntimeException ex) {
+            return ResourceSupport.handle(ex);
+        }
+    }
+
+    @POST
+    @Path("/transactions")
+    public Response createTransaction(MesInventoryTransaction transaction) {
+        try {
+            return ResourceSupport.created("inventory transaction created", service.createTransaction(transaction));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }

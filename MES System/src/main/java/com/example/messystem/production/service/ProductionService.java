@@ -34,6 +34,22 @@ public class ProductionService {
         return database(() -> dao.findWorkReport(reportId));
     }
 
+    public MesWorkReport updateWorkReport(long reportId, MesWorkReport report) {
+        if (report.reportQty != null && report.reportQty < 0
+                || report.qualifiedQty != null && report.qualifiedQty < 0
+                || report.defectQty != null && report.defectQty < 0) {
+            throw new BadRequestException("quantities cannot be negative");
+        }
+        return database(() -> dao.updateWorkReport(reportId, report));
+    }
+
+    public void deleteWorkReport(long reportId) {
+        database(() -> {
+            dao.deleteWorkReport(reportId);
+            return null;
+        });
+    }
+
     public List<MesWorkReport> listWorkReportsByWorkOrder(long workOrderId) {
         if (workOrderId <= 0) {
             throw new BadRequestException("workOrderId is required");
@@ -51,6 +67,13 @@ public class ProductionService {
 
     public MesPieceworkWage getWage(long wageId) {
         return database(() -> dao.findWage(wageId));
+    }
+
+    public List<MesPieceworkWage> listWagesByReport(long reportId) {
+        if (reportId <= 0) {
+            throw new BadRequestException("workReportId is required");
+        }
+        return database(() -> dao.listWagesByReport(reportId));
     }
 
     private static <T> T database(SqlCall<T> call) {

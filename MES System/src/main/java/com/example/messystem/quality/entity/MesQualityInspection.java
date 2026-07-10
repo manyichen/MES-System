@@ -6,6 +6,7 @@ public record MesQualityInspection(
         Long inspectionId,
         String inspectionNo,
         Long workOrderId,
+        Long workReportId,
         Integer sampleQty,
         String inspectionStatus,
         Long inspectorId,
