@@ -6,9 +6,20 @@
     <title>双星轮胎 MES 工作台</title>
     <link rel="stylesheet" href="css/app.css">
 </head>
-<body>
+<body class="auth-locked">
+<section id="login-screen" class="login-screen">
+    <form id="login-form" class="login-card">
+        <h1>MES 系统登录</h1>
+        <label>用户名 <input name="username" autocomplete="username" value="admin" required></label>
+        <label>密码 <input name="password" type="password" autocomplete="current-password" required></label>
+        <button type="submit">登录</button>
+        <p id="login-error"></p>
+    </form>
+</section>
 <aside class="sidebar">
     <h1>MES</h1>
+    <div id="current-user" class="current-user"></div>
+    <button id="logout-button" type="button" class="secondary">退出登录</button>
     <button data-tab="dashboard" class="active">首页看板</button>
     <button data-tab="planning">计划工单</button>
     <button data-tab="warehouse">仓储物流</button>
@@ -283,6 +294,7 @@
 <script src="js/dashboard.js"></script>
 <script src="js/quality.js"></script>
 <script src="js/equipment.js"></script>
+<script src="js/auth.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>
