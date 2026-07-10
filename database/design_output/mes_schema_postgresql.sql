@@ -888,23 +888,29 @@ CREATE INDEX IF NOT EXISTS idx_mes_management_feedback_feedback_status ON mes_ma
 CREATE TABLE IF NOT EXISTS mes_user (
     user_id BIGSERIAL,
     username VARCHAR(50) NOT NULL,
+    password_hash VARCHAR(255),
     real_name VARCHAR(100) NOT NULL,
-    role_code VARCHAR(50) NOT NULL,
+    role_code VARCHAR(50) NOT NULL DEFAULT 'PRODUCTION_OPERATOR',
     department VARCHAR(100),
     phone VARCHAR(30),
     enabled SMALLINT NOT NULL DEFAULT 1,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_login_at TIMESTAMP,
     PRIMARY KEY (user_id)
 );
 COMMENT ON TABLE mes_user IS '用户表：存储系统用户基础信息。';
 COMMENT ON COLUMN mes_user.user_id IS '用户主键';
 COMMENT ON COLUMN mes_user.username IS '登录名';
+COMMENT ON COLUMN mes_user.password_hash IS '登录密码哈希';
 COMMENT ON COLUMN mes_user.real_name IS '姓名';
 COMMENT ON COLUMN mes_user.role_code IS '角色编码';
 COMMENT ON COLUMN mes_user.department IS '部门';
 COMMENT ON COLUMN mes_user.phone IS '电话';
 COMMENT ON COLUMN mes_user.enabled IS '是否启用';
 COMMENT ON COLUMN mes_user.created_at IS '创建时间';
+COMMENT ON COLUMN mes_user.updated_at IS '更新时间';
+COMMENT ON COLUMN mes_user.last_login_at IS '最近登录时间';
 CREATE UNIQUE INDEX IF NOT EXISTS uk_mes_user_username ON mes_user (username);
 CREATE INDEX IF NOT EXISTS idx_mes_user_role_code ON mes_user (role_code);
 

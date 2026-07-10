@@ -1,3 +1,5 @@
+let appInitialized = false;
+
 function bindNavigation() {
     document.querySelectorAll(".sidebar button").forEach(button => {
         button.addEventListener("click", () => {
@@ -9,7 +11,11 @@ function bindNavigation() {
     });
 }
 
-window.addEventListener("DOMContentLoaded", () => {
+function initializeApp() {
+    if (appInitialized) {
+        return;
+    }
+    appInitialized = true;
     bindNavigation();
     if (typeof bindDashboardEvents === "function") bindDashboardEvents();
     if (typeof bindQualityEvents === "function") bindQualityEvents();
@@ -19,4 +25,12 @@ window.addEventListener("DOMContentLoaded", () => {
     if (typeof loadEquipment === "function") loadEquipment();
     if (typeof loadTraces === "function") loadTraces();
     if (typeof loadFeedback === "function") loadFeedback(1);
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+    if (typeof initAuthGate === "function") {
+        initAuthGate(initializeApp);
+        return;
+    }
+    initializeApp();
 });
