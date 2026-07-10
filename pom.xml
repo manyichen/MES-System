@@ -4,10 +4,10 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.mes</groupId>
-    <artifactId>mes-jdbc-demo</artifactId>
+    <artifactId>mes-system-parent</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
-    <name>MES JDBC Demo</name>
+    <name>MES System Parent</name>
 
     <properties>
         <maven.compiler.release>21</maven.compiler.release>
@@ -25,7 +25,7 @@
     </dependencies>
 
     <modules>
-        <module>MES System</module>
+        <module>backend</module>
     </modules>
 
     <build>

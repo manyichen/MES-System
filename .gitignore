@@ -1,6 +1,17 @@
 target/
+**/target/
+tomcat.*/
+**/tomcat.*/
 .m2/
 .tools/
 .env
 .env.*
 !.env.example
+
+### IDE ###
+.idea/
+**/.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws

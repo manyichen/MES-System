@@ -55,8 +55,9 @@ public class MesBackendApplication {
     private static Path findWebRoot() {
         Path current = Path.of("").toAbsolutePath().normalize();
         Path[] candidates = {
-                current.resolve("src/main/webapp"),
-                current.resolve("MES System/src/main/webapp")
+                current.resolve("../frontend"),
+                current.resolve("frontend"),
+                current.resolve("src/main/webapp")
         };
         for (Path candidate : candidates) {
             if (Files.isRegularFile(candidate.resolve("index.html"))) {

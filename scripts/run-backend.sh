@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+APP_DIR="$(cd "$SCRIPT_DIR/../backend" && pwd -P)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd -P)"
 
-if [ -f "$APP_DIR/../.env" ]; then
+if [ -f "$ROOT_DIR/.env" ]; then
     set -a
-    . "$APP_DIR/../.env"
+    . "$ROOT_DIR/.env"
     set +a
 fi
 
@@ -19,4 +21,5 @@ echo
 echo "Starting MES backend on ${HOST}:${PORT}"
 exec "$MAVEN_CMD" -DskipTests compile exec:java \
     -Dexec.mainClass=com.example.messystem.MesBackendApplication \
-    -Dexec.args="${PORT} ${HOST}"
+    -Dmes.port="${PORT}" \
+    -Dmes.host="${HOST}"
