@@ -98,14 +98,13 @@ Example body:
 - `GET /api/requisitions/{id}`
 - `GET /api/requisitions/by-work-order/{workOrderId}`
 - `POST /api/requisitions`
-- `POST /api/requisitions/{id}/approve?approvedBy=1`
+- `POST /api/requisitions/{id}/approve`
 
 Example body:
 
 ```json
 {
   "workOrderId": 1,
-  "requestedBy": 1,
   "items": [
     {
       "materialId": 1,

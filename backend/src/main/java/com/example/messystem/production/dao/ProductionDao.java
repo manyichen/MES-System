@@ -66,11 +66,13 @@ public class ProductionDao {
         try (Connection connection = Db.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             WorkOrderSnapshot workOrder = findExecutableWorkOrder(connection, report.workOrderId, false);
+            long operatorId = report.operatorId == null ? 1L : report.operatorId;
+            validateOperatorOwnsWorkOrder(workOrder, operatorId);
             validateReportQtyAgainstWorkOrder(workOrder, nvl(report.reportQty));
             statement.setString(1, defaultCode(report.reportNo, "WR"));
             statement.setLong(2, report.workOrderId);
             statement.setString(3, defaultText(report.batchNo, workOrder.batchNo()));
-            statement.setLong(4, report.operatorId == null ? 1L : report.operatorId);
+            statement.setLong(4, operatorId);
             statement.setInt(5, nvl(report.reportQty));
             statement.setInt(6, nvl(report.qualifiedQty));
             statement.setInt(7, nvl(report.defectQty));
@@ -125,11 +127,13 @@ public class ProductionDao {
                     report.workOrderId == null ? current.workOrderId : report.workOrderId,
                     false
             );
+            long operatorId = report.operatorId == null ? current.operatorId : report.operatorId;
+            validateOperatorOwnsWorkOrder(workOrder, operatorId);
             validateReportQtyAgainstWorkOrder(workOrder, report.reportQty == null ? current.reportQty : report.reportQty);
             statement.setString(1, defaultText(report.reportNo, current.reportNo));
             statement.setLong(2, report.workOrderId == null ? current.workOrderId : report.workOrderId);
             statement.setString(3, defaultText(report.batchNo, current.batchNo));
-            statement.setLong(4, report.operatorId == null ? current.operatorId : report.operatorId);
+            statement.setLong(4, operatorId);
             statement.setInt(5, report.reportQty == null ? current.reportQty : report.reportQty);
             statement.setInt(6, report.qualifiedQty == null ? current.qualifiedQty : report.qualifiedQty);
             statement.setInt(7, report.defectQty == null ? current.defectQty : report.defectQty);
@@ -392,7 +396,7 @@ public class ProductionDao {
 
     private WorkOrderSnapshot findExecutableWorkOrder(Connection connection, long workOrderId, boolean forUpdate) throws SQLException {
         String sql = """
-                select work_order_status, planned_qty, actual_qty, batch_no
+                select work_order_status, planned_qty, actual_qty, batch_no, assigned_to, accepted_by
                 from mes_work_order
                 where work_order_id = ?
                 """ + (forUpdate ? " for update" : "");
@@ -410,9 +414,19 @@ public class ProductionDao {
                         status,
                         rs.getInt("planned_qty"),
                         rs.getInt("actual_qty"),
-                        rs.getString("batch_no")
+                        rs.getString("batch_no"),
+                        nullableLong(rs, "assigned_to"),
+                        nullableLong(rs, "accepted_by")
                 );
             }
+        }
+    }
+
+    private void validateOperatorOwnsWorkOrder(WorkOrderSnapshot workOrder, long operatorId) {
+        boolean assigned = workOrder.assignedTo() != null && workOrder.assignedTo() == operatorId;
+        boolean accepted = workOrder.acceptedBy() != null && workOrder.acceptedBy() == operatorId;
+        if (!assigned && !accepted) {
+            throw new BadRequestException("只能提交本人被派或已接收工单的报工");
         }
     }
 
@@ -463,6 +477,11 @@ public class ProductionDao {
         return item;
     }
 
+    private static Long nullableLong(ResultSet rs, String column) throws SQLException {
+        long value = rs.getLong(column);
+        return rs.wasNull() ? null : value;
+    }
+
     private MesPieceworkWage mapWage(ResultSet rs) throws SQLException {
         MesPieceworkWage item = new MesPieceworkWage();
         item.wageId = rs.getLong("wage_id");
@@ -493,6 +512,7 @@ public class ProductionDao {
         return value == null ? null : value.toLocalDateTime();
     }
 
-    private record WorkOrderSnapshot(String status, int plannedQty, int actualQty, String batchNo) {
+    private record WorkOrderSnapshot(String status, int plannedQty, int actualQty, String batchNo,
+                                     Long assignedTo, Long acceptedBy) {
     }
 }

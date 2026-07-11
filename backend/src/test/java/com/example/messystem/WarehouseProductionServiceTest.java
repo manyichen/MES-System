@@ -20,11 +20,14 @@ import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@Execution(ExecutionMode.SAME_THREAD)
 class WarehouseProductionServiceTest {
     private WarehouseService warehouseService;
     private ProductionService productionService;
@@ -300,8 +303,8 @@ class WarehouseProductionServiceTest {
         String sql = """
                 insert into mes_work_order
                     (work_order_no, task_id, product_id, line_id, process_id, planned_qty,
-                     actual_qty, priority_level, work_order_status, batch_no)
-                values (?, 1, 1, 1, 1, ?, 0, 3, 'RECEIVED', ?)
+                     actual_qty, priority_level, work_order_status, batch_no, assigned_to, accepted_by)
+                values (?, 1, 1, 1, 1, ?, 0, 3, 'RECEIVED', ?, 9, 9)
                 returning work_order_id
                 """;
         try (Connection connection = Db.getConnection();

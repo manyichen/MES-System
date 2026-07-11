@@ -23,6 +23,7 @@ final class AuthorizationPolicy {
 
             rule("GET", "(?:materials|warehouses|warehouse-locations|inventory|requisitions|picking-tasks|robots|robot-delivery-tasks)(?:/.*)?", "warehouse.read"),
             rule("POST|PUT|DELETE", "(?:materials|warehouses|warehouse-locations|robots)(?:/.*)?", "warehouse.master.manage"),
+            rule("POST|PUT|DELETE", "warehouses/locations(?:/.*)?", "warehouse.master.manage"),
             rule("POST|PUT|DELETE", "inventory(?:/.*)?", "warehouse.inventory.adjust"),
             rule("POST", "requisitions", "warehouse.requisition.create"),
             rule("POST", "requisitions/\\d+/approve", "warehouse.requisition.approve"),

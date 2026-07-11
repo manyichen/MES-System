@@ -389,7 +389,7 @@ VALUES
     ('planning.manage', '管理计划工单', 'planning', 'planning', 'manage', 'MEDIUM'),
     ('warehouse.manage', '管理仓储库存', 'warehouse', 'warehouse', 'manage', 'HIGH'),
     ('production.report', '提交生产报工', 'production', 'work_report', 'create', 'MEDIUM'),
-    ('production.report_review', '审核生产报工', 'production', 'work_report', 'review', 'HIGH'),
+    ('production.report.review', '审核生产报工', 'production', 'work_report', 'review', 'HIGH'),
     ('quality.inspect', '执行质检', 'quality', 'inspection', 'execute', 'MEDIUM'),
     ('quality.review', '审核质检结果', 'quality', 'inspection', 'review', 'HIGH'),
     ('process.manage', '维护工艺标准', 'process', 'process_standard', 'manage', 'HIGH'),
@@ -443,7 +443,7 @@ ON CONFLICT (role_id, permission_id) DO NOTHING;
 INSERT INTO mes_role_permission (role_id, permission_id)
 SELECT r.role_id, p.permission_id
 FROM mes_role r
-JOIN mes_permission p ON p.permission_code IN ('production.report_review', 'dashboard.read', 'trace.read')
+JOIN mes_permission p ON p.permission_code IN ('production.report.review', 'dashboard.read', 'trace.read')
 WHERE r.role_code = 'WORKSHOP_MANAGER'
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
