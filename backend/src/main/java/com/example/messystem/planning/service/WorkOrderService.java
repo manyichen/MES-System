@@ -38,6 +38,29 @@ public class WorkOrderService {
         }
     }
 
+    public List<MesWorkOrder> listWorkOrdersForOperator(long userId) {
+        String sql = """
+                select work_order_id, work_order_no, task_id, product_id, line_id, process_id,
+                       planned_qty, actual_qty, priority_level, work_order_status, batch_no,
+                       dispatch_time, receive_time, completed_time, created_at, updated_at
+                from mes_work_order
+                where assigned_to = ? or accepted_by = ?
+                order by work_order_id desc
+                """;
+        try (Connection connection = Db.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, userId);
+            statement.setLong(2, userId);
+            try (ResultSet rs = statement.executeQuery()) {
+                List<MesWorkOrder> rows = new ArrayList<>();
+                while (rs.next()) rows.add(mapWorkOrder(rs));
+                return rows;
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("database operation failed: " + e.getMessage(), e);
+        }
+    }
+
     public MesWorkOrder getWorkOrder(long workOrderId) {
         String sql = """
                 select work_order_id, work_order_no, task_id, product_id, line_id, process_id,
@@ -156,23 +179,30 @@ public class WorkOrderService {
 
     private MesWorkOrder changeStatus(long workOrderId, String expectedStatus, String nextStatus,
             String operationType, Long operatorId, String remark) {
+        requireId(operatorId, "operatorId is required");
         String timeColumn = "DISPATCHED".equals(nextStatus) ? "dispatch_time" : "receive_time";
+        String actorColumn = "DISPATCHED".equals(nextStatus) ? "assigned_to" : "accepted_by";
+        String ownershipCondition = "RECEIVED".equals(nextStatus) ? "and assigned_to = ?" : "";
         String sql = """
                 update mes_work_order
                 set work_order_status = ?,
+                    %s = ?,
                     %s = current_timestamp,
                     updated_at = current_timestamp
                 where work_order_id = ? and work_order_status = ?
+                    %s
                 returning work_order_id, work_order_no, task_id, product_id, line_id, process_id,
                           planned_qty, actual_qty, priority_level, work_order_status, batch_no,
                           dispatch_time, receive_time, completed_time, created_at, updated_at
-                """.formatted(timeColumn);
+                """.formatted(actorColumn, timeColumn, ownershipCondition);
         try (Connection connection = Db.getConnection()) {
             connection.setAutoCommit(false);
             try (PreparedStatement statement = connection.prepareStatement(sql)) {
                 statement.setString(1, nextStatus);
-                statement.setLong(2, workOrderId);
-                statement.setString(3, expectedStatus);
+                statement.setLong(2, operatorId);
+                statement.setLong(3, workOrderId);
+                statement.setString(4, expectedStatus);
+                if ("RECEIVED".equals(nextStatus)) statement.setLong(5, operatorId);
                 MesWorkOrder workOrder;
                 try (ResultSet rs = statement.executeQuery()) {
                     if (!rs.next()) {

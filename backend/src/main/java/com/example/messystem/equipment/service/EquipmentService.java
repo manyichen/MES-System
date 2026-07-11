@@ -95,6 +95,24 @@ public class EquipmentService {
         return maintenanceOrderDao.findAll();
     }
 
+    public List<MesMaintenanceOrder> listMaintenanceOrdersForMaintainer(long userId) throws SQLException {
+        return maintenanceOrderDao.findByMaintainer(userId);
+    }
+
+    public boolean assignMaintenanceOrder(long id, long maintainerId) throws SQLException {
+        if (!maintenanceOrderDao.assign(id, maintainerId)) {
+            throw new com.example.messystem.common.BadRequestException("维修工单不存在、已派工或状态不允许派工");
+        }
+        return true;
+    }
+
+    public boolean finishMaintenanceOrder(long id, long maintainerId) throws SQLException {
+        if (!maintenanceOrderDao.finishOwn(id, maintainerId)) {
+            throw new com.example.messystem.common.BadRequestException("只能完成分配给本人的维修工单");
+        }
+        return true;
+    }
+
     public boolean updateMaintenanceOrderStatus(long id, String status) throws SQLException {
         boolean updated = maintenanceOrderDao.updateStatus(id, status);
         if (updated && "ACCEPTED".equals(status)) {

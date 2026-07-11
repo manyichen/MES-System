@@ -2,6 +2,8 @@ package com.example.messystem.quality.resource;
 
 import com.example.messystem.common.ApiResponse;
 import com.example.messystem.common.BadRequestException;
+import com.example.messystem.auth.AuthFilter;
+import com.example.messystem.auth.AuthenticatedUser;
 import com.example.messystem.quality.entity.MesQualityInspection;
 import com.example.messystem.quality.entity.MesQualityInspectionItem;
 import com.example.messystem.quality.service.QualityInspectionService;
@@ -10,6 +12,8 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import java.sql.SQLException;
 import java.util.List;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.core.Context;
 
 @Path("/quality-inspections")
 @Produces(MediaType.APPLICATION_JSON)
@@ -19,9 +23,12 @@ public class QualityInspectionResource {
     private final QualityInspectionService service = new QualityInspectionService();
 
     @GET
-    public ApiResponse<List<MesQualityInspection>> list() {
+    public ApiResponse<List<MesQualityInspection>> list(@Context ContainerRequestContext context) {
         try {
-            return ApiResponse.ok(service.listInspections());
+            AuthenticatedUser user = AuthFilter.currentUser(context);
+            return ApiResponse.ok(user.hasRole("QUALITY_INSPECTOR")
+                    ? service.listAssignedInspections(user.user.userId)
+                    : service.listInspections());
         } catch (SQLException e) {
             throw new BadRequestException(e.getMessage());
         }
@@ -29,8 +36,13 @@ public class QualityInspectionResource {
 
     @GET
     @Path("/{id}")
-    public ApiResponse<MesQualityInspection> get(@PathParam("id") long id) {
+    public ApiResponse<MesQualityInspection> get(@PathParam("id") long id,
+            @Context ContainerRequestContext context) {
         try {
+            AuthenticatedUser user = AuthFilter.currentUser(context);
+            if (user.hasRole("QUALITY_INSPECTOR")) {
+                return ApiResponse.ok(service.requireAssignedInspection(id, user.user.userId));
+            }
             return service.getInspectionById(id)
                     .map(ApiResponse::ok)
                     .orElseGet(() -> ApiResponse.fail("Inspection not found"));
@@ -51,10 +63,15 @@ public class QualityInspectionResource {
 
     @POST
     @Path("/{id}/items")
-    public ApiResponse<Long> addItem(@PathParam("id") long id, MesQualityInspectionItem item) {
+    public ApiResponse<Long> addItem(@PathParam("id") long id, MesQualityInspectionItem item,
+            @Context ContainerRequestContext context) {
         try {
             if (item == null) {
                 throw new BadRequestException("Item body is required");
+            }
+            AuthenticatedUser user = AuthFilter.currentUser(context);
+            if (!user.hasRole("SYSTEM_ADMIN")) {
+                service.requireAssignedInspection(id, user.user.userId);
             }
             long itemId = service.addInspectionItem(new MesQualityInspectionItem(
                     null,
@@ -73,13 +90,35 @@ public class QualityInspectionResource {
     }
 
     @POST
+    @Path("/{id}/assign")
+    public ApiResponse<Boolean> assign(@PathParam("id") long id, @QueryParam("inspectorId") long inspectorId) {
+        try {
+            return ApiResponse.ok(service.assignInspection(id, inspectorId));
+        } catch (SQLException e) {
+            throw new BadRequestException(e.getMessage());
+        }
+    }
+
+    @POST
+    @Path("/{id}/submit")
+    public ApiResponse<Boolean> submit(@PathParam("id") long id, @Context ContainerRequestContext context) {
+        try {
+            return ApiResponse.ok(service.submitInspection(id, AuthFilter.currentUser(context).user.userId));
+        } catch (SQLException e) {
+            throw new BadRequestException(e.getMessage());
+        }
+    }
+
+    @POST
     @Path("/{id}/judge")
-    public ApiResponse<Boolean> judge(@PathParam("id") long id, QualityJudgement judgement) {
+    public ApiResponse<Boolean> judge(@PathParam("id") long id, QualityJudgement judgement,
+            @Context ContainerRequestContext context) {
         try {
             if (judgement == null || judgement.status() == null || judgement.result() == null) {
                 throw new BadRequestException("Judgement status and result are required");
             }
-            return ApiResponse.ok(service.judgeInspection(id, judgement.status(), judgement.result()));
+            return ApiResponse.ok(service.judgeInspection(id, judgement.status(), judgement.result(),
+                    AuthFilter.currentUser(context).user.userId));
         } catch (SQLException e) {
             throw new BadRequestException(e.getMessage());
         }

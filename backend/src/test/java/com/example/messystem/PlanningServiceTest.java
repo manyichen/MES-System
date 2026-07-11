@@ -26,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 class PlanningServiceTest {
+    private long materialId;
     private MasterDataService masterDataService;
     private CustomerOrderService orderService;
     private ProductionTaskService taskService;
@@ -36,6 +37,7 @@ class PlanningServiceTest {
     @BeforeEach
     void setUp() {
         PlanningStore.clear();
+        materialId = 8_000_000_000L + Math.floorMod(System.nanoTime(), 1_000_000_000L);
         masterDataService = new MasterDataService();
         orderService = new CustomerOrderService();
         taskService = new ProductionTaskService();
@@ -72,7 +74,7 @@ class PlanningServiceTest {
         workOrder.processId = route.processId;
         workOrder = workOrderService.createWorkOrder(workOrder);
         workOrderService.dispatch(workOrder.workOrderId, 1L);
-        workOrderService.receive(workOrder.workOrderId, 2L);
+        workOrderService.receive(workOrder.workOrderId, 1L);
 
         assertEquals("READY", analysis.kittingStatus);
         assertEquals("RELEASED", taskService.getTask(task.taskId).taskStatus);
@@ -110,7 +112,7 @@ class PlanningServiceTest {
 
     private void createBom(long productId) {
         MesProductBom bom = new MesProductBom();
-        bom.materialId = 1L;
+        bom.materialId = materialId;
         bom.materialName = "天然橡胶";
         bom.qtyPerUnit = new BigDecimal("2.5");
         masterDataService.createBom(productId, bom);
@@ -140,7 +142,7 @@ class PlanningServiceTest {
         location = warehouseService.createLocation(location);
 
         MesInventory inventory = new MesInventory();
-        inventory.materialId = 1L;
+        inventory.materialId = materialId;
         inventory.warehouseId = warehouse.warehouseId;
         inventory.locationId = location.locationId;
         inventory.availableQty = new BigDecimal("300");

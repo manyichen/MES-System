@@ -19,6 +19,11 @@ body.auth-locked main {
     user-select: none;
 }
 
+.permission-hidden,
+.module-hidden {
+    display: none !important;
+}
+
 .login-screen {
     position: fixed;
     inset: 0;
@@ -262,6 +267,21 @@ th {
     border: 1px solid #d8dee7;
     border-radius: 8px;
     background: #fff;
+    color: inherit;
+    text-align: left;
+}
+
+button.metric:hover {
+    border-color: #2563eb;
+    background: #f8fafc;
+}
+
+.metric-warning {
+    border-left: 4px solid #d97706;
+}
+
+.metric-danger {
+    border-left: 4px solid #b91c1c;
 }
 
 .metric span {
@@ -275,6 +295,134 @@ th {
     margin-top: 8px;
     color: #16324f;
     font-size: 26px;
+}
+
+.metric strong small {
+    margin-left: 5px;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.dashboard-layout {
+    display: grid;
+    grid-template-columns: minmax(260px, 0.8fr) minmax(420px, 2fr);
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.dashboard-role p {
+    margin: 0 0 16px;
+    color: #475569;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.boundary-list {
+    margin: 0;
+    padding-left: 20px;
+    color: #475569;
+    font-size: 13px;
+    line-height: 1.7;
+}
+
+.section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.section-heading h3 {
+    margin: 0;
+}
+
+.section-heading span {
+    color: #64748b;
+    font-size: 13px;
+}
+
+.todo-list {
+    display: grid;
+    gap: 10px;
+}
+
+.todo-item {
+    width: 100%;
+    min-height: 72px;
+    height: auto;
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border: 1px solid #d8dee7;
+    background: #fff;
+    color: #1f2937;
+    text-align: left;
+}
+
+.todo-item:hover {
+    border-color: #2563eb;
+    background: #f8fafc;
+}
+
+.todo-count {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    color: #fff;
+    background: #2563eb;
+    font-weight: 700;
+}
+
+.priority-high .todo-count {
+    background: #b91c1c;
+}
+
+.todo-copy,
+.todo-copy strong,
+.todo-copy small {
+    display: block;
+    min-width: 0;
+}
+
+.todo-copy strong {
+    margin-bottom: 5px;
+    font-size: 14px;
+}
+
+.todo-copy small {
+    color: #64748b;
+    line-height: 1.45;
+}
+
+.todo-go {
+    color: #2563eb;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.empty-state {
+    padding: 22px;
+    border: 1px dashed #cbd5e1;
+    border-radius: 6px;
+    color: #64748b;
+    text-align: center;
+}
+
+.role-editor {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 300px;
+}
+
+.role-editor select {
+    min-width: 210px;
 }
 
 .detail {
@@ -372,5 +520,9 @@ pre {
 
     main {
         padding: 16px;
+    }
+
+    .dashboard-layout {
+        grid-template-columns: 1fr;
     }
 }

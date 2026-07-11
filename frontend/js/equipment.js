@@ -10,8 +10,8 @@ async function loadEquipment() {
             { key: "equipmentStatus", label: "状态" },
             { key: "enabled", label: "启用" }
         ], [
-            { name: "status-running", label: "运行", idKey: "equipmentId", handler: id => updateEquipmentStatus(id, "RUNNING") },
-            { name: "status-fault", label: "故障", idKey: "equipmentId", handler: id => updateEquipmentStatus(id, "FAULT") }
+            { name: "status-running", label: "运行", idKey: "equipmentId", permission: "equipment.manage", handler: id => updateEquipmentStatus(id, "RUNNING") },
+            { name: "status-fault", label: "故障", idKey: "equipmentId", permission: "equipment.manage", handler: id => updateEquipmentStatus(id, "FAULT") }
         ]);
 
         const repairs = await getJson("/equipment-repair-reports");
@@ -23,8 +23,8 @@ async function loadEquipment() {
             { key: "faultDesc", label: "描述" },
             { key: "repairStatus", label: "状态" }
         ], [
-            { name: "approve-repair", label: "审核", idKey: "repairReportId", handler: approveRepair },
-            { name: "to-maintenance", label: "转维修", idKey: "repairReportId", handler: toMaintenanceOrder }
+            { name: "approve-repair", label: "审核", idKey: "repairReportId", permission: "equipment.repair.review", handler: approveRepair },
+            { name: "to-maintenance", label: "转维修", idKey: "repairReportId", permission: "equipment.maintenance.assign", handler: toMaintenanceOrder }
         ]);
 
         const orders = await getJson("/maintenance-orders");
@@ -36,9 +36,9 @@ async function loadEquipment() {
             { key: "maintenanceStatus", label: "状态" },
             { key: "resultDesc", label: "结果" }
         ], [
-            { name: "assign-maintenance", label: "派工", idKey: "maintenanceOrderId", handler: assignMaintenance },
-            { name: "finish-maintenance", label: "完成", idKey: "maintenanceOrderId", handler: finishMaintenance },
-            { name: "accept-maintenance", label: "验收", idKey: "maintenanceOrderId", handler: acceptMaintenance }
+            { name: "assign-maintenance", label: "派工", idKey: "maintenanceOrderId", permission: "equipment.maintenance.assign", handler: assignMaintenance },
+            { name: "finish-maintenance", label: "完成", idKey: "maintenanceOrderId", permission: "equipment.maintenance.execute", handler: finishMaintenance },
+            { name: "accept-maintenance", label: "验收", idKey: "maintenanceOrderId", permission: "equipment.maintenance.accept", handler: acceptMaintenance }
         ]);
     } catch (error) {
         showMessage(error.message, "error");
@@ -65,7 +65,9 @@ async function toMaintenanceOrder(id) {
 }
 
 async function assignMaintenance(id) {
-    await postJson(`/maintenance-orders/${id}/assign`);
+    const maintainerId = window.prompt("请输入设备维护员的用户 ID");
+    if (!maintainerId) return;
+    await postJson(`/maintenance-orders/${id}/assign?maintainerId=${encodeURIComponent(maintainerId)}`);
     showMessage("维修工单已派工");
     loadEquipment();
 }
@@ -103,7 +105,7 @@ function bindEquipmentEvents() {
         const payload = {
             ...formToObject(event.target),
             reportTime: nowIsoLocal(),
-            repairStatus: "SUBMITTED"
+            repairStatus: "REPORTED"
         };
         await postJson("/equipment-repair-reports", payload);
         showMessage("报修单已提交");

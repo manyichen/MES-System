@@ -160,6 +160,7 @@ public class WarehouseService {
 
     public MesMaterialRequisition createRequisition(MesMaterialRequisition requisition) {
         requireId(requisition.workOrderId, "workOrderId is required");
+        requireId(requisition.warehouseId, "warehouseId is required");
         if (requisition.items == null || requisition.items.isEmpty()) {
             throw new BadRequestException("requisition items are required");
         }
@@ -198,6 +199,7 @@ public class WarehouseService {
 
     public MesRobot createRobot(MesRobot robot) {
         requireText(robot.robotName, "robotName is required");
+        requireId(robot.warehouseId, "warehouseId is required");
         return database(() -> dao.insertRobot(robot));
     }
 

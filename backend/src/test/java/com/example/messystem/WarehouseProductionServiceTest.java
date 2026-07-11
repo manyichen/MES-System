@@ -222,6 +222,7 @@ class WarehouseProductionServiceTest {
         MesMaterialRequisition requisition = new MesMaterialRequisition();
         requisition.requisitionNo = "REQ-" + suffix;
         requisition.workOrderId = workOrderId;
+        requisition.warehouseId = createdWarehouse.warehouseId;
         requisition.requestedBy = 1L;
         requisition.items = List.of(item);
         return warehouseService.createRequisition(requisition);

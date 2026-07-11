@@ -16,7 +16,23 @@ function clearCurrentSession() {
     localStorage.removeItem(AUTH_STORAGE_KEY);
 }
 
-function initAuthGate(onAuthenticated) {
+function hasPermission(permission) {
+    if (!permission) return true;
+    return new Set(getCurrentSession()?.permissions || []).has(permission);
+}
+
+function hasRole(roleCode) {
+    return new Set(getCurrentSession()?.roles || []).has(roleCode);
+}
+
+function applyPermissionVisibility() {
+    document.querySelectorAll("[data-permission]").forEach(element => {
+        const allowed = element.dataset.permission.split("|").some(hasPermission);
+        element.classList.toggle("permission-hidden", !allowed);
+    });
+}
+
+async function initAuthGate(onAuthenticated) {
     const session = getCurrentSession();
     const loginScreen = document.getElementById("login-screen");
     const loginForm = document.getElementById("login-form");
@@ -27,11 +43,20 @@ function initAuthGate(onAuthenticated) {
         document.body.classList.remove("auth-locked");
         loginScreen?.classList.add("hidden");
         renderCurrentUser(sessionData?.user);
+        applyPermissionVisibility();
         onAuthenticated?.(sessionData);
     }
 
-    if (session?.user) {
-        enter(session);
+    if (session?.token) {
+        try {
+            const current = await getJson("/auth/me");
+            const refreshed = { token: session.token, ...current };
+            setCurrentSession(refreshed);
+            enter(refreshed);
+        } catch (error) {
+            clearCurrentSession();
+            loginError.textContent = "登录状态已失效，请重新登录";
+        }
     }
 
     loginForm?.addEventListener("submit", async event => {
@@ -48,12 +73,18 @@ function initAuthGate(onAuthenticated) {
         }
     });
 
-    logoutButton?.addEventListener("click", () => {
-        clearCurrentSession();
-        window.location.reload();
+    logoutButton?.addEventListener("click", async () => {
+        try {
+            await postJson("/auth/logout");
+        } catch {
+            // 本地仍需退出，后端会话可能已经过期。
+        } finally {
+            clearCurrentSession();
+            window.location.reload();
+        }
     });
 
-    return Boolean(session?.user);
+    return Boolean(getCurrentSession()?.user);
 }
 
 function renderCurrentUser(user) {
@@ -63,6 +94,16 @@ function renderCurrentUser(user) {
     }
     box.innerHTML = `
         <strong>${escapeHtml(user.realName || user.username)}</strong>
-        <span>${escapeHtml(user.roleCode || "")}</span>
+        <span>${escapeHtml((getCurrentSession()?.roles || [user.roleCode]).join(" / "))}</span>
+        <span>${renderScopeSummary(getCurrentSession())}</span>
     `;
+}
+
+function renderScopeSummary(session) {
+    const lineIds = session?.lineIds || [];
+    const warehouseIds = session?.warehouseIds || [];
+    const parts = [];
+    if (lineIds.length) parts.push(`产线 ${lineIds.join(",")}`);
+    if (warehouseIds.length) parts.push(`仓库 ${warehouseIds.join(",")}`);
+    return escapeHtml(parts.length ? parts.join("；") : "全局/本人范围");
 }

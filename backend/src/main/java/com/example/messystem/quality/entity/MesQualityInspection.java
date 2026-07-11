@@ -10,7 +10,12 @@ public record MesQualityInspection(
         Integer sampleQty,
         String inspectionStatus,
         Long inspectorId,
+        Long assignedTo,
         LocalDateTime inspectionTime,
-        String judgementResult
+        String judgementResult,
+        Long submittedBy,
+        LocalDateTime submittedAt,
+        Long reviewedBy,
+        LocalDateTime reviewedAt
 ) {
 }

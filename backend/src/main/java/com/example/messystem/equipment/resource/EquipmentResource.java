@@ -1,5 +1,6 @@
 package com.example.messystem.equipment.resource;
 
+import com.example.messystem.auth.AuthFilter;
 import com.example.messystem.common.ApiResponse;
 import com.example.messystem.common.BadRequestException;
 import com.example.messystem.equipment.entity.MesEquipment;
@@ -12,6 +13,8 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import java.sql.SQLException;
 import java.util.List;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.core.Context;
 
 @Path("/equipment")
 @Produces(MediaType.APPLICATION_JSON)
@@ -84,7 +87,8 @@ public class EquipmentResource {
 
     @POST
     @Path("/{equipmentId}/repair-reports")
-    public ApiResponse<Long> createRepairReport(@PathParam("equipmentId") long equipmentId, MesEquipmentRepairReport report) {
+    public ApiResponse<Long> createRepairReport(@PathParam("equipmentId") long equipmentId,
+            MesEquipmentRepairReport report, @Context ContainerRequestContext context) {
         try {
             if (report == null) {
                 throw new BadRequestException("Repair report body is required");
@@ -96,7 +100,7 @@ public class EquipmentResource {
                     report.workOrderId(),
                     report.faultLevel(),
                     report.faultDesc(),
-                    report.reporterId(),
+                    AuthFilter.currentUser(context).user.userId,
                     report.reportTime(),
                     report.repairStatus()
             );

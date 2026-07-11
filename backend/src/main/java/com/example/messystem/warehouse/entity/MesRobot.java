@@ -6,6 +6,7 @@ public class MesRobot {
     public Long robotId;
     public String robotCode;
     public String robotName;
+    public Long warehouseId;
     public String robotStatus;
     public BigDecimal batteryLevel;
     public String currentLocation;

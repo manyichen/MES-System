@@ -10,15 +10,23 @@ function escapeHtml(value) {
 }
 
 async function requestJson(path, options = {}) {
+    const session = typeof getCurrentSession === "function" ? getCurrentSession() : null;
+    const headers = {
+        "Content-Type": "application/json",
+        ...(session?.token ? { Authorization: `Bearer ${session.token}` } : {}),
+        ...(options.headers || {})
+    };
     const response = await fetch(`${API_BASE}${path}`, {
-        headers: {
-            "Content-Type": "application/json",
-            ...(options.headers || {})
-        },
-        ...options
+        ...options,
+        headers
     });
     const payload = await response.json().catch(() => null);
     if (!response.ok) {
+        if (response.status === 401 && !path.startsWith("/auth/login")) {
+            if (typeof clearCurrentSession === "function") clearCurrentSession();
+            document.body.classList.add("auth-locked");
+            document.getElementById("login-screen")?.classList.remove("hidden");
+        }
         throw new Error(payload?.message || `HTTP ${response.status}`);
     }
     if (payload && payload.success === false) {
@@ -71,15 +79,16 @@ function renderTable(containerId, rows = [], columns = [], actions = []) {
         container.innerHTML = "<p>暂无数据</p>";
         return;
     }
+    const visibleActions = actions.filter(action => !action.permission || hasPermission(action.permission));
     const head = columns.map(col => `<th>${escapeHtml(col.title || col.label || "")}</th>`).join("")
-        + (actions.length ? "<th>操作</th>" : "");
+        + (visibleActions.length ? "<th>操作</th>" : "");
     const body = rows.map(row => {
         const cells = columns.map(col => {
             const value = col.render ? col.render(row) : formatCell(row[col.key]);
             return `<td>${value}</td>`;
         }).join("");
-        const actionCells = actions.length
-            ? `<td><div class="row-actions">${actions.map(action => {
+        const actionCells = visibleActions.length
+            ? `<td><div class="row-actions">${visibleActions.map(action => {
                 const id = row[action.idKey];
                 return `<button type="button" data-action="${escapeHtml(action.name)}" data-id="${escapeHtml(id)}">${escapeHtml(action.label)}</button>`;
             }).join("")}</div></td>`
@@ -88,7 +97,7 @@ function renderTable(containerId, rows = [], columns = [], actions = []) {
     }).join("");
 
     container.innerHTML = `<table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
-    actions.forEach(action => {
+    visibleActions.forEach(action => {
         container.querySelectorAll(`[data-action="${action.name}"]`).forEach(button => {
             button.addEventListener("click", () => action.handler(button.dataset.id));
         });

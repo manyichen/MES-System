@@ -12,19 +12,24 @@ async function refreshProduction() {
         { title: "状态", key: "reportStatus" },
         { title: "操作", render: renderReportActions }
     ]);
-    renderTable("wageTable", wages, [
-        { title: "ID", key: "wageId" },
-        { title: "报工", key: "reportId" },
-        { title: "单价", key: "pieceRate" },
-        { title: "金额", key: "wageAmount" },
-        { title: "状态", key: "settlementStatus" },
-        { title: "操作", render: row => `<button onclick="showWageDetail(${row.wageId})">详情</button>` }
-    ]);
+    if (Array.isArray(wages)) {
+        renderTable("wageTable", wages, [
+            { title: "ID", key: "wageId" }, { title: "报工", key: "reportId" },
+            { title: "单价", key: "pieceRate" }, { title: "金额", key: "wageAmount" },
+            { title: "状态", key: "settlementStatus" },
+            { title: "操作", render: row => `<button onclick="showWageDetail(${row.wageId})">详情</button>` }
+        ]);
+    } else {
+        renderTable("wageTable", [wages], [
+            { title: "记录数", key: "recordCount" }, { title: "涉及员工", key: "operatorCount" },
+            { title: "合格产量", key: "qualifiedQty" }, { title: "工资汇总", key: "wageAmount" }
+        ]);
+    }
 }
 
 function renderReportActions(row) {
     const actions = [`<button onclick="showReportDetail(${row.reportId})">详情</button>`];
-    if (row.reportStatus === "SUBMITTED") {
+    if (row.reportStatus === "SUBMITTED" && hasPermission("production.report.review")) {
         actions.push(`<button onclick="approveReport(${row.reportId})">审核</button>`);
     }
     return actions.join("");
@@ -76,5 +81,3 @@ document.getElementById("reportForm").addEventListener("submit", async event => 
         showMessage(error.message, "error");
     }
 });
-
-refreshProduction().catch(() => {});

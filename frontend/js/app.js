@@ -1,14 +1,22 @@
 let appInitialized = false;
 
 function bindNavigation() {
-    document.querySelectorAll(".sidebar button").forEach(button => {
+    document.querySelectorAll(".sidebar button[data-tab]").forEach(button => {
         button.addEventListener("click", () => {
-            document.querySelectorAll(".sidebar button").forEach(item => item.classList.remove("active"));
-            document.querySelectorAll(".panel").forEach(item => item.classList.remove("active"));
-            button.classList.add("active");
-            document.getElementById(button.dataset.tab)?.classList.add("active");
+            switchTab(button.dataset.tab);
         });
     });
+}
+
+function switchTab(tab, anchorId = null) {
+    const button = document.querySelector(`.sidebar button[data-tab="${tab}"]`);
+    const panel = document.getElementById(tab);
+    if (!button || !panel || button.classList.contains("permission-hidden")) return;
+    document.querySelectorAll(".sidebar button[data-tab]").forEach(item => item.classList.remove("active"));
+    document.querySelectorAll(".panel").forEach(item => item.classList.remove("active"));
+    button.classList.add("active");
+    panel.classList.add("active");
+    if (anchorId) window.setTimeout(() => document.getElementById(anchorId)?.scrollIntoView({ behavior: "smooth", block: "center" }), 80);
 }
 
 function initializeApp() {
@@ -21,15 +29,19 @@ function initializeApp() {
     if (typeof bindQualityEvents === "function") bindQualityEvents();
     if (typeof bindEquipmentEvents === "function") bindEquipmentEvents();
     if (typeof loadDashboard === "function") loadDashboard();
-    if (typeof loadQuality === "function") loadQuality();
-    if (typeof loadEquipment === "function") loadEquipment();
-    if (typeof loadTraces === "function") loadTraces();
-    if (typeof loadFeedback === "function") loadFeedback(1);
+    if ((hasPermission("planning.read") || hasPermission("planning.work_order.read")) && typeof refreshPlanning === "function") refreshPlanning();
+    if (hasPermission("warehouse.read") && typeof refreshWarehouse === "function") refreshWarehouse();
+    if (hasPermission("production.read") && typeof refreshProduction === "function") refreshProduction();
+    if (hasPermission("quality.read") && typeof loadQuality === "function") loadQuality();
+    if (hasPermission("equipment.read") && typeof loadEquipment === "function") loadEquipment();
+    if (hasPermission("trace.read") && typeof loadTraces === "function") loadTraces();
+    if (hasPermission("feedback.read") && typeof loadFeedback === "function") loadFeedback(1);
+    if (hasPermission("user.read") && typeof loadAccessManagement === "function") loadAccessManagement();
 }
 
 window.addEventListener("DOMContentLoaded", () => {
     if (typeof initAuthGate === "function") {
-        initAuthGate(initializeApp);
+        void initAuthGate(initializeApp);
         return;
     }
     initializeApp();

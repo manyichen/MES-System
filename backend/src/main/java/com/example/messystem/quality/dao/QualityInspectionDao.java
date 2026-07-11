@@ -15,7 +15,7 @@ import java.util.Optional;
 public class QualityInspectionDao {
 
     public long insert(MesQualityInspection inspection) throws SQLException {
-        String sql = "INSERT INTO mes_quality_inspection (inspection_no, work_order_id, work_report_id, sample_qty, inspection_status, inspector_id, inspection_time, judgement_result) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO mes_quality_inspection (inspection_no, work_order_id, work_report_id, sample_qty, inspection_status, inspector_id, assigned_to, inspection_time, judgement_result) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = Db.getConnection(); PreparedStatement ps = conn.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
             ensureApprovedWorkReport(conn, inspection.workOrderId(), inspection.workReportId());
             ps.setString(1, inspection.inspectionNo());
@@ -27,9 +27,10 @@ public class QualityInspectionDao {
             }
             ps.setInt(4, inspection.sampleQty());
             ps.setString(5, inspection.inspectionStatus());
-            ps.setLong(6, inspection.inspectorId());
-            ps.setObject(7, inspection.inspectionTime());
-            ps.setString(8, inspection.judgementResult());
+            setLong(ps, 6, inspection.inspectorId());
+            setLong(ps, 7, inspection.assignedTo() == null ? inspection.inspectorId() : inspection.assignedTo());
+            ps.setObject(8, inspection.inspectionTime());
+            ps.setString(9, inspection.judgementResult());
             ps.executeUpdate();
             try (ResultSet rs = ps.getGeneratedKeys()) {
                 if (rs.next()) {
@@ -41,7 +42,7 @@ public class QualityInspectionDao {
     }
 
     public Optional<MesQualityInspection> findById(long id) throws SQLException {
-        String sql = "SELECT inspection_id, inspection_no, work_order_id, work_report_id, sample_qty, inspection_status, inspector_id, inspection_time, judgement_result FROM mes_quality_inspection WHERE inspection_id = ?";
+        String sql = SELECT_COLUMNS + " WHERE inspection_id = ?";
         try (Connection conn = Db.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, id);
             try (ResultSet rs = ps.executeQuery()) {
@@ -54,7 +55,7 @@ public class QualityInspectionDao {
     }
 
     public List<MesQualityInspection> findAll() throws SQLException {
-        String sql = "SELECT inspection_id, inspection_no, work_order_id, work_report_id, sample_qty, inspection_status, inspector_id, inspection_time, judgement_result FROM mes_quality_inspection";
+        String sql = SELECT_COLUMNS + " ORDER BY inspection_id DESC";
         try (Connection conn = Db.getConnection(); PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
             List<MesQualityInspection> list = new ArrayList<>();
             while (rs.next()) {
@@ -64,12 +65,63 @@ public class QualityInspectionDao {
         }
     }
 
-    public boolean updateStatus(long inspectionId, String status, String judgementResult) throws SQLException {
-        String sql = "UPDATE mes_quality_inspection SET inspection_status = ?, judgement_result = ? WHERE inspection_id = ?";
+    public List<MesQualityInspection> findAssignedTo(long userId) throws SQLException {
+        String sql = SELECT_COLUMNS + " WHERE assigned_to = ? OR inspector_id = ? ORDER BY inspection_id DESC";
+        try (Connection conn = Db.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, userId);
+            ps.setLong(2, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                List<MesQualityInspection> list = new ArrayList<>();
+                while (rs.next()) list.add(mapRow(rs));
+                return list;
+            }
+        }
+    }
+
+    public boolean assign(long inspectionId, long inspectorId) throws SQLException {
+        String sql = """
+                update mes_quality_inspection
+                set assigned_to = ?, inspector_id = ?, inspection_status = 'CREATED'
+                where inspection_id = ? and inspection_status = 'CREATED'
+                """;
+        try (Connection conn = Db.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, inspectorId);
+            ps.setLong(2, inspectorId);
+            ps.setLong(3, inspectionId);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
+    public boolean submit(long inspectionId, long inspectorId) throws SQLException {
+        String sql = """
+                update mes_quality_inspection
+                set inspection_status = 'SUBMITTED', submitted_by = ?, submitted_at = current_timestamp,
+                    inspection_time = coalesce(inspection_time, current_timestamp)
+                where inspection_id = ? and (assigned_to = ? or inspector_id = ?)
+                  and inspection_status in ('CREATED','IN_PROGRESS')
+                  and exists (select 1 from mes_quality_inspection_item i where i.inspection_id = ?)
+                """;
+        try (Connection conn = Db.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, inspectorId);
+            ps.setLong(2, inspectionId);
+            ps.setLong(3, inspectorId);
+            ps.setLong(4, inspectorId);
+            ps.setLong(5, inspectionId);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
+    public boolean updateStatus(long inspectionId, String status, String judgementResult, long reviewedBy) throws SQLException {
+        String sql = """
+                update mes_quality_inspection
+                set inspection_status = ?, judgement_result = ?, reviewed_by = ?, reviewed_at = current_timestamp
+                where inspection_id = ? and inspection_status = 'SUBMITTED'
+                """;
         try (Connection conn = Db.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, status);
             ps.setString(2, judgementResult);
-            ps.setLong(3, inspectionId);
+            ps.setLong(3, reviewedBy);
+            ps.setLong(4, inspectionId);
             return ps.executeUpdate() > 0;
         }
     }
@@ -103,14 +155,31 @@ public class QualityInspectionDao {
                 getLong(rs, "work_report_id"),
                 rs.getInt("sample_qty"),
                 rs.getString("inspection_status"),
-                rs.getLong("inspector_id"),
+                getLong(rs, "inspector_id"),
+                getLong(rs, "assigned_to"),
                 rs.getObject("inspection_time", java.time.LocalDateTime.class),
-                rs.getString("judgement_result")
+                rs.getString("judgement_result"),
+                getLong(rs, "submitted_by"),
+                rs.getObject("submitted_at", java.time.LocalDateTime.class),
+                getLong(rs, "reviewed_by"),
+                rs.getObject("reviewed_at", java.time.LocalDateTime.class)
         );
     }
+
+    private static final String SELECT_COLUMNS = """
+            SELECT inspection_id, inspection_no, work_order_id, work_report_id, sample_qty,
+                   inspection_status, inspector_id, assigned_to, inspection_time, judgement_result,
+                   submitted_by, submitted_at, reviewed_by, reviewed_at
+            FROM mes_quality_inspection
+            """;
 
     private Long getLong(ResultSet rs, String column) throws SQLException {
         long value = rs.getLong(column);
         return rs.wasNull() ? null : value;
+    }
+
+    private static void setLong(PreparedStatement statement, int index, Long value) throws SQLException {
+        if (value == null) statement.setNull(index, java.sql.Types.BIGINT);
+        else statement.setLong(index, value);
     }
 }

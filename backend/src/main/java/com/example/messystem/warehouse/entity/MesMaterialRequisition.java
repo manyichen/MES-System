@@ -8,6 +8,7 @@ public class MesMaterialRequisition {
     public Long requisitionId;
     public String requisitionNo;
     public Long workOrderId;
+    public Long warehouseId;
     public Long requestedBy;
     public String requestStatus;
     public LocalDateTime requestTime;

@@ -27,7 +27,7 @@ async function refreshWarehouse() {
         { title: "单位", key: "unit" },
         { title: "操作", render: row => `
             <button onclick="showMaterialDetail(${row.materialId})">详情</button>
-            <button onclick="fillMaterial(${row.materialId})">使用</button>
+            ${hasPermission("warehouse.requisition.create") ? `<button onclick="fillMaterial(${row.materialId})">使用</button>` : ""}
         ` }
     ]);
     renderTable("warehouseTable", warehouses, [
@@ -52,13 +52,14 @@ async function refreshWarehouse() {
         { title: "状态", key: "qualityStatus" },
         { title: "操作", render: row => `
             <button onclick="showInventoryDetail(${row.inventoryId})">详情</button>
-            <button onclick="fillInventory(${row.materialId}, '${escapeJs(row.batchNo)}')">使用</button>
+            ${hasPermission("warehouse.requisition.create") ? `<button onclick="fillInventory(${row.materialId}, '${escapeJs(row.batchNo)}')">使用</button>` : ""}
         ` }
     ]);
     renderTable("robotTable", robots, [
         { title: "ID", key: "robotId" },
         { title: "编码", key: "robotCode" },
         { title: "名称", key: "robotName" },
+        { title: "仓库", key: "warehouseId" },
         { title: "状态", key: "robotStatus" },
         { title: "电量", key: "batteryLevel" },
         { title: "操作", render: row => `<button onclick="showRobotDetail(${row.robotId})">详情</button>` }
@@ -67,6 +68,7 @@ async function refreshWarehouse() {
         { title: "ID", key: "requisitionId" },
         { title: "编号", key: "requisitionNo" },
         { title: "工单", key: "workOrderId" },
+        { title: "仓库", key: "warehouseId" },
         { title: "状态", key: "requestStatus" },
         { title: "操作", render: renderRequisitionActions }
     ]);
@@ -112,7 +114,7 @@ function fillInventory(materialId, batchNo) {
 
 function renderRequisitionActions(row) {
     const actions = [`<button onclick="showRequisitionDetail(${row.requisitionId})">详情</button>`];
-    if (row.requestStatus === "CREATED") {
+    if (row.requestStatus === "CREATED" && hasPermission("warehouse.requisition.approve")) {
         actions.push(`<button onclick="approveRequisition(${row.requisitionId})">审核</button>`);
     }
     return actions.join("");
@@ -120,7 +122,7 @@ function renderRequisitionActions(row) {
 
 function renderPickingActions(row) {
     const actions = [`<button onclick="showPickingDetail(${row.pickingTaskId})">详情</button>`];
-    if (row.taskStatus === "CREATED") {
+    if (row.taskStatus === "CREATED" && hasPermission("warehouse.picking.execute")) {
         actions.push(`<button onclick="completePicking(${row.pickingTaskId})">完成</button>`);
     }
     return actions.join("");
@@ -128,10 +130,10 @@ function renderPickingActions(row) {
 
 function renderDeliveryActions(row) {
     const actions = [`<button onclick="showDeliveryDetail(${row.deliveryTaskId})">详情</button>`];
-    if (row.deliveryStatus === "PENDING") {
+    if (row.deliveryStatus === "PENDING" && hasPermission("warehouse.delivery.execute")) {
         actions.push(`<button onclick="arriveDelivery(${row.deliveryTaskId})">到达</button>`);
     }
-    if (row.deliveryStatus === "ARRIVED") {
+    if (row.deliveryStatus === "ARRIVED" && hasPermission("warehouse.delivery.execute")) {
         actions.push(`<button onclick="confirmReceipt(${row.deliveryTaskId})">收料</button>`);
     }
     return actions.join("");
@@ -240,6 +242,7 @@ async function seedWarehouse() {
         await postJson("/robots", {
             robotCode: `ROB-DEMO-${suffix}`,
             robotName: "配送机器人一号",
+            warehouseId: warehouse.warehouseId,
             batteryLevel: 88,
             currentLocation: "原材料仓"
         });
@@ -300,7 +303,8 @@ document.getElementById("requisitionForm").addEventListener("submit", async even
     try {
         await postJson("/requisitions", {
             workOrderId: Number(form.get("workOrderId")),
-            requestedBy: 1,
+            warehouseId: Number(form.get("warehouseId")),
+            requestedBy: getCurrentSession().user.userId,
             items: [{
                 materialId: Number(form.get("materialId")),
                 requiredQty: Number(form.get("requiredQty")),
@@ -314,5 +318,3 @@ document.getElementById("requisitionForm").addEventListener("submit", async even
         showMessage(error.message, "error");
     }
 });
-
-refreshWarehouse().catch(() => {});

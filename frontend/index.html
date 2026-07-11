@@ -28,6 +28,7 @@
     <button data-tab="equipment">设备维护</button>
     <button data-tab="trace">产品追溯</button>
     <button data-tab="feedback">管理反馈</button>
+    <button data-tab="system" data-permission="user.read|role.read">用户与角色</button>
 </aside>
 
 <main>
@@ -37,31 +38,42 @@
             <button id="refresh-dashboard">刷新</button>
         </header>
         <div id="dashboard-metrics" class="metric-grid"></div>
+        <div class="dashboard-layout">
+            <section class="tool dashboard-role">
+                <h3 id="dashboard-role-name">当前岗位</h3>
+                <p id="dashboard-scope"></p>
+                <div id="dashboard-restrictions"></div>
+            </section>
+            <section class="tool dashboard-todo-panel">
+                <div class="section-heading"><h3>我的待办</h3><span id="dashboard-todo-count"></span></div>
+                <div id="dashboard-todos" class="todo-list"></div>
+            </section>
+        </div>
     </section>
 
     <section id="planning" class="panel">
         <header>
             <h2>计划工单</h2>
             <div class="actions">
-                <button id="seedPlanning">生成演示主线</button>
+                <button id="seedPlanning" data-permission="demo.seed">生成演示主线</button>
                 <button id="refreshPlanning">刷新</button>
             </div>
         </header>
         <div class="grid">
-            <form id="orderForm" class="tool">
+            <form id="orderForm" class="tool" data-permission="planning.order.create">
                 <h3>创建客户订单</h3>
                 <label>客户名称 <input name="customerName" value="双星演示客户" required></label>
                 <label>产品ID <input name="productId" type="number" value="1" min="1" required></label>
                 <label>订单数量 <input name="orderQty" type="number" value="100" min="1" required></label>
                 <button type="submit">创建订单</button>
             </form>
-            <form id="taskForm" class="tool">
+            <form id="taskForm" class="tool" data-permission="planning.task.create">
                 <h3>创建生产任务</h3>
                 <label>订单ID <input name="orderId" type="number" value="1" min="1" required></label>
                 <label>计划数量 <input name="planQty" type="number" value="100" min="1"></label>
                 <button type="submit">创建任务</button>
             </form>
-            <form id="workOrderForm" class="tool">
+            <form id="workOrderForm" class="tool" data-permission="planning.work_order.create">
                 <h3>创建生产工单</h3>
                 <label>任务ID <input name="taskId" type="number" value="1" min="1" required></label>
                 <label>产线ID <input name="lineId" type="number" value="1" min="1"></label>
@@ -79,7 +91,7 @@
         <header>
             <h2>仓储物流</h2>
             <div class="actions">
-                <button id="seedWarehouse">生成演示数据</button>
+                <button id="seedWarehouse" data-permission="demo.seed">生成演示数据</button>
                 <button id="refreshWarehouse">刷新</button>
             </div>
         </header>
@@ -109,9 +121,10 @@
                     </div>
                 </div>
             </div>
-            <form id="requisitionForm" class="tool">
+            <form id="requisitionForm" class="tool" data-permission="warehouse.requisition.create">
                 <h3>创建领料任务</h3>
                 <label>工单 ID <input name="workOrderId" type="number" value="1" min="1" required></label>
+                <label>目标仓库 ID <input name="warehouseId" type="number" value="1" min="1" required></label>
                 <label>物料 ID <input name="materialId" type="number" value="1" min="1" required></label>
                 <label>批次号 <input name="batchNo" type="text" value="BATCH-20260709-001" required></label>
                 <label>数量 <input name="requiredQty" type="number" value="10" min="0" step="0.01" required></label>
@@ -146,7 +159,7 @@
             <button id="refreshProduction">刷新</button>
         </header>
         <div class="grid">
-            <form id="reportForm" class="tool">
+            <form id="reportForm" class="tool" data-permission="production.report.create">
                 <h3>提交报工</h3>
                 <label>工单 ID <input name="workOrderId" type="number" value="1" min="1" required></label>
                 <label>批次号 <input name="batchNo" value="BATCH-DEMO-001"></label>
@@ -178,16 +191,16 @@
             <button id="refresh-quality">刷新</button>
         </header>
         <div class="grid">
-            <form id="inspection-form" class="tool">
+            <form id="inspection-form" class="tool" data-permission="quality.inspection.create">
                 <h3>创建质检单</h3>
                 <label>质检单号 <input name="inspectionNo" value="QI-DEMO-001" required></label>
                 <label>工单ID <input name="workOrderId" type="number" value="1" min="1" required></label>
                 <label>报工ID <input name="workReportId" type="number" value="1" min="1"></label>
                 <label>抽检数量 <input name="sampleQty" type="number" value="10" min="1" required></label>
-                <label>质检员ID <input name="inspectorId" type="number" value="1" min="1"></label>
+                <label>质检员ID（可稍后分配） <input name="inspectorId" type="number" min="1"></label>
                 <button type="submit">创建</button>
             </form>
-            <form id="inspection-item-form" class="tool">
+            <form id="inspection-item-form" class="tool" data-permission="quality.inspect">
                 <h3>添加质检项目</h3>
                 <label>质检单ID <input name="inspectionId" type="number" value="1" min="1" required></label>
                 <label>项目编码 <input name="itemCode" value="ITEM-001" required></label>
@@ -209,7 +222,7 @@
             <button id="refresh-equipment">刷新</button>
         </header>
         <div class="grid">
-            <form id="equipment-form" class="tool">
+            <form id="equipment-form" class="tool" data-permission="equipment.manage">
                 <h3>创建设备</h3>
                 <label>设备编码 <input name="equipmentCode" value="EQ-DEMO-001" required></label>
                 <label>设备名称 <input name="equipmentName" value="密炼机一号" required></label>
@@ -218,7 +231,7 @@
                 <label>状态 <input name="equipmentStatus" value="RUNNING"></label>
                 <button type="submit">创建</button>
             </form>
-            <form id="repair-form" class="tool">
+            <form id="repair-form" class="tool" data-permission="equipment.fault.report">
                 <h3>提交报修</h3>
                 <label>报修单号 <input name="repairReportNo" value="REP-DEMO-001" required></label>
                 <label>设备ID <input name="equipmentId" type="number" value="1" min="1" required></label>
@@ -240,7 +253,7 @@
             <button id="refresh-trace">刷新</button>
         </header>
         <div class="grid">
-            <form id="trace-form" class="tool">
+            <form id="trace-form" class="tool" data-permission="trace.create">
                 <h3>新增追溯</h3>
                 <label>追溯码 <input name="traceCode" value="TRACE-DEMO-001" required></label>
                 <label>订单ID <input name="orderId" type="number" value="1" required></label>
@@ -271,7 +284,7 @@
                 <label>工单ID <input name="workOrderId" type="number" value="1"></label>
                 <button type="submit">查询</button>
             </form>
-            <form id="feedback-form" class="tool">
+            <form id="feedback-form" class="tool" data-permission="feedback.create">
                 <h3>新增反馈</h3>
                 <label>反馈编号 <input name="feedbackNo" value="FB-DEMO-001" required></label>
                 <label>订单ID <input name="orderId" type="number" value="1" required></label>
@@ -284,6 +297,38 @@
             <div class="tool wide"><h3>反馈列表</h3><div id="feedback-table"></div></div>
         </div>
     </section>
+
+    <section id="system" class="panel">
+        <header>
+            <h2>用户与角色</h2>
+            <button id="refresh-access">刷新</button>
+        </header>
+        <div class="grid">
+            <form id="permission-apply-form" class="tool" data-permission="permission.apply">
+                <h3>发起角色变更申请</h3>
+                <label>目标用户ID <input name="targetUserId" type="number" min="1" required></label>
+                <label>申请角色 <select name="toRoleCode" id="permission-apply-role" required></select></label>
+                <label>申请原因 <input name="reason" required></label>
+                <button type="submit">提交申请</button>
+            </form>
+            <div class="tool wide" data-permission="permission.apply|permission.review|role.manage">
+                <h3>权限变更申请</h3>
+                <div id="permission-apply-table"></div>
+            </div>
+            <div class="tool wide">
+                <h3>用户角色管理</h3>
+                <div id="user-table"></div>
+            </div>
+            <div class="tool wide">
+                <h3>角色权限清单</h3>
+                <div id="role-table"></div>
+            </div>
+            <div class="tool wide">
+                <h3>选中角色的权限</h3>
+                <div id="permission-table"></div>
+            </div>
+        </div>
+    </section>
 </main>
 
 <div id="message"></div>
@@ -294,6 +339,7 @@
 <script src="js/dashboard.js"></script>
 <script src="js/quality.js"></script>
 <script src="js/equipment.js"></script>
+<script src="js/access.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/app.js"></script>
 </body>

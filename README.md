@@ -107,3 +107,39 @@ database/design_output/mes_schema_postgresql.sql
 ```text
 database/design_output/mes_seed_data.sql
 ```
+
+## 数据库优化设计 v2
+
+权限管理、组织人员、审计日志、登录会话、工艺质量标准、设备状态履历等增量优化设计见：
+
+```text
+docs/数据库优化详细设计-v2.md
+database/mes_database_optimization_v2.sql
+```
+
+该 v2 脚本是增量增强脚本，不删除现有表和字段。建议审核设计文档后，再通过 `DatabaseMigrationRunner` 执行到云数据库。
+
+## 权限管理 v3
+
+正式角色边界、看板待办和数据范围：
+
+```text
+docs/权限管理正式实施说明-v3.md
+```
+
+权限实施迁移：
+
+```text
+database/mes_permission_implementation_v3.sql
+database/mes_data_scope_v4.sql
+```
+
+`v4` 数据范围迁移为车间管理员建立产线分配、为仓库管理员建立仓库分配，并补齐领料申请和机器人仓库归属。范围由系统管理员在“用户与角色”页面分配；未分配范围时返回空列表并拒绝详情和操作，不回退为模块全量。
+
+角色权限验收账号初始化脚本：
+
+```text
+database/mes_role_acceptance_accounts.sql
+```
+
+该脚本只保存密码哈希，不在仓库中保存验收账号的明文密码。

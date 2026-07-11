@@ -12,8 +12,8 @@ public class ManagementFeedbackService {
 
     private final ManagementFeedbackDao feedbackDao = new ManagementFeedbackDao();
 
-    public long createFeedback(MesManagementFeedback feedback) throws SQLException {
-        return feedbackDao.insert(feedback);
+    public long createFeedback(MesManagementFeedback feedback, long createdBy) throws SQLException {
+        return feedbackDao.insert(feedback, createdBy);
     }
 
     public Optional<MesManagementFeedback> getFeedback(long id) throws SQLException {
@@ -22,6 +22,14 @@ public class ManagementFeedbackService {
 
     public List<MesManagementFeedback> listFeedbackForWorkOrder(long workOrderId) throws SQLException {
         return feedbackDao.findByWorkOrderId(workOrderId);
+    }
+
+    public List<MesManagementFeedback> listOwnFeedbackForWorkOrder(long workOrderId, long userId) throws SQLException {
+        return feedbackDao.findByWorkOrderIdAndCreator(workOrderId, userId);
+    }
+
+    public Optional<MesManagementFeedback> getOwnFeedback(long id, long userId) throws SQLException {
+        return feedbackDao.findByIdAndCreator(id, userId);
     }
 
     public long createDefaultFeedback(long orderId, long taskId, long workOrderId, String type, String content) throws SQLException {
@@ -37,7 +45,7 @@ public class ManagementFeedbackService {
                 LocalDateTime.now(),
                 null
         );
-        return feedbackDao.insert(feedback);
+        return feedbackDao.insert(feedback, 1L);
     }
 
     public boolean closeFeedback(long id) throws SQLException {

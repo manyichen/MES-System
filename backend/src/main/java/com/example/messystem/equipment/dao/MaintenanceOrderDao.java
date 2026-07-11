@@ -85,6 +85,36 @@ public class MaintenanceOrderDao {
         }
     }
 
+    public List<MesMaintenanceOrder> findByMaintainer(long userId) throws SQLException {
+        String sql = "SELECT maintenance_order_id, maintenance_order_no, repair_report_id, equipment_id, maintainer_id, maintenance_status, dispatch_time, finish_time, result_desc FROM mes_maintenance_order WHERE maintainer_id = ? ORDER BY maintenance_order_id DESC";
+        try (Connection conn = Db.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                List<MesMaintenanceOrder> results = new ArrayList<>();
+                while (rs.next()) results.add(mapRow(rs));
+                return results;
+            }
+        }
+    }
+
+    public boolean assign(long id, long maintainerId) throws SQLException {
+        String sql = "UPDATE mes_maintenance_order SET maintainer_id = ?, maintenance_status = 'ASSIGNED', dispatch_time = current_timestamp WHERE maintenance_order_id = ? AND maintenance_status = 'CREATED'";
+        try (Connection conn = Db.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, maintainerId);
+            ps.setLong(2, id);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
+    public boolean finishOwn(long id, long maintainerId) throws SQLException {
+        String sql = "UPDATE mes_maintenance_order SET maintenance_status = 'FINISHED', finish_time = current_timestamp WHERE maintenance_order_id = ? AND maintainer_id = ? AND maintenance_status IN ('ASSIGNED','IN_PROGRESS')";
+        try (Connection conn = Db.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, id);
+            ps.setLong(2, maintainerId);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
     public boolean updateStatus(long id, String status) throws SQLException {
         String sql = "UPDATE mes_maintenance_order SET maintenance_status = ?, finish_time = CASE WHEN ? IN ('FINISHED', 'ACCEPTED') THEN NOW() ELSE finish_time END WHERE maintenance_order_id = ?";
         try (Connection conn = Db.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {

@@ -1,5 +1,7 @@
 package com.example.messystem.planning.resource;
 
+import com.example.messystem.auth.AuthFilter;
+import com.example.messystem.auth.AuthenticatedUser;
 import com.example.messystem.common.ResourceSupport;
 import com.example.messystem.planning.entity.MesWorkOrder;
 import com.example.messystem.planning.service.WorkOrderService;
@@ -10,6 +12,8 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
@@ -20,8 +24,11 @@ public class WorkOrderResource {
     private final WorkOrderService service = new WorkOrderService();
 
     @GET
-    public Response list() {
-        return ResourceSupport.ok(service.listWorkOrders());
+    public Response list(@Context ContainerRequestContext context) {
+        AuthenticatedUser user = AuthFilter.currentUser(context);
+        return ResourceSupport.ok(user.hasRole("PRODUCTION_OPERATOR")
+                ? service.listWorkOrdersForOperator(user.user.userId)
+                : service.listWorkOrders());
     }
 
     @POST
@@ -55,9 +62,10 @@ public class WorkOrderResource {
 
     @POST
     @Path("/{id}/receive")
-    public Response receive(@PathParam("id") long id, @QueryParam("operatorId") Long operatorId) {
+    public Response receive(@PathParam("id") long id, @Context ContainerRequestContext context) {
         try {
-            return ResourceSupport.action("work order received", service.receive(id, operatorId));
+            return ResourceSupport.action("work order received",
+                    service.receive(id, AuthFilter.currentUser(context).user.userId));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }

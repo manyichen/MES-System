@@ -37,6 +37,7 @@ public class UserService {
     public MesUser createUser(MesUser user) {
         requireText(user.username, "username is required");
         requireText(user.password, "password is required");
+        String roleCode = defaultText(user.roleCode, "PRODUCTION_OPERATOR");
         String sql = """
                 insert into mes_user
                     (username, real_name, role_code, department, phone, enabled, password_hash, updated_at)
@@ -44,18 +45,29 @@ public class UserService {
                 returning user_id, username, real_name, role_code, department, phone, enabled,
                           created_at, updated_at, last_login_at
                 """;
-        try (Connection connection = Db.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setString(1, user.username.trim());
-            statement.setString(2, defaultText(user.realName, user.username.trim()));
-            statement.setString(3, defaultText(user.roleCode, "PRODUCTION_OPERATOR"));
-            statement.setString(4, user.department);
-            statement.setString(5, user.phone);
-            statement.setInt(6, user.enabled == null ? 1 : user.enabled);
-            statement.setString(7, PasswordHasher.hash(user.password));
-            try (ResultSet rs = statement.executeQuery()) {
-                rs.next();
-                return mapUser(rs);
+        try (Connection connection = Db.getConnection()) {
+            connection.setAutoCommit(false);
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setString(1, user.username.trim());
+                statement.setString(2, defaultText(user.realName, user.username.trim()));
+                statement.setString(3, roleCode);
+                statement.setString(4, user.department);
+                statement.setString(5, user.phone);
+                statement.setInt(6, user.enabled == null ? 1 : user.enabled);
+                statement.setString(7, PasswordHasher.hash(user.password));
+                MesUser created;
+                try (ResultSet rs = statement.executeQuery()) {
+                    rs.next();
+                    created = mapUser(rs);
+                }
+                linkRole(connection, created.userId, roleCode);
+                connection.commit();
+                return created;
+            } catch (SQLException | RuntimeException ex) {
+                connection.rollback();
+                throw ex;
+            } finally {
+                connection.setAutoCommit(true);
             }
         } catch (SQLException ex) {
             throw new IllegalStateException("database operation failed: " + ex.getMessage(), ex);
@@ -72,18 +84,51 @@ public class UserService {
                 returning user_id, username, real_name, role_code, department, phone, enabled,
                           created_at, updated_at, last_login_at
                 """;
-        try (Connection connection = Db.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setString(1, roleCode.trim());
-            statement.setLong(2, userId);
-            try (ResultSet rs = statement.executeQuery()) {
-                if (!rs.next()) {
-                    throw new NotFoundException("user not found");
+        try (Connection connection = Db.getConnection()) {
+            connection.setAutoCommit(false);
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setString(1, roleCode.trim());
+                statement.setLong(2, userId);
+                MesUser updated;
+                try (ResultSet rs = statement.executeQuery()) {
+                    if (!rs.next()) throw new NotFoundException("user not found");
+                    updated = mapUser(rs);
                 }
-                return mapUser(rs);
+                try (PreparedStatement delete = connection.prepareStatement("delete from mes_user_role where user_id = ?")) {
+                    delete.setLong(1, userId);
+                    delete.executeUpdate();
+                }
+                linkRole(connection, userId, roleCode.trim());
+                try (PreparedStatement revoke = connection.prepareStatement(
+                        "update mes_user_session set revoked_at = current_timestamp where user_id = ? and revoked_at is null")) {
+                    revoke.setLong(1, userId);
+                    revoke.executeUpdate();
+                }
+                connection.commit();
+                return updated;
+            } catch (SQLException | RuntimeException ex) {
+                connection.rollback();
+                throw ex;
+            } finally {
+                connection.setAutoCommit(true);
             }
         } catch (SQLException ex) {
             throw new IllegalStateException("database operation failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    private static void linkRole(Connection connection, long userId, String roleCode) throws SQLException {
+        String sql = """
+                insert into mes_user_role (user_id, role_id)
+                select ?, role_id from mes_role where role_code = ? and enabled = 1
+                on conflict (user_id, role_id) do nothing
+                """;
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, userId);
+            statement.setString(2, roleCode);
+            if (statement.executeUpdate() == 0) {
+                throw new BadRequestException("roleCode does not exist or is disabled");
+            }
         }
     }
 

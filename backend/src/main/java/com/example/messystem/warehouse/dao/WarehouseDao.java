@@ -442,7 +442,7 @@ public class WarehouseDao {
 
     public List<MesMaterialRequisition> listRequisitions() throws SQLException {
         String sql = """
-                select r.requisition_id, r.requisition_no, r.work_order_id, r.requested_by,
+                select r.requisition_id, r.requisition_no, r.work_order_id, r.warehouse_id, r.requested_by,
                        r.request_status, r.request_time, r.approved_by, r.approved_time, r.remark,
                        i.requisition_item_id, i.material_id, i.required_qty, i.issued_qty,
                        i.unit, i.batch_no, i.item_status
@@ -470,7 +470,7 @@ public class WarehouseDao {
 
     public MesMaterialRequisition findRequisition(long requisitionId) throws SQLException {
         String sql = """
-                select r.requisition_id, r.requisition_no, r.work_order_id, r.requested_by,
+                select r.requisition_id, r.requisition_no, r.work_order_id, r.warehouse_id, r.requested_by,
                        r.request_status, r.request_time, r.approved_by, r.approved_time, r.remark,
                        i.requisition_item_id, i.material_id, i.required_qty, i.issued_qty,
                        i.unit, i.batch_no, i.item_status
@@ -503,7 +503,7 @@ public class WarehouseDao {
 
     public List<MesMaterialRequisition> listRequisitionsByWorkOrder(long workOrderId) throws SQLException {
         String sql = """
-                select r.requisition_id, r.requisition_no, r.work_order_id, r.requested_by,
+                select r.requisition_id, r.requisition_no, r.work_order_id, r.warehouse_id, r.requested_by,
                        r.request_status, r.request_time, r.approved_by, r.approved_time, r.remark,
                        i.requisition_item_id, i.material_id, i.required_qty, i.issued_qty,
                        i.unit, i.batch_no, i.item_status
@@ -524,9 +524,9 @@ public class WarehouseDao {
     public MesMaterialRequisition insertRequisition(MesMaterialRequisition requisition) throws SQLException {
         String requisitionSql = """
                 insert into mes_material_requisition
-                    (requisition_no, work_order_id, requested_by, request_status, remark)
-                values (?, ?, ?, 'CREATED', ?)
-                returning requisition_id, requisition_no, work_order_id, requested_by,
+                    (requisition_no, work_order_id, warehouse_id, requested_by, request_status, remark)
+                values (?, ?, ?, ?, 'CREATED', ?)
+                returning requisition_id, requisition_no, work_order_id, warehouse_id, requested_by,
                           request_status, request_time, approved_by, approved_time, remark
                 """;
         String itemSql = """
@@ -543,8 +543,9 @@ public class WarehouseDao {
                 try (PreparedStatement statement = connection.prepareStatement(requisitionSql)) {
                     statement.setString(1, defaultCode(requisition.requisitionNo, "REQ"));
                     statement.setLong(2, requisition.workOrderId);
-                    statement.setLong(3, requisition.requestedBy == null ? 1L : requisition.requestedBy);
-                    statement.setString(4, requisition.remark);
+                    statement.setLong(3, requisition.warehouseId);
+                    statement.setLong(4, requisition.requestedBy == null ? 1L : requisition.requestedBy);
+                    statement.setString(5, requisition.remark);
                     try (ResultSet rs = statement.executeQuery()) {
                         rs.next();
                         created = mapRequisition(rs);
@@ -583,7 +584,7 @@ public class WarehouseDao {
                     approved_by = ?,
                     approved_time = current_timestamp
                 where requisition_id = ? and request_status = 'CREATED'
-                returning requisition_id, requisition_no, work_order_id, requested_by,
+                returning requisition_id, requisition_no, work_order_id, warehouse_id, requested_by,
                           request_status, request_time, approved_by, approved_time, remark
                 """;
         String pickingSql = """
@@ -607,7 +608,7 @@ public class WarehouseDao {
                         requisition = mapRequisition(rs);
                     }
                 }
-                Long warehouseId = firstWarehouseId(connection);
+                Long warehouseId = requisition.warehouseId;
                 if (warehouseId == null) {
                     throw new BadRequestException("warehouse is required before approving requisition");
                 }
@@ -635,6 +636,7 @@ public class WarehouseDao {
                 from mes_material_requisition_item i
                 left join mes_inventory inv on inv.material_id = i.material_id
                     and inv.available_qty > 0
+                    and inv.warehouse_id = (select r.warehouse_id from mes_material_requisition r where r.requisition_id = i.requisition_id)
                     and (i.batch_no is null or inv.batch_no = i.batch_no)
                 where i.requisition_id = ?
                 group by i.requisition_item_id, i.material_id, i.required_qty, i.batch_no
@@ -738,14 +740,14 @@ public class WarehouseDao {
                         task = mapPickingTask(rs);
                     }
                 }
-                Long locationId = firstLocationId(connection);
+                Long locationId = firstLocationId(connection, task.warehouseId);
                 if (locationId == null) {
                     throw new BadRequestException("warehouse location is required before completing picking");
                 }
                 try (PreparedStatement statement = connection.prepareStatement(deliverySql)) {
                     statement.setString(1, IdGenerator.nextCode("RBT"));
                     statement.setLong(2, pickingTaskId);
-                    setLong(statement, 3, firstRobotId(connection));
+                    setLong(statement, 3, firstRobotId(connection, task.warehouseId));
                     statement.setLong(4, locationId);
                     statement.executeUpdate();
                 }
@@ -762,7 +764,7 @@ public class WarehouseDao {
 
     public List<MesRobot> listRobots() throws SQLException {
         String sql = """
-                select robot_id, robot_code, robot_name, robot_status, battery_level, current_location, enabled
+                select robot_id, robot_code, robot_name, warehouse_id, robot_status, battery_level, current_location, enabled
                 from mes_robot
                 order by robot_id desc
                 """;
@@ -779,7 +781,7 @@ public class WarehouseDao {
 
     public MesRobot findRobot(long robotId) throws SQLException {
         String sql = """
-                select robot_id, robot_code, robot_name, robot_status, battery_level, current_location, enabled
+                select robot_id, robot_code, robot_name, warehouse_id, robot_status, battery_level, current_location, enabled
                 from mes_robot
                 where robot_id = ?
                 """;
@@ -789,18 +791,19 @@ public class WarehouseDao {
     public MesRobot insertRobot(MesRobot robot) throws SQLException {
         String sql = """
                 insert into mes_robot
-                    (robot_code, robot_name, robot_status, battery_level, current_location, enabled)
-                values (?, ?, ?, ?, ?, ?)
-                returning robot_id, robot_code, robot_name, robot_status, battery_level, current_location, enabled
+                    (robot_code, robot_name, warehouse_id, robot_status, battery_level, current_location, enabled)
+                values (?, ?, ?, ?, ?, ?, ?)
+                returning robot_id, robot_code, robot_name, warehouse_id, robot_status, battery_level, current_location, enabled
                 """;
         try (Connection connection = Db.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, defaultCode(robot.robotCode, "ROB"));
             statement.setString(2, robot.robotName);
-            statement.setString(3, defaultText(robot.robotStatus, "IDLE"));
-            statement.setBigDecimal(4, robot.batteryLevel);
-            statement.setString(5, robot.currentLocation);
-            statement.setInt(6, robot.enabled == null ? 1 : robot.enabled);
+            setLong(statement, 3, robot.warehouseId);
+            statement.setString(4, defaultText(robot.robotStatus, "IDLE"));
+            statement.setBigDecimal(5, robot.batteryLevel);
+            statement.setString(6, robot.currentLocation);
+            statement.setInt(7, robot.enabled == null ? 1 : robot.enabled);
             try (ResultSet rs = statement.executeQuery()) {
                 rs.next();
                 return mapRobot(rs);
@@ -813,23 +816,25 @@ public class WarehouseDao {
                 update mes_robot
                 set robot_code = ?,
                     robot_name = ?,
+                    warehouse_id = ?,
                     robot_status = ?,
                     battery_level = ?,
                     current_location = ?,
                     enabled = ?
                 where robot_id = ?
-                returning robot_id, robot_code, robot_name, robot_status, battery_level, current_location, enabled
+                returning robot_id, robot_code, robot_name, warehouse_id, robot_status, battery_level, current_location, enabled
                 """;
         try (Connection connection = Db.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             MesRobot current = findRobot(robotId);
             statement.setString(1, defaultText(robot.robotCode, current.robotCode));
             statement.setString(2, defaultText(robot.robotName, current.robotName));
-            statement.setString(3, defaultText(robot.robotStatus, current.robotStatus));
-            statement.setBigDecimal(4, robot.batteryLevel == null ? current.batteryLevel : robot.batteryLevel);
-            statement.setString(5, robot.currentLocation == null ? current.currentLocation : robot.currentLocation);
-            statement.setInt(6, robot.enabled == null ? current.enabled : robot.enabled);
-            statement.setLong(7, robotId);
+            setLong(statement, 3, robot.warehouseId == null ? current.warehouseId : robot.warehouseId);
+            statement.setString(4, defaultText(robot.robotStatus, current.robotStatus));
+            statement.setBigDecimal(5, robot.batteryLevel == null ? current.batteryLevel : robot.batteryLevel);
+            statement.setString(6, robot.currentLocation == null ? current.currentLocation : robot.currentLocation);
+            statement.setInt(7, robot.enabled == null ? current.enabled : robot.enabled);
+            statement.setLong(8, robotId);
             try (ResultSet rs = statement.executeQuery()) {
                 if (!rs.next()) {
                     throw new NotFoundException("robot not found");
@@ -1153,12 +1158,24 @@ public class WarehouseDao {
         return firstId(connection, "select warehouse_id from mes_warehouse order by warehouse_id limit 1");
     }
 
-    private Long firstLocationId(Connection connection) throws SQLException {
-        return firstId(connection, "select location_id from mes_warehouse_location order by location_id limit 1");
+    private Long firstLocationId(Connection connection, long warehouseId) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(
+                "select location_id from mes_warehouse_location where warehouse_id = ? order by location_id limit 1")) {
+            statement.setLong(1, warehouseId);
+            try (ResultSet rs = statement.executeQuery()) {
+                return rs.next() ? rs.getLong(1) : null;
+            }
+        }
     }
 
-    private Long firstRobotId(Connection connection) throws SQLException {
-        return firstId(connection, "select robot_id from mes_robot where enabled = 1 order by robot_id limit 1");
+    private Long firstRobotId(Connection connection, long warehouseId) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(
+                "select robot_id from mes_robot where enabled = 1 and warehouse_id = ? order by robot_id limit 1")) {
+            statement.setLong(1, warehouseId);
+            try (ResultSet rs = statement.executeQuery()) {
+                return rs.next() ? rs.getLong(1) : null;
+            }
+        }
     }
 
     private Long firstId(Connection connection, String sql) throws SQLException {
@@ -1275,6 +1292,7 @@ public class WarehouseDao {
         item.requisitionId = rs.getLong("requisition_id");
         item.requisitionNo = rs.getString("requisition_no");
         item.workOrderId = rs.getLong("work_order_id");
+        item.warehouseId = getLong(rs, "warehouse_id");
         item.requestedBy = rs.getLong("requested_by");
         item.requestStatus = rs.getString("request_status");
         item.requestTime = getLocalDateTime(rs, "request_time");
@@ -1323,6 +1341,7 @@ public class WarehouseDao {
         item.robotId = rs.getLong("robot_id");
         item.robotCode = rs.getString("robot_code");
         item.robotName = rs.getString("robot_name");
+        item.warehouseId = getLong(rs, "warehouse_id");
         item.robotStatus = rs.getString("robot_status");
         item.batteryLevel = rs.getBigDecimal("battery_level");
         item.currentLocation = rs.getString("current_location");

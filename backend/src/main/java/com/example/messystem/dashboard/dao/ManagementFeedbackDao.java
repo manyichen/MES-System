@@ -13,7 +13,7 @@ import java.util.Optional;
 
 public class ManagementFeedbackDao {
 
-    public long insert(MesManagementFeedback feedback) throws SQLException {
+    public long insert(MesManagementFeedback feedback, long createdBy) throws SQLException {
         String sql = "INSERT INTO mes_management_feedback (feedback_no, feedback_type, related_doc_type, related_doc_id, feedback_content, decision_action, feedback_status, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = Db.getConnection(); PreparedStatement ps = conn.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, feedback.feedbackNo());
@@ -23,7 +23,7 @@ public class ManagementFeedbackDao {
             ps.setString(5, feedback.feedbackContent());
             ps.setString(6, "");
             ps.setString(7, feedback.feedbackStatus());
-            ps.setLong(8, 1L);
+            ps.setLong(8, createdBy);
             ps.setObject(9, feedback.createdAt());
             ps.executeUpdate();
             try (ResultSet rs = ps.getGeneratedKeys()) {
@@ -58,6 +58,30 @@ public class ManagementFeedbackDao {
                     results.add(mapRow(rs));
                 }
                 return results;
+            }
+        }
+    }
+
+    public List<MesManagementFeedback> findByWorkOrderIdAndCreator(long workOrderId, long createdBy) throws SQLException {
+        String sql = "SELECT feedback_id, feedback_no, related_doc_id AS work_order_id, feedback_type, feedback_content, feedback_status, created_at FROM mes_management_feedback WHERE related_doc_type = 'WORK_ORDER' AND related_doc_id = ? AND created_by = ?";
+        try (Connection conn = Db.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, workOrderId);
+            ps.setLong(2, createdBy);
+            try (ResultSet rs = ps.executeQuery()) {
+                List<MesManagementFeedback> results = new ArrayList<>();
+                while (rs.next()) results.add(mapRow(rs));
+                return results;
+            }
+        }
+    }
+
+    public Optional<MesManagementFeedback> findByIdAndCreator(long id, long createdBy) throws SQLException {
+        String sql = "SELECT feedback_id, feedback_no, related_doc_id AS work_order_id, feedback_type, feedback_content, feedback_status, created_at FROM mes_management_feedback WHERE feedback_id = ? AND created_by = ?";
+        try (Connection conn = Db.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, id);
+            ps.setLong(2, createdBy);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? Optional.of(mapRow(rs)) : Optional.empty();
             }
         }
     }

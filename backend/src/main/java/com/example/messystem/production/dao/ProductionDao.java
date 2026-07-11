@@ -37,6 +37,23 @@ public class ProductionDao {
         }
     }
 
+    public List<MesWorkReport> listWorkReportsByOperator(long operatorId) throws SQLException {
+        String sql = """
+                select report_id, report_no, work_order_id, batch_no, operator_id, report_qty,
+                       qualified_qty, defect_qty, work_hours, report_time, report_status
+                from mes_work_report where operator_id = ? order by report_id desc
+                """;
+        try (Connection connection = Db.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, operatorId);
+            try (ResultSet rs = statement.executeQuery()) {
+                List<MesWorkReport> rows = new ArrayList<>();
+                while (rs.next()) rows.add(mapWorkReport(rs));
+                return rows;
+            }
+        }
+    }
+
     public MesWorkReport insertWorkReport(MesWorkReport report) throws SQLException {
         String sql = """
                 insert into mes_work_report
@@ -227,6 +244,82 @@ public class ProductionDao {
         }
     }
 
+    public List<MesWorkReport> listWorkReportsByWorkOrderAndOperator(long workOrderId, long operatorId) throws SQLException {
+        String sql = """
+                select report_id, report_no, work_order_id, batch_no, operator_id, report_qty,
+                       qualified_qty, defect_qty, work_hours, report_time, report_status
+                from mes_work_report where work_order_id = ? and operator_id = ? order by report_id desc
+                """;
+        try (Connection connection = Db.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, workOrderId);
+            statement.setLong(2, operatorId);
+            try (ResultSet rs = statement.executeQuery()) {
+                List<MesWorkReport> rows = new ArrayList<>();
+                while (rs.next()) rows.add(mapWorkReport(rs));
+                return rows;
+            }
+        }
+    }
+
+    public List<MesPieceworkWage> listWagesByOperator(long operatorId) throws SQLException {
+        String sql = """
+                select wage_id, report_id, operator_id, piece_rate, qualified_qty,
+                       wage_amount, settlement_status, created_at
+                from mes_piecework_wage where operator_id = ? order by wage_id desc
+                """;
+        try (Connection connection = Db.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, operatorId);
+            try (ResultSet rs = statement.executeQuery()) {
+                List<MesPieceworkWage> rows = new ArrayList<>();
+                while (rs.next()) rows.add(mapWage(rs));
+                return rows;
+            }
+        }
+    }
+
+    public java.util.Map<String, Object> wageSummary() throws SQLException {
+        String sql = "select count(*) record_count, count(distinct operator_id) operator_count, coalesce(sum(qualified_qty),0) qualified_qty, coalesce(sum(wage_amount),0) wage_amount from mes_piecework_wage";
+        try (Connection connection = Db.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet rs = statement.executeQuery()) {
+            rs.next();
+            java.util.Map<String, Object> result = new java.util.LinkedHashMap<>();
+            result.put("recordCount", rs.getLong("record_count"));
+            result.put("operatorCount", rs.getLong("operator_count"));
+            result.put("qualifiedQty", rs.getLong("qualified_qty"));
+            result.put("wageAmount", rs.getBigDecimal("wage_amount"));
+            return result;
+        }
+    }
+
+    public java.util.Map<String, Object> wageSummaryForWorkshop(long userId) throws SQLException {
+        String sql = """
+                select count(*) record_count, count(distinct w.operator_id) operator_count,
+                       coalesce(sum(w.qualified_qty),0) qualified_qty,
+                       coalesce(sum(w.wage_amount),0) wage_amount
+                from mes_piecework_wage w
+                join mes_work_report r on r.report_id = w.report_id
+                join mes_work_order wo on wo.work_order_id = r.work_order_id
+                join mes_user_line_scope s on s.line_id = wo.line_id
+                where s.user_id = ?
+                """;
+        try (Connection connection = Db.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, userId);
+            try (ResultSet rs = statement.executeQuery()) {
+                rs.next();
+                java.util.Map<String, Object> result = new java.util.LinkedHashMap<>();
+                result.put("recordCount", rs.getLong("record_count"));
+                result.put("operatorCount", rs.getLong("operator_count"));
+                result.put("qualifiedQty", rs.getLong("qualified_qty"));
+                result.put("wageAmount", rs.getBigDecimal("wage_amount"));
+                return result;
+            }
+        }
+    }
+
     public MesPieceworkWage findWage(long wageId) throws SQLException {
         String sql = """
                 select wage_id, report_id, operator_id, piece_rate, qualified_qty,
@@ -262,6 +355,24 @@ public class ProductionDao {
                 while (rs.next()) {
                     rows.add(mapWage(rs));
                 }
+                return rows;
+            }
+        }
+    }
+
+    public List<MesPieceworkWage> listWagesByReportAndOperator(long reportId, long operatorId) throws SQLException {
+        String sql = """
+                select wage_id, report_id, operator_id, piece_rate, qualified_qty,
+                       wage_amount, settlement_status, created_at
+                from mes_piecework_wage where report_id = ? and operator_id = ? order by wage_id desc
+                """;
+        try (Connection connection = Db.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, reportId);
+            statement.setLong(2, operatorId);
+            try (ResultSet rs = statement.executeQuery()) {
+                List<MesPieceworkWage> rows = new ArrayList<>();
+                while (rs.next()) rows.add(mapWage(rs));
                 return rows;
             }
         }

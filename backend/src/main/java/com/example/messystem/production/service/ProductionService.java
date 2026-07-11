@@ -14,6 +14,10 @@ public class ProductionService {
         return database(dao::listWorkReports);
     }
 
+    public List<MesWorkReport> listWorkReportsByOperator(long operatorId) {
+        return database(() -> dao.listWorkReportsByOperator(operatorId));
+    }
+
     public MesWorkReport createWorkReport(MesWorkReport report) {
         if (report.workOrderId == null || report.workOrderId <= 0) {
             throw new BadRequestException("workOrderId is required");
@@ -65,6 +69,22 @@ public class ProductionService {
         return database(dao::listWages);
     }
 
+    public List<MesWorkReport> listWorkReportsByWorkOrderAndOperator(long workOrderId, long operatorId) {
+        return database(() -> dao.listWorkReportsByWorkOrderAndOperator(workOrderId, operatorId));
+    }
+
+    public List<MesPieceworkWage> listWagesByOperator(long operatorId) {
+        return database(() -> dao.listWagesByOperator(operatorId));
+    }
+
+    public java.util.Map<String, Object> wageSummary() {
+        return database(dao::wageSummary);
+    }
+
+    public java.util.Map<String, Object> wageSummaryForWorkshop(long userId) {
+        return database(() -> dao.wageSummaryForWorkshop(userId));
+    }
+
     public MesPieceworkWage getWage(long wageId) {
         return database(() -> dao.findWage(wageId));
     }
@@ -74,6 +94,10 @@ public class ProductionService {
             throw new BadRequestException("workReportId is required");
         }
         return database(() -> dao.listWagesByReport(reportId));
+    }
+
+    public List<MesPieceworkWage> listWagesByReportAndOperator(long reportId, long operatorId) {
+        return database(() -> dao.listWagesByReportAndOperator(reportId, operatorId));
     }
 
     private static <T> T database(SqlCall<T> call) {

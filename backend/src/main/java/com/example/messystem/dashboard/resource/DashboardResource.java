@@ -2,11 +2,16 @@ package com.example.messystem.dashboard.resource;
 
 import com.example.messystem.common.ApiResponse;
 import com.example.messystem.common.BadRequestException;
+import com.example.messystem.auth.AuthFilter;
 import com.example.messystem.dashboard.entity.MesDashboardMetric;
+import com.example.messystem.dashboard.entity.RoleDashboard;
 import com.example.messystem.dashboard.service.DashboardService;
+import com.example.messystem.dashboard.service.RoleDashboardService;
 
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.core.Context;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -16,6 +21,13 @@ import java.util.List;
 public class DashboardResource {
 
     private final DashboardService service = new DashboardService();
+    private final RoleDashboardService roleDashboardService = new RoleDashboardService();
+
+    @GET
+    @Path("/my-summary")
+    public ApiResponse<RoleDashboard> mySummary(@Context ContainerRequestContext context) {
+        return ApiResponse.ok(roleDashboardService.build(AuthFilter.currentUser(context)));
+    }
 
     @GET
     @Path("/metrics")

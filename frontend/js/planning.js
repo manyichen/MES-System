@@ -2,8 +2,8 @@ let lastWorkOrderId = null;
 
 async function refreshPlanning() {
     const [orders, tasks, workOrders] = await Promise.all([
-        getJson("/orders"),
-        getJson("/production-tasks"),
+        hasPermission("planning.read") ? getJson("/orders") : Promise.resolve([]),
+        hasPermission("planning.read") ? getJson("/production-tasks") : Promise.resolve([]),
         getJson("/work-orders")
     ]);
     renderTable("orderTable", orders, [
@@ -22,8 +22,7 @@ async function refreshPlanning() {
         { title: "齐套", key: "kittingStatus" },
         { title: "状态", key: "taskStatus" },
         { title: "操作", render: row => `
-            <button onclick="analyzeTask(${row.taskId})">齐套</button>
-            <button onclick="releaseTask(${row.taskId})">发布</button>` }
+            ${hasPermission("planning.task.release") ? `<button onclick="analyzeTask(${row.taskId})">齐套</button><button onclick="releaseTask(${row.taskId})">发布</button>` : ""}` }
     ]);
     renderTable("workOrderTable", workOrders, [
         { title: "ID", key: "workOrderId" },
@@ -33,8 +32,8 @@ async function refreshPlanning() {
         { title: "工序", key: "processId" },
         { title: "状态", key: "workOrderStatus" },
         { title: "操作", render: row => `
-            <button onclick="dispatchWorkOrder(${row.workOrderId})">派发</button>
-            <button onclick="receiveWorkOrder(${row.workOrderId})">接收</button>
+            ${hasPermission("planning.work_order.dispatch") ? `<button onclick="dispatchWorkOrder(${row.workOrderId})">派发</button>` : ""}
+            ${hasPermission("planning.work_order.receive") ? `<button onclick="receiveWorkOrder(${row.workOrderId})">接收</button>` : ""}
             <button onclick="loadWorkOrderLogs(${row.workOrderId})">日志</button>` }
     ]);
     if (workOrders.length) {
@@ -48,7 +47,8 @@ async function seedPlanning() {
         const user = await postJson("/users", {
             username: "planner_a",
             realName: "A同学",
-            roleCode: "PMC_PLANNER"
+            roleCode: "PMC_PLANNER",
+            password: "Planner@123456"
         });
         const material = await postJson("/materials", {
             materialName: "天然橡胶",
@@ -133,7 +133,9 @@ async function releaseTask(id) {
 
 async function dispatchWorkOrder(id) {
     try {
-        await postJson(`/work-orders/${id}/dispatch?operatorId=1`);
+        const operatorId = window.prompt("请输入接单操作工的用户 ID");
+        if (!operatorId) return;
+        await postJson(`/work-orders/${id}/dispatch?operatorId=${encodeURIComponent(operatorId)}`);
         showMessage("生产工单已派发");
         await refreshPlanning();
     } catch (error) {
@@ -143,7 +145,7 @@ async function dispatchWorkOrder(id) {
 
 async function receiveWorkOrder(id) {
     try {
-        await postJson(`/work-orders/${id}/receive?operatorId=2`);
+        await postJson(`/work-orders/${id}/receive`);
         showMessage("生产工单已接收");
         await refreshPlanning();
     } catch (error) {
@@ -216,5 +218,3 @@ document.getElementById("workOrderForm").addEventListener("submit", async event 
         showMessage(error.message, "error");
     }
 });
-
-refreshPlanning().catch(() => {});

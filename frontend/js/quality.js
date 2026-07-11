@@ -10,8 +10,10 @@ async function loadQuality() {
             { key: "inspectionStatus", label: "状态" },
             { key: "judgementResult", label: "判定" }
         ], [
-            { name: "judge-pass", label: "判定通过", idKey: "inspectionId", handler: id => judgeInspection(id, "PASS") },
-            { name: "judge-rework", label: "返工", idKey: "inspectionId", handler: id => judgeInspection(id, "REWORK") }
+            { name: "assign-inspection", label: "分配", idKey: "inspectionId", permission: "quality.inspection.assign", handler: assignInspection },
+            { name: "submit-inspection", label: "提交审核", idKey: "inspectionId", permission: "quality.inspect", handler: submitInspection },
+            { name: "judge-pass", label: "审核通过", idKey: "inspectionId", permission: "quality.review", handler: id => judgeInspection(id, "PASS") },
+            { name: "judge-rework", label: "退回返工", idKey: "inspectionId", permission: "quality.review", handler: id => judgeInspection(id, "REWORK") }
         ]);
 
         const reworks = await getJson("/rework-orders").catch(() => []);
@@ -22,12 +24,28 @@ async function loadQuality() {
             { key: "reworkReason", label: "原因" },
             { key: "reworkStatus", label: "状态" }
         ], [
-            { name: "dispatch-rework", label: "派发", idKey: "reworkOrderId", handler: dispatchRework },
-            { name: "finish-rework", label: "完成", idKey: "reworkOrderId", handler: finishRework }
+            { name: "dispatch-rework", label: "派发", idKey: "reworkOrderId", permission: "quality.rework.manage", handler: dispatchRework },
+            { name: "finish-rework", label: "完成", idKey: "reworkOrderId", permission: "quality.rework.manage", handler: finishRework }
         ]);
     } catch (error) {
         showMessage(error.message, "error");
     }
+}
+
+async function assignInspection(id) {
+    const inspectorId = window.prompt("请输入质检员的用户 ID");
+    if (!inspectorId) return;
+    await postJson(`/quality-inspections/${id}/assign?inspectorId=${encodeURIComponent(inspectorId)}`);
+    showMessage("质检任务已分配");
+    await loadQuality();
+    await loadDashboard();
+}
+
+async function submitInspection(id) {
+    await postJson(`/quality-inspections/${id}/submit`);
+    showMessage("检验结果已提交质量主管审核");
+    await loadQuality();
+    await loadDashboard();
 }
 
 async function judgeInspection(id, result) {
@@ -59,6 +77,7 @@ function bindQualityEvents() {
         event.preventDefault();
         const payload = {
             ...formToObject(event.target),
+            inspectionStatus: "CREATED",
             inspectionTime: nowIsoLocal(),
             judgementResult: null
         };
