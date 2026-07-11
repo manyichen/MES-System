@@ -6,6 +6,7 @@ async function refreshPlanning() {
         hasPermission("planning.read") ? getJson("/production-tasks") : Promise.resolve([]),
         getJson("/work-orders")
     ]);
+
     renderTable("orderTable", orders, [
         { title: "ID", key: "orderId" },
         { title: "编号", key: "orderNo" },
@@ -14,6 +15,7 @@ async function refreshPlanning() {
         { title: "数量", key: "orderQty" },
         { title: "状态", key: "orderStatus" }
     ]);
+
     renderTable("taskTable", tasks, [
         { title: "ID", key: "taskId" },
         { title: "编号", key: "taskNo" },
@@ -24,6 +26,7 @@ async function refreshPlanning() {
         { title: "操作", render: row => `
             ${hasPermission("planning.task.release") ? `<button onclick="analyzeTask(${row.taskId})">齐套</button><button onclick="releaseTask(${row.taskId})">发布</button>` : ""}` }
     ]);
+
     renderTable("workOrderTable", workOrders, [
         { title: "ID", key: "workOrderId" },
         { title: "编号", key: "workOrderNo" },
@@ -36,6 +39,7 @@ async function refreshPlanning() {
             ${hasPermission("planning.work_order.receive") ? `<button onclick="receiveWorkOrder(${row.workOrderId})">接收</button>` : ""}
             <button onclick="loadWorkOrderLogs(${row.workOrderId})">日志</button>` }
     ]);
+
     if (workOrders.length) {
         lastWorkOrderId = workOrders[workOrders.length - 1].workOrderId;
         await loadWorkOrderLogs(lastWorkOrderId, false);
@@ -44,45 +48,24 @@ async function refreshPlanning() {
 
 async function seedPlanning() {
     try {
-        const user = await postJson("/users", {
-            username: "planner_a",
-            realName: "A同学",
-            roleCode: "PMC_PLANNER",
-            password: "Planner@123456"
-        });
-        const material = await postJson("/materials", {
-            materialName: "天然橡胶",
-            materialType: "RAW",
-            specification: "RSS3",
-            unit: "kg"
-        });
-        const product = await postJson("/products", {
-            productName: "半钢子午线轮胎",
-            productModel: "205/55R16",
-            unit: "条"
-        });
-        await postJson(`/products/${product.productId}/bom`, {
-            materialId: material.materialId,
-            materialName: material.materialName,
-            qtyPerUnit: 2.5,
-            unit: "kg"
-        });
-        const line = await postJson("/production-lines", {
-            lineName: "成型一线",
-            lineType: "BUILDING",
-            capacityPerDay: 800
-        });
-        const route = await postJson("/process-routes", {
-            productId: product.productId,
-            processName: "成型",
-            processSeq: 1,
-            workCenter: "成型车间"
-        });
-        await postJson("/inventory", {
-            materialId: material.materialId,
-            availableQty: 500,
-            qualityStatus: "PASS"
-        });
+        const [products, lines, routes] = await Promise.all([
+            getJson("/products"),
+            getJson("/production-lines"),
+            getJson("/process-routes")
+        ]);
+        if (!products.length) {
+            throw new Error("请先维护产品主数据");
+        }
+        if (!lines.length) {
+            throw new Error("请先维护产线主数据");
+        }
+        if (!routes.length) {
+            throw new Error("请先维护工艺路线");
+        }
+
+        const product = products[0];
+        const line = lines[0];
+        const route = routes.find(item => item.productId === product.productId) || routes[0];
         const order = await postJson("/orders", {
             customerName: "双星演示客户",
             productId: product.productId,
@@ -91,7 +74,7 @@ async function seedPlanning() {
         });
         const task = await postJson("/production-tasks", {
             orderId: order.orderId,
-            plannerId: user.userId,
+            plannerId: 1,
             planQty: 100,
             targetLineId: line.lineId
         });

@@ -35,6 +35,7 @@ public class UserService {
     }
 
     public MesUser createUser(MesUser user) {
+        requireUser(user);
         requireText(user.username, "username is required");
         requireText(user.password, "password is required");
         String roleCode = defaultText(user.roleCode, "PRODUCTION_OPERATOR");
@@ -154,6 +155,12 @@ public class UserService {
 
     private static String defaultText(String value, String fallback) {
         return value == null || value.isBlank() ? fallback : value;
+    }
+
+    private static void requireUser(MesUser user) {
+        if (user == null) {
+            throw new BadRequestException("user is required");
+        }
     }
 
     private static void requireText(String value, String message) {
