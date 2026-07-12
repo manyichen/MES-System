@@ -17,7 +17,7 @@ public final class PasswordHasher {
 
     public static String hash(String password) {
         if (password == null || password.isBlank()) {
-            throw new BadRequestException("password is required");
+            throw new BadRequestException("密码不能为空");
         }
         byte[] salt = new byte[16];
         RANDOM.nextBytes(salt);

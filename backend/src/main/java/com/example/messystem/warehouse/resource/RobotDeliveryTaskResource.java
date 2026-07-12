@@ -43,7 +43,7 @@ public class RobotDeliveryTaskResource {
         try {
             dataScopeService.snapshot(AuthFilter.currentUser(context))
                     .requireWarehouseEntity("picking", task.pickingTaskId);
-            return ResourceSupport.created("delivery task created", service.createDeliveryTask(task));
+            return ResourceSupport.created("配送任务已创建", service.createDeliveryTask(task));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }
@@ -53,7 +53,7 @@ public class RobotDeliveryTaskResource {
     @Path("/{id}/arrive")
     public Response arrive(@PathParam("id") long id) {
         try {
-            return ResourceSupport.action("delivery arrived", service.markDeliveryArrived(id));
+            return ResourceSupport.action("配送任务已到达", service.markDeliveryArrived(id));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }
@@ -63,7 +63,7 @@ public class RobotDeliveryTaskResource {
     @Path("/{id}/confirm-receipt")
     public Response confirmReceipt(@PathParam("id") long id) {
         try {
-            return ResourceSupport.action("materials received", service.confirmDeliveryReceipt(id));
+            return ResourceSupport.action("物料已确认接收", service.confirmDeliveryReceipt(id));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }

@@ -57,7 +57,7 @@ public class MaterialRequisitionResource {
     public Response create(MesMaterialRequisition requisition, @Context ContainerRequestContext context) {
         try {
             if (requisition.warehouseId == null || requisition.warehouseId <= 0) {
-                throw new BadRequestException("warehouseId is required");
+                throw new BadRequestException("仓库ID不能为空");
             }
             var user = AuthFilter.currentUser(context);
             dataScopeService.snapshot(user).requireWorkOrder(requisition.workOrderId);
@@ -65,7 +65,7 @@ public class MaterialRequisitionResource {
                 requireOperatorWorkOrder(requisition.workOrderId, user.user.userId);
             }
             requisition.requestedBy = user.user.userId;
-            return ResourceSupport.created("requisition created", service.createRequisition(requisition));
+            return ResourceSupport.created("领料单已创建", service.createRequisition(requisition));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }
@@ -75,7 +75,7 @@ public class MaterialRequisitionResource {
     @Path("/{id}/approve")
     public Response approve(@PathParam("id") long id, @Context ContainerRequestContext context) {
         try {
-            return ResourceSupport.action("requisition approved",
+            return ResourceSupport.action("领料单已审核通过",
                     service.approveRequisition(id, AuthFilter.currentUser(context).user.userId));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);

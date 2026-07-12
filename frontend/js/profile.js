@@ -29,7 +29,7 @@ function renderProfile(profile) {
     text("profile-department", profile.department || "未设置");
     text("profile-position-name", profile.positionName || "未设置");
     text("profile-last-login", formatProfileTime(profile.lastLoginAt));
-    document.getElementById("profile-role-list").innerHTML = roles.map(role => `<span>${escapeHtml(role)}</span>`).join("");
+    document.getElementById("profile-role-list").innerHTML = roles.map(role => `<span>${escapeHtml(displayText(role))}</span>`).join("");
     renderProfileAvatar(profile.avatarUrl, profile.realName || profile.username);
     updateProfileBioCount();
 }

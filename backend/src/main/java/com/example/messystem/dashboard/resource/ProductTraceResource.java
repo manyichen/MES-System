@@ -52,7 +52,7 @@ public class ProductTraceResource {
     public ApiResponse<Long> createTrace(MesProductTrace trace) {
         try {
             if (trace == null) {
-                throw new BadRequestException("Product trace body is required");
+                throw new BadRequestException("产品追溯信息不能为空");
             }
             return ApiResponse.ok(service.createProductTrace(trace));
         } catch (SQLException e) {

@@ -44,7 +44,7 @@ public class WarehouseLocationResource {
     public Response create(MesWarehouseLocation location, @Context ContainerRequestContext context) {
         try {
             dataScopeService.snapshot(AuthFilter.currentUser(context)).requireWarehouse(location.warehouseId);
-            return ResourceSupport.created("location created", service.createLocation(location));
+            return ResourceSupport.created("库位已创建", service.createLocation(location));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }
@@ -58,7 +58,7 @@ public class WarehouseLocationResource {
             if (location.warehouseId != null) {
                 dataScopeService.snapshot(AuthFilter.currentUser(context)).requireWarehouse(location.warehouseId);
             }
-            return ResourceSupport.action("location updated", service.updateLocation(id, location));
+            return ResourceSupport.action("库位已更新", service.updateLocation(id, location));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }
@@ -69,7 +69,7 @@ public class WarehouseLocationResource {
     public Response delete(@PathParam("id") long id) {
         try {
             service.deleteLocation(id);
-            return ResourceSupport.action("location deleted", null);
+            return ResourceSupport.action("库位已删除", null);
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }

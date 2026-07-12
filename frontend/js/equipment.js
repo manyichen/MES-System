@@ -47,7 +47,7 @@ async function loadEquipment() {
 
 async function updateEquipmentStatus(id, status) {
     await postJson(`/equipment/${id}/status`, { status });
-    showMessage(`设备状态已更新为 ${status}`);
+    showMessage(`设备状态已更新为“${displayText(status)}”`);
     loadEquipment();
     loadDashboard();
 }

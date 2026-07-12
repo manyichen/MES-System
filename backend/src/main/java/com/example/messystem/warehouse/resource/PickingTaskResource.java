@@ -42,7 +42,7 @@ public class PickingTaskResource {
     public Response create(MesPickingTask task, @Context ContainerRequestContext context) {
         try {
             dataScopeService.snapshot(AuthFilter.currentUser(context)).requireWarehouse(task.warehouseId);
-            return ResourceSupport.created("picking task created", service.createPickingTask(task));
+            return ResourceSupport.created("拣货任务已创建", service.createPickingTask(task));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }
@@ -52,7 +52,7 @@ public class PickingTaskResource {
     @Path("/{id}/complete")
     public Response complete(@PathParam("id") long id) {
         try {
-            return ResourceSupport.action("picking completed", service.completePicking(id));
+            return ResourceSupport.action("拣货任务已完成", service.completePicking(id));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }

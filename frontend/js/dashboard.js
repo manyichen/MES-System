@@ -114,7 +114,7 @@ function bindDashboardEvents() {
         const traceCode = event.target.traceCode.value.trim();
         if (!traceCode) return;
         const trace = await getJson(`/product-traces/${encodeURIComponent(traceCode)}`);
-        document.getElementById("trace-detail").innerHTML = `<div class="detail"><strong>${escapeHtml(trace.traceCode)}</strong><div>订单：${escapeHtml(trace.orderId)}，任务：${escapeHtml(trace.taskId)}，工单：${escapeHtml(trace.workOrderId)}</div><div>批次：${escapeHtml(trace.batchNo)}，状态：${escapeHtml(trace.traceStatus)}</div></div>`;
+        document.getElementById("trace-detail").innerHTML = `<div class="detail"><strong>${escapeHtml(trace.traceCode)}</strong><div>订单：${escapeHtml(trace.orderId)}，任务：${escapeHtml(trace.taskId)}，工单：${escapeHtml(trace.workOrderId)}</div><div>批次：${escapeHtml(trace.batchNo)}，状态：${escapeHtml(displayText(trace.traceStatus))}</div></div>`;
     });
     document.getElementById("feedback-filter-form")?.addEventListener("submit", event => {
         event.preventDefault(); loadFeedback(event.target.workOrderId.value || 1);

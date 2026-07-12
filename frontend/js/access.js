@@ -32,7 +32,7 @@ async function loadAccessManagement() {
 function renderPermissionApplyRoleOptions(roles) {
     const select = document.getElementById("permission-apply-role");
     if (!select) return;
-    select.innerHTML = roles.map(role => `<option value="${escapeHtml(role.roleCode)}">${escapeHtml(role.roleName)} (${escapeHtml(role.roleCode)})</option>`).join("");
+    select.innerHTML = roles.map(role => `<option value="${escapeHtml(role.roleCode)}">${escapeHtml(role.roleName || displayText(role.roleCode))}</option>`).join("");
 }
 
 function renderPermissionApplications(rows) {
@@ -66,7 +66,7 @@ async function applyPermissionApplication(id) {
 function renderUserRoleTable(users, roles) {
     const container = document.getElementById("user-table");
     if (!container) return;
-    const roleOptions = roles.map(role => `<option value="${escapeHtml(role.roleCode)}">${escapeHtml(role.roleName)} (${escapeHtml(role.roleCode)})</option>`).join("");
+    const roleOptions = roles.map(role => `<option value="${escapeHtml(role.roleCode)}">${escapeHtml(role.roleName || displayText(role.roleCode))}</option>`).join("");
     const canUpdate = hasPermission("user.update_role");
     const canScope = hasPermission("data_scope.manage");
     container.innerHTML = `
@@ -78,7 +78,7 @@ function renderUserRoleTable(users, roles) {
                     <td>${escapeHtml(user.username)}</td>
                     <td>${escapeHtml(user.realName)}</td>
                     <td>${escapeHtml(user.department || "")}</td>
-                    <td>${escapeHtml(user.roleCode)}</td>
+                    <td>${escapeHtml(displayText(user.roleCode))}</td>
                     <td>${user.enabled === 1 ? "启用" : "停用"}</td>
                     ${canUpdate ? `<td><div class="role-editor"><select data-role-user="${escapeHtml(user.userId)}">${roleOptions}</select><button type="button" data-save-role="${escapeHtml(user.userId)}">保存</button></div></td>` : ""}
                     ${canScope ? `<td><button type="button" data-edit-scope="${escapeHtml(user.userId)}">分配产线/仓库</button></td>` : ""}

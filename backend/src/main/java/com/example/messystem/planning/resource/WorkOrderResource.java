@@ -35,7 +35,7 @@ public class WorkOrderResource {
     public Response create(MesWorkOrder workOrder, @Context ContainerRequestContext context) {
         try {
             Long actorId = AuthFilter.currentUser(context).user.userId;
-            return ResourceSupport.created("work order created", service.createWorkOrder(workOrder, actorId));
+            return ResourceSupport.created("生产工单已创建", service.createWorkOrder(workOrder, actorId));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }
@@ -60,7 +60,7 @@ public class WorkOrderResource {
             @Context ContainerRequestContext context) {
         try {
             Long actorId = AuthFilter.currentUser(context).user.userId;
-            return ResourceSupport.action("work order dispatched", service.dispatch(id, operatorId, actorId));
+            return ResourceSupport.action("生产工单已派发", service.dispatch(id, operatorId, actorId));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }
@@ -70,7 +70,7 @@ public class WorkOrderResource {
     @Path("/{id}/receive")
     public Response receive(@PathParam("id") long id, @Context ContainerRequestContext context) {
         try {
-            return ResourceSupport.action("work order received",
+            return ResourceSupport.action("生产工单已接收",
                     service.receive(id, AuthFilter.currentUser(context).user.userId));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);

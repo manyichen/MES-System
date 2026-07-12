@@ -44,7 +44,7 @@ public class RobotResource {
     public Response create(MesRobot robot, @Context ContainerRequestContext context) {
         try {
             dataScopeService.snapshot(AuthFilter.currentUser(context)).requireWarehouse(robot.warehouseId);
-            return ResourceSupport.created("robot created", service.createRobot(robot));
+            return ResourceSupport.created("仓储机器人已创建", service.createRobot(robot));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }
@@ -58,7 +58,7 @@ public class RobotResource {
             if (robot.warehouseId != null) {
                 dataScopeService.snapshot(AuthFilter.currentUser(context)).requireWarehouse(robot.warehouseId);
             }
-            return ResourceSupport.action("robot updated", service.updateRobot(id, robot));
+            return ResourceSupport.action("仓储机器人已更新", service.updateRobot(id, robot));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }
@@ -69,7 +69,7 @@ public class RobotResource {
     public Response delete(@PathParam("id") long id) {
         try {
             service.deleteRobot(id);
-            return ResourceSupport.action("robot deleted", null);
+            return ResourceSupport.action("仓储机器人已删除", null);
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }

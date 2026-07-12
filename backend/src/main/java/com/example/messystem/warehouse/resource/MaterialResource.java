@@ -38,7 +38,7 @@ public class MaterialResource {
     @POST
     public Response create(MesMaterial material) {
         try {
-            return ResourceSupport.created("material created", service.createMaterial(material));
+            return ResourceSupport.created("物料已创建", service.createMaterial(material));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }
@@ -48,7 +48,7 @@ public class MaterialResource {
     @Path("/{id}")
     public Response update(@PathParam("id") long id, MesMaterial material) {
         try {
-            return ResourceSupport.action("material updated", service.updateMaterial(id, material));
+            return ResourceSupport.action("物料已更新", service.updateMaterial(id, material));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }
@@ -59,7 +59,7 @@ public class MaterialResource {
     public Response delete(@PathParam("id") long id) {
         try {
             service.deleteMaterial(id);
-            return ResourceSupport.action("material deleted", null);
+            return ResourceSupport.action("物料已删除", null);
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }

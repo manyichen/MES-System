@@ -159,7 +159,7 @@ public class WorkOrderService {
                     rs.next();
                     created = mapWorkOrder(rs);
                 }
-                addLog(connection, created.workOrderId, "CREATE", null, "CREATED", actorId, "work order created");
+                addLog(connection, created.workOrderId, "CREATE", null, "CREATED", actorId, "创建生产工单");
                 connection.commit();
                 return created;
             } catch (SQLException | RuntimeException ex) {
@@ -175,18 +175,18 @@ public class WorkOrderService {
 
     public MesWorkOrder dispatch(long workOrderId, Long operatorId) {
         return changeStatus(workOrderId, "CREATED", "DISPATCHED", "DISPATCH", operatorId, operatorId,
-                "work order dispatched");
+                "生产工单已派发");
     }
 
     public MesWorkOrder dispatch(long workOrderId, Long assigneeId, Long actorId) {
         requireProductionOperator(assigneeId);
         return changeStatus(workOrderId, "CREATED", "DISPATCHED", "DISPATCH", assigneeId, actorId,
-                "work order dispatched to user " + assigneeId);
+                "生产工单已派发给用户 " + assigneeId);
     }
 
     public MesWorkOrder receive(long workOrderId, Long operatorId) {
         return changeStatus(workOrderId, "DISPATCHED", "RECEIVED", "RECEIVE", operatorId, operatorId,
-                "work order received");
+                "生产工单已接收");
     }
 
     public List<MesWorkOrderOperationLog> listLogs(long workOrderId) {

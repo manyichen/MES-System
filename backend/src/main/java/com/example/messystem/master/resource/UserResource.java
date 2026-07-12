@@ -31,7 +31,7 @@ public class UserResource {
     @POST
     public Response create(MesUser user) {
         try {
-            return ResourceSupport.created("user created", service.createUser(user));
+            return ResourceSupport.created("用户已创建", service.createUser(user));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }
@@ -41,7 +41,7 @@ public class UserResource {
     @Path("/{userId}/role")
     public Response updateRole(@PathParam("userId") long userId, MesUser user) {
         try {
-            return ResourceSupport.action("user role updated", service.updateRole(userId, user.roleCode));
+            return ResourceSupport.action("用户角色已更新", service.updateRole(userId, user.roleCode));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }

@@ -201,7 +201,7 @@ function chooseOperator() {
         }
         const mask = document.createElement("div");
         mask.className = "modal-mask";
-        mask.innerHTML = `<div class="modal-card"><h3>${TXT.chooseOperator}</h3><select id="dispatchOperatorSelect">${planningCache.operators.map(user => `<option value="${escapeHtml(user.userId)}">${escapeHtml(user.realName || user.username)} / ${escapeHtml(user.username)} / ID ${escapeHtml(user.userId)}</option>`).join("")}</select><div class="modal-actions"><button type="button" id="dispatchCancel">${TXT.cancel}</button><button type="button" id="dispatchConfirm">${TXT.confirmDispatch}</button></div></div>`;
+        mask.innerHTML = `<div class="modal-card"><h3>${TXT.chooseOperator}</h3><select id="dispatchOperatorSelect">${planningCache.operators.map(user => `<option value="${escapeHtml(user.userId)}">${escapeHtml(user.realName || user.username)} / 账号 ${escapeHtml(user.username)} / 用户ID ${escapeHtml(user.userId)}</option>`).join("")}</select><div class="modal-actions"><button type="button" id="dispatchCancel">${TXT.cancel}</button><button type="button" id="dispatchConfirm">${TXT.confirmDispatch}</button></div></div>`;
         document.body.appendChild(mask);
         mask.querySelector("#dispatchCancel").addEventListener("click", () => {
             mask.remove();

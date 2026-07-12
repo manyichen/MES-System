@@ -26,7 +26,7 @@ public class CustomerOrderResource {
     @POST
     public Response create(MesCustomerOrder order) {
         try {
-            return ResourceSupport.created("order created", service.createOrder(order));
+            return ResourceSupport.created("客户订单已创建", service.createOrder(order));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }

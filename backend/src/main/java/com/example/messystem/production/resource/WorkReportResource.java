@@ -66,7 +66,7 @@ public class WorkReportResource {
     public Response create(MesWorkReport report, @Context ContainerRequestContext context) {
         try {
             report.operatorId = AuthFilter.currentUser(context).user.userId;
-            return ResourceSupport.created("work report submitted", service.createWorkReport(report));
+            return ResourceSupport.created("报工单已提交", service.createWorkReport(report));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }
@@ -82,7 +82,7 @@ public class WorkReportResource {
                 throw new BadRequestException("只能修改本人尚未审核的报工单");
             }
             report.operatorId = user.user.userId;
-            return ResourceSupport.action("work report updated", service.updateWorkReport(id, report));
+            return ResourceSupport.action("报工单已更新", service.updateWorkReport(id, report));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }
@@ -93,7 +93,7 @@ public class WorkReportResource {
     public Response delete(@PathParam("id") long id) {
         try {
             service.deleteWorkReport(id);
-            return ResourceSupport.action("work report deleted", null);
+            return ResourceSupport.action("报工单已删除", null);
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }
@@ -103,7 +103,7 @@ public class WorkReportResource {
     @Path("/{id}/approve")
     public Response approve(@PathParam("id") long id) {
         try {
-            return ResourceSupport.action("work report approved", service.approveWorkReport(id));
+            return ResourceSupport.action("报工单已审核通过", service.approveWorkReport(id));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }

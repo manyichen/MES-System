@@ -53,7 +53,7 @@ public class KittingService {
         }
         analysis.shortageItems = shortages;
         analysis.kittingStatus = shortages.isEmpty() ? "READY" : "SHORTAGE";
-        analysis.analysisResult = shortages.isEmpty() ? "materials ready" : "materials shortage";
+        analysis.analysisResult = shortages.isEmpty() ? "物料齐套" : "物料短缺";
         MesKittingAnalysis created = database(() -> dao.insertAnalysis(analysis, shortages));
         database(() -> {
             dao.updateTaskKitting(task.taskId, shortages.isEmpty() ? "READY" : "SHORTAGE", created.kittingStatus);

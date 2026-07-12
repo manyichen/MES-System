@@ -20,16 +20,16 @@ public class ProductionService {
 
     public MesWorkReport createWorkReport(MesWorkReport report) {
         if (report.workOrderId == null || report.workOrderId <= 0) {
-            throw new BadRequestException("workOrderId is required");
+            throw new BadRequestException("生产工单ID不能为空");
         }
         report.reportQty = report.reportQty == null ? 0 : report.reportQty;
         report.qualifiedQty = report.qualifiedQty == null ? 0 : report.qualifiedQty;
         report.defectQty = report.defectQty == null ? 0 : report.defectQty;
         if (report.reportQty < 0 || report.qualifiedQty < 0 || report.defectQty < 0) {
-            throw new BadRequestException("quantities cannot be negative");
+            throw new BadRequestException("数量不能为负数");
         }
         if (report.qualifiedQty + report.defectQty > report.reportQty) {
-            throw new BadRequestException("qualifiedQty + defectQty cannot exceed reportQty");
+            throw new BadRequestException("合格数量与不合格数量之和不能超过报工数量");
         }
         return database(() -> dao.insertWorkReport(report));
     }
@@ -42,7 +42,7 @@ public class ProductionService {
         if (report.reportQty != null && report.reportQty < 0
                 || report.qualifiedQty != null && report.qualifiedQty < 0
                 || report.defectQty != null && report.defectQty < 0) {
-            throw new BadRequestException("quantities cannot be negative");
+            throw new BadRequestException("数量不能为负数");
         }
         return database(() -> dao.updateWorkReport(reportId, report));
     }
@@ -56,7 +56,7 @@ public class ProductionService {
 
     public List<MesWorkReport> listWorkReportsByWorkOrder(long workOrderId) {
         if (workOrderId <= 0) {
-            throw new BadRequestException("workOrderId is required");
+            throw new BadRequestException("生产工单ID不能为空");
         }
         return database(() -> dao.listWorkReportsByWorkOrder(workOrderId));
     }
@@ -91,7 +91,7 @@ public class ProductionService {
 
     public List<MesPieceworkWage> listWagesByReport(long reportId) {
         if (reportId <= 0) {
-            throw new BadRequestException("workReportId is required");
+            throw new BadRequestException("报工单ID不能为空");
         }
         return database(() -> dao.listWagesByReport(reportId));
     }

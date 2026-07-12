@@ -57,7 +57,7 @@ public class InventoryResource {
             var scope = dataScopeService.snapshot(AuthFilter.currentUser(context));
             scope.requireWarehouse(inventory.warehouseId);
             scope.requireWarehouseEntity("location", inventory.locationId);
-            return ResourceSupport.created("inventory created", service.createInventory(inventory));
+            return ResourceSupport.created("库存记录已创建", service.createInventory(inventory));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }
@@ -71,7 +71,7 @@ public class InventoryResource {
             var scope = dataScopeService.snapshot(AuthFilter.currentUser(context));
             if (inventory.warehouseId != null) scope.requireWarehouse(inventory.warehouseId);
             if (inventory.locationId != null) scope.requireWarehouseEntity("location", inventory.locationId);
-            return ResourceSupport.action("inventory updated", service.updateInventory(id, inventory));
+            return ResourceSupport.action("库存记录已更新", service.updateInventory(id, inventory));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }
@@ -82,7 +82,7 @@ public class InventoryResource {
     public Response delete(@PathParam("id") long id) {
         try {
             service.deleteInventory(id);
-            return ResourceSupport.action("inventory deleted", null);
+            return ResourceSupport.action("库存记录已删除", null);
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }
@@ -113,7 +113,7 @@ public class InventoryResource {
                         .requireWarehouseEntity("inventory", transaction.inventoryId);
             }
             transaction.operatorId = AuthFilter.currentUser(context).user.userId;
-            return ResourceSupport.created("inventory transaction created", service.createTransaction(transaction));
+            return ResourceSupport.created("库存流水已创建", service.createTransaction(transaction));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }

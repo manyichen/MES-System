@@ -94,7 +94,7 @@ function renderCurrentUser(user) {
     }
     box.innerHTML = `
         <strong>${escapeHtml(user.realName || user.username)}</strong>
-        <span>${escapeHtml((getCurrentSession()?.roles || [user.roleCode]).join(" / "))}</span>
+        <span>${escapeHtml((getCurrentSession()?.roles || [user.roleCode]).map(displayText).join(" / "))}</span>
         <span>${renderScopeSummary(getCurrentSession())}</span>
     `;
 }

@@ -32,7 +32,7 @@ public class ProductionTaskResource {
     public Response create(MesProductionTask task, @Context ContainerRequestContext context) {
         try {
             task.plannerId = AuthFilter.currentUser(context).user.userId;
-            return ResourceSupport.created("production task created", service.createTask(task));
+            return ResourceSupport.created("生产任务已创建", service.createTask(task));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }
@@ -42,7 +42,7 @@ public class ProductionTaskResource {
     @Path("/{id}/kitting")
     public Response analyzeKitting(@PathParam("id") long id) {
         try {
-            return ResourceSupport.action("kitting analysis finished", kittingService.analyze(id));
+            return ResourceSupport.action("齐套分析已完成", kittingService.analyze(id));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }
@@ -52,7 +52,7 @@ public class ProductionTaskResource {
     @Path("/{id}/release")
     public Response release(@PathParam("id") long id) {
         try {
-            return ResourceSupport.action("production task released", service.releaseTask(id));
+            return ResourceSupport.action("生产任务已发布", service.releaseTask(id));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }

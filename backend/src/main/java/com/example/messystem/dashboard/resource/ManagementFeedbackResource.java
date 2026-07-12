@@ -62,7 +62,7 @@ public class ManagementFeedbackResource {
             @Context ContainerRequestContext context) {
         try {
             if (feedback == null) {
-                throw new BadRequestException("Feedback body is required");
+                throw new BadRequestException("反馈内容不能为空");
             }
             if (feedback.workOrderId() != null) {
                 dataScopeService.snapshot(AuthFilter.currentUser(context)).requireWorkOrder(feedback.workOrderId());

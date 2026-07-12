@@ -49,7 +49,7 @@ public class WarehouseResource {
             if (user.hasRole("WAREHOUSE_ADMIN")) {
                 dataScopeService.assignWarehouse(user.user.userId, created.warehouseId, user.user.userId);
             }
-            return ResourceSupport.created("warehouse created", created);
+            return ResourceSupport.created("仓库已创建", created);
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }
@@ -59,7 +59,7 @@ public class WarehouseResource {
     @Path("/{id}")
     public Response updateWarehouse(@PathParam("id") long id, MesWarehouse warehouse) {
         try {
-            return ResourceSupport.action("warehouse updated", service.updateWarehouse(id, warehouse));
+            return ResourceSupport.action("仓库已更新", service.updateWarehouse(id, warehouse));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }
@@ -70,7 +70,7 @@ public class WarehouseResource {
     public Response deleteWarehouse(@PathParam("id") long id) {
         try {
             service.deleteWarehouse(id);
-            return ResourceSupport.action("warehouse deleted", null);
+            return ResourceSupport.action("仓库已删除", null);
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }
@@ -97,7 +97,7 @@ public class WarehouseResource {
     public Response createLocation(MesWarehouseLocation location, @Context ContainerRequestContext context) {
         try {
             dataScopeService.snapshot(AuthFilter.currentUser(context)).requireWarehouse(location.warehouseId);
-            return ResourceSupport.created("location created", service.createLocation(location));
+            return ResourceSupport.created("库位已创建", service.createLocation(location));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }
@@ -111,7 +111,7 @@ public class WarehouseResource {
             if (location.warehouseId != null) {
                 dataScopeService.snapshot(AuthFilter.currentUser(context)).requireWarehouse(location.warehouseId);
             }
-            return ResourceSupport.action("location updated", service.updateLocation(id, location));
+            return ResourceSupport.action("库位已更新", service.updateLocation(id, location));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }
@@ -122,7 +122,7 @@ public class WarehouseResource {
     public Response deleteLocation(@PathParam("id") long id) {
         try {
             service.deleteLocation(id);
-            return ResourceSupport.action("location deleted", null);
+            return ResourceSupport.action("库位已删除", null);
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }

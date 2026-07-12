@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="双星轮胎 MES">
+  <defs>
+    <linearGradient id="ring" x1="96" y1="76" x2="414" y2="438" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#5CB8FF"/><stop offset=".48" stop-color="#176BFF"/><stop offset="1" stop-color="#00BFD8"/>
+    </linearGradient>
+    <linearGradient id="core" x1="174" y1="157" x2="341" y2="357" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#16355F"/><stop offset="1" stop-color="#071426"/>
+    </linearGradient>
+  </defs>
+  <circle cx="256" cy="256" r="196" fill="#08182D"/>
+  <circle cx="256" cy="256" r="173" fill="none" stroke="url(#ring)" stroke-width="35"/>
+  <path d="M130 156l34 22m-55 45 40 9m-38 65 40-9m-19 72 35-22m213-182-34 22m55 45-40 9m38 65-40-9m19 72-35-22" fill="none" stroke="#7CC9FF" stroke-width="13" stroke-linecap="round" opacity=".62"/>
+  <circle cx="256" cy="256" r="118" fill="url(#core)" stroke="#2B78DB" stroke-width="5"/>
+  <path d="M215 194h82l29 50-29 50h-82l-29-50 29-50Z" fill="#0C2340" stroke="#48A5FF" stroke-width="8"/>
+  <circle cx="256" cy="244" r="31" fill="#176BFF"/><circle cx="256" cy="244" r="13" fill="#BCEAFF"/>
+  <path d="M256 275v37m0 0-45 26m45-26 45 26" fill="none" stroke="#45D4E8" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="211" cy="338" r="13" fill="#8DEAFF" stroke="#0D567A" stroke-width="6"/><circle cx="301" cy="338" r="13" fill="#8DEAFF" stroke="#0D567A" stroke-width="6"/>
+  <path d="M183 132a160 160 0 0 1 145-5" fill="none" stroke="#D7F1FF" stroke-width="10" stroke-linecap="round" opacity=".72"/>
+</svg>

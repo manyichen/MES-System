@@ -4,12 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>双星轮胎 MES 工作台</title>
+    <link rel="icon" href="assets/mes-icon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="css/app.css">
 </head>
 <body class="auth-locked">
 <section id="login-screen" class="login-screen">
     <div class="login-visual">
-        <div class="login-brand"><span class="brand-mark">DS</span><span>双星轮胎制造执行系统</span></div>
+        <div class="login-brand"><span class="brand-mark"><img src="assets/mes-icon.svg" alt=""></span><span>双星轮胎制造执行系统</span></div>
         <div class="login-copy"><span class="eyebrow">MES</span><h2>生产制造执行系统</h2><p>用于生产计划、仓储物流、生产报工、质量检验和设备维护。</p></div>
         <div class="factory-lines"><i></i><i></i><i></i><i></i></div>
     </div>
@@ -22,7 +23,7 @@
     </form>
 </section>
 <aside class="sidebar">
-    <div class="sidebar-brand"><span class="brand-mark">DS</span><div><strong>双星轮胎 MES</strong><small>制造执行系统</small></div></div>
+    <div class="sidebar-brand"><span class="brand-mark"><img src="assets/mes-icon.svg" alt=""></span><div><strong>双星轮胎 MES</strong><small>制造执行系统</small></div></div>
     <nav>
         <span class="nav-group">首页</span><button data-tab="dashboard" class="active"><i>⌂</i><span>工作台</span></button><button data-tab="profile"><i>◎</i><span>个人主页</span></button>
         <span class="nav-group">生产业务</span><button data-tab="planning"><i>▤</i><span>计划与工单</span></button><button data-tab="warehouse"><i>▦</i><span>仓储物流</span></button><button data-tab="production"><i>◉</i><span>生产报工</span></button><button data-tab="quality"><i>◇</i><span>质量管理</span></button><button data-tab="equipment"><i>⚙</i><span>设备维护</span></button>
@@ -40,7 +41,7 @@
         </header>
         <section class="dashboard-hero">
             <div class="hero-copy">
-                <span class="hero-kicker">FACTORY OVERVIEW</span>
+                <span class="hero-kicker">工厂运行总览</span>
                 <h3>生产运行概览</h3>
                 <p>计划、仓储、生产、质量和设备数据集中展示</p>
                 <div class="hero-status"><span><i class="live-dot"></i>数据已同步</span><span id="dashboard-clock"></span></div>
@@ -78,7 +79,7 @@
             </aside>
             <div class="profile-main">
                 <section class="profile-section">
-                    <div class="profile-section-title"><div><span>ACCOUNT</span><h3>账号信息</h3></div><small>以下信息由系统管理员维护</small></div>
+                    <div class="profile-section-title"><div><span>账号资料</span><h3>账号信息</h3></div><small>以下信息由系统管理员维护</small></div>
                     <div class="profile-facts">
                         <div><span>用户 ID</span><strong id="profile-user-id">—</strong></div><div><span>登录账号</span><strong id="profile-username">—</strong></div>
                         <div><span>员工编号</span><strong id="profile-employee-no">—</strong></div><div><span>所属部门</span><strong id="profile-department">—</strong></div>
@@ -86,7 +87,7 @@
                     </div>
                 </section>
                 <form id="profile-form" class="profile-section profile-form">
-                    <div class="profile-section-title"><div><span>PROFILE</span><h3>个人资料</h3></div><small>修改内容仅影响当前账号</small></div>
+                    <div class="profile-section-title"><div><span>个人资料</span><h3>个人信息</h3></div><small>修改内容仅影响当前账号</small></div>
                     <div class="profile-form-grid">
                         <label>姓名<input name="realName" maxlength="100" required></label>
                         <label>联系电话<input name="phone" maxlength="50" placeholder="例如：13800138000"></label>
@@ -255,7 +256,7 @@
                 <label>项目名称 <input name="itemName" value="外观检查" required></label>
                 <label>标准值 <input name="standardValue" value="合格"></label>
                 <label>实际值 <input name="actualValue" value="待判定"></label>
-                <label>结果 <input name="itemResult" value="PASS"></label>
+                <label>结果 <select name="itemResult"><option value="PASS">合格</option><option value="FAIL">不合格</option><option value="REWORK">返工</option></select></label>
                 <label>备注 <input name="remark"></label>
                 <button type="submit">添加</button>
             </form>
@@ -274,9 +275,9 @@
                 <h3>创建设备</h3>
                 <label>设备编码 <input name="equipmentCode" value="EQ-DEMO-001" required></label>
                 <label>设备名称 <input name="equipmentName" value="密炼机一号" required></label>
-                <label>设备类型 <input name="equipmentType" value="MIXER"></label>
+                <label>设备类型 <select name="equipmentType"><option value="MIXER">密炼设备</option><option value="BUILDING">成型设备</option><option value="CURING">硫化设备</option><option value="QUALITY">质检设备</option></select></label>
                 <label>产线ID <input name="lineId" type="number" value="1"></label>
-                <label>状态 <input name="equipmentStatus" value="RUNNING"></label>
+                <label>状态 <select name="equipmentStatus"><option value="RUNNING">运行中</option><option value="IDLE">空闲</option><option value="FAULT">故障</option><option value="MAINTENANCE">维护中</option><option value="DISABLED">已停用</option></select></label>
                 <button type="submit">创建</button>
             </form>
             <form id="repair-form" class="tool" data-permission="equipment.fault.report">
@@ -284,7 +285,7 @@
                 <label>报修单号 <input name="repairReportNo" value="REP-DEMO-001" required></label>
                 <label>设备ID <input name="equipmentId" type="number" value="1" min="1" required></label>
                 <label>工单ID <input name="workOrderId" type="number" value="1"></label>
-                <label>故障级别 <input name="faultLevel" value="HIGH"></label>
+                <label>故障级别 <select name="faultLevel"><option value="LOW">低</option><option value="MEDIUM">中</option><option value="HIGH" selected>高</option><option value="CRITICAL">严重</option></select></label>
                 <label>故障描述 <input name="faultDesc" value="设备异常停机" required></label>
                 <label>上报人ID <input name="reporterId" type="number" value="1"></label>
                 <button type="submit">提交</button>
@@ -308,7 +309,7 @@
                 <label>任务ID <input name="taskId" type="number" value="1" required></label>
                 <label>工单ID <input name="workOrderId" type="number" value="1" required></label>
                 <label>批次号 <input name="batchNo" value="BATCH-DEMO-001" required></label>
-                <label>状态 <input name="traceStatus" value="NORMAL"></label>
+                <label>状态 <select name="traceStatus"><option value="NORMAL">正常</option><option value="QUALITY_RISK">质量风险</option><option value="REWORKED">已返工</option><option value="SCRAPPED">已报废</option></select></label>
                 <button type="submit">创建</button>
             </form>
             <form id="trace-search-form" class="tool">
@@ -338,7 +339,7 @@
                 <label>订单ID <input name="orderId" type="number" value="1" required></label>
                 <label>任务ID <input name="taskId" type="number" value="1" required></label>
                 <label>工单ID <input name="workOrderId" type="number" value="1" required></label>
-                <label>反馈类型 <input name="feedbackType" value="QUALITY"></label>
+                <label>反馈类型 <select name="feedbackType"><option value="QUALITY">质量问题</option><option value="PRODUCTION">生产问题</option><option value="EQUIPMENT">设备问题</option><option value="MATERIAL">物料问题</option><option value="SYSTEM">系统问题</option></select></label>
                 <label>反馈内容 <input name="feedbackContent" value="关注返工批次"></label>
                 <button type="submit">创建</button>
             </form>

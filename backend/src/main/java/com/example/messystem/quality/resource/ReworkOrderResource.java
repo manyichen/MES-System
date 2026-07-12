@@ -20,7 +20,7 @@ public class ReworkOrderResource {
     public ApiResponse<Long> createReworkOrder(MesReworkOrder order) {
         try {
             if (order == null) {
-                throw new BadRequestException("Rework order body is required");
+                throw new BadRequestException("返工单信息不能为空");
             }
             return ApiResponse.ok(service.createReworkOrder(order));
         } catch (SQLException e) {

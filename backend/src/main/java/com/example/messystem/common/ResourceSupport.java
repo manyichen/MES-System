@@ -19,12 +19,13 @@ public final class ResourceSupport {
     }
 
     public static Response handle(RuntimeException ex) {
+        String message = ChineseMessageSupport.translate(ex.getMessage());
         if (ex instanceof NotFoundException) {
-            return Response.status(Response.Status.NOT_FOUND).entity(ApiResponse.fail(ex.getMessage())).build();
+            return Response.status(Response.Status.NOT_FOUND).entity(ApiResponse.fail(message)).build();
         }
         if (ex instanceof BadRequestException) {
-            return Response.status(Response.Status.BAD_REQUEST).entity(ApiResponse.fail(ex.getMessage())).build();
+            return Response.status(Response.Status.BAD_REQUEST).entity(ApiResponse.fail(message)).build();
         }
-        return Response.serverError().entity(ApiResponse.fail(ex.getMessage())).build();
+        return Response.serverError().entity(ApiResponse.fail(message)).build();
     }
 }

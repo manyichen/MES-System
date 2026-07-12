@@ -100,7 +100,7 @@ public class QualityInspectionService {
                     generateCode("RW"),
                     null,
                     inspectionId,
-                    "Quality rework due to inspection",
+                    "质检不合格，安排返工",
                     "CREATED",
                     null,
                     LocalDateTime.now(),

@@ -53,7 +53,7 @@ async function judgeInspection(id, result) {
         status: result,
         result
     });
-    showMessage(`质检已判定为 ${result}`);
+    showMessage(`质检结果：${displayText(result)}`);
     loadQuality();
     loadDashboard();
 }

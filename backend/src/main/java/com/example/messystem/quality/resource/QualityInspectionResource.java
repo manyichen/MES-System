@@ -67,7 +67,7 @@ public class QualityInspectionResource {
             @Context ContainerRequestContext context) {
         try {
             if (item == null) {
-                throw new BadRequestException("Item body is required");
+                throw new BadRequestException("质检项目不能为空");
             }
             AuthenticatedUser user = AuthFilter.currentUser(context);
             if (!user.hasRole("SYSTEM_ADMIN")) {
@@ -115,7 +115,7 @@ public class QualityInspectionResource {
             @Context ContainerRequestContext context) {
         try {
             if (judgement == null || judgement.status() == null || judgement.result() == null) {
-                throw new BadRequestException("Judgement status and result are required");
+                throw new BadRequestException("审核状态和判定结果不能为空");
             }
             return ApiResponse.ok(service.judgeInspection(id, judgement.status(), judgement.result(),
                     AuthFilter.currentUser(context).user.userId));

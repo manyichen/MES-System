@@ -56,7 +56,7 @@ public class DashboardResource {
     public ApiResponse<Long> createMetric(MesDashboardMetric metric) {
         try {
             if (metric == null) {
-                throw new BadRequestException("Metric body is required");
+                throw new BadRequestException("指标信息不能为空");
             }
             return ApiResponse.ok(service.createMetric(metric));
         } catch (SQLException e) {
@@ -69,7 +69,7 @@ public class DashboardResource {
     public ApiResponse<Long> createDefaultMetric(DefaultMetricRequest request) {
         try {
             if (request == null || request.metricKey() == null || request.metricName() == null) {
-                throw new BadRequestException("Metric key and name are required");
+                throw new BadRequestException("指标编码和名称不能为空");
             }
             return ApiResponse.ok(service.createDefaultMetric(request.metricKey(), request.metricName(), request.metricValue(), request.metricType()));
         } catch (SQLException e) {
