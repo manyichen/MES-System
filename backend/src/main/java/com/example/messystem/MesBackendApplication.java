@@ -1,15 +1,22 @@
 package com.example.messystem;
 
 import java.awt.Desktop;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.URI;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import org.apache.catalina.Context;
 import org.apache.catalina.Wrapper;
-import org.apache.catalina.servlets.DefaultServlet;
 import org.apache.catalina.startup.Tomcat;
 import org.glassfish.jersey.servlet.ServletContainer;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 public class MesBackendApplication {
     public static void main(String[] args) throws Exception {
@@ -23,15 +30,17 @@ public class MesBackendApplication {
         tomcat.getConnector();
 
         Context context = tomcat.addContext("", webRoot.toString());
+        context.addMimeMapping("html", "text/html;charset=UTF-8");
+        context.addMimeMapping("css", "text/css;charset=UTF-8");
+        context.addMimeMapping("js", "application/javascript;charset=UTF-8");
         Wrapper jersey = Tomcat.addServlet(context, "Jersey", new ServletContainer(new MesApplication()));
         jersey.setLoadOnStartup(1);
         context.addServletMappingDecoded("/api/*", "Jersey");
         context.addWelcomeFile("index.html");
 
-        Wrapper staticFiles = Tomcat.addServlet(context, "default", new DefaultServlet());
+        Wrapper staticFiles = Tomcat.addServlet(context, "staticFiles", new StaticFileServlet(webRoot));
         staticFiles.setLoadOnStartup(2);
-        staticFiles.addInitParameter("listings", "false");
-        context.addServletMappingDecoded("/", "default");
+        context.addServletMappingDecoded("/", "staticFiles");
 
         tomcat.start();
 
@@ -101,6 +110,47 @@ public class MesBackendApplication {
             }
         } catch (Exception ignored) {
             // The URL is printed above for environments that cannot open a browser.
+        }
+    }
+
+    private static final class StaticFileServlet extends HttpServlet {
+        private final Path webRoot;
+
+        private StaticFileServlet(Path webRoot) {
+            this.webRoot = webRoot.toAbsolutePath().normalize();
+        }
+
+        @Override
+        protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+            String requestPath = URLDecoder.decode(request.getRequestURI(), StandardCharsets.UTF_8);
+            if (requestPath == null || requestPath.isBlank() || "/".equals(requestPath)) {
+                requestPath = "/index.html";
+            }
+            Path file = webRoot.resolve(requestPath.substring(1)).normalize();
+            if (!file.startsWith(webRoot) || !Files.isRegularFile(file)) {
+                response.sendError(HttpServletResponse.SC_NOT_FOUND);
+                return;
+            }
+            response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+            response.setContentType(contentType(file));
+            response.setHeader("X-Content-Type-Options", "nosniff");
+            response.setContentLengthLong(Files.size(file));
+            try (OutputStream out = response.getOutputStream()) {
+                Files.copy(file, out);
+            }
+        }
+
+        private String contentType(Path file) throws IOException {
+            String name = file.getFileName().toString().toLowerCase();
+            if (name.endsWith(".html") || name.endsWith(".htm")) return "text/html;charset=UTF-8";
+            if (name.endsWith(".css")) return "text/css;charset=UTF-8";
+            if (name.endsWith(".js")) return "application/javascript;charset=UTF-8";
+            if (name.endsWith(".json")) return "application/json;charset=UTF-8";
+            if (name.endsWith(".svg")) return "image/svg+xml";
+            if (name.endsWith(".png")) return "image/png";
+            if (name.endsWith(".jpg") || name.endsWith(".jpeg")) return "image/jpeg";
+            String probed = Files.probeContentType(file);
+            return probed == null ? "application/octet-stream" : probed;
         }
     }
 }

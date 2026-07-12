@@ -7,7 +7,7 @@ const DISPLAY_TEXT = {
     WAREHOUSE_KEEPER: "仓储人员", QUALITY_MANAGER: "质量主管", QUALITY_INSPECTOR: "质检员",
     PROCESS_ENGINEER: "工艺工程师", EQUIPMENT_ADMIN: "设备管理员", EQUIPMENT_MAINTAINER: "设备维护员", VIEWER: "只读访客",
     CREATED: "待处理", DRAFT: "草稿", PENDING: "待处理", PENDING_PLAN: "待排产", PLANNED: "已排产",
-    RELEASED: "已发布", READY: "齐套", SHORTAGE: "缺料", PROCESSING: "处理中", RESOLVED: "已解决",
+    RELEASED: "已发布", READY: "齐套", NOT_READY: "未齐套", SHORTAGE: "缺料", ANALYZED: "已分析", PROCESSING: "处理中", IN_PROGRESS: "处理中", RESOLVED: "已解决",
     DISPATCHED: "已派发", RECEIVED: "已接收", RUNNING: "进行中", FINISHED: "已完成", COMPLETED: "已完成",
     CLOSED: "已关闭", CANCELLED: "已取消", SUBMITTED: "已提交", REVIEWED: "已复核", APPLIED: "已执行",
     APPROVED: "已通过", REJECTED: "已驳回", ASSIGNED: "已分配", ACCEPTED: "已验收", ARRIVED: "已到达",
@@ -17,9 +17,9 @@ const DISPLAY_TEXT = {
     OPEN: "待处理", PASS: "合格", FAIL: "不合格", REWORK: "返工", NORMAL: "正常", QUALITY_RISK: "质量风险",
     REWORKED: "已返工", SCRAPPED: "已报废", IDLE: "空闲", FAULT: "故障", MAINTENANCE: "维护中", DISABLED: "已停用",
     ENABLED: "已启用", HIGH: "高", MEDIUM: "中", LOW: "低", URGENT: "紧急", CRITICAL: "严重",
-    MIXER: "密炼设备", MIXING: "炼胶", BUILDING: "成型", CURING: "硫化", QUALITY: "质量",
+    MIXER: "密炼设备", MIXING: "炼胶", BUILDING: "成型", BUILDING_MACHINE: "成型机", CURING: "硫化", CURING_PRESS: "硫化机", INSPECTION: "检测设备", QUALITY: "质量",
     PRODUCTION: "生产", EQUIPMENT: "设备", MATERIAL: "物料", SYSTEM: "系统", EMPLOYEE: "员工账号",
-    RAW_MATERIAL: "原材料仓", WIP: "在制品仓", FINISHED_GOODS: "成品仓", SPARE_PARTS: "备件仓",
+    RAW: "原材料", SEMI_FINISHED: "半成品", TRANSFER: "转移", RAW_MATERIAL: "原材料仓", WIP: "在制品仓", FINISHED_GOODS: "成品仓", SPARE_PARTS: "备件仓",
     IN: "入库", OUT: "出库", INBOUND: "入库", OUTBOUND: "出库", RESERVE: "预留", RELEASE: "释放预留",
     ADJUST_IN: "盘盈调整", ADJUST_OUT: "盘亏调整", REQUISITION: "领料单", PICKING_TASK: "拣货任务",
     DELIVERY_TASK: "配送任务", WORK_REPORT: "报工单", CUSTOMER_ORDER: "客户订单", WORK_ORDER: "生产工单",
@@ -95,13 +95,11 @@ async function requestJson(path, options = {}) {
     };
     let response;
     try {
-        response = await fetch(`${API_BASE}${path}`, {
-            ...options,
-            headers
-        });
+        response = await fetch(`${API_BASE}${path}`, { ...options, headers });
     } catch (error) {
         throw new Error(toChineseError(error));
     }
+
     const text = await response.text();
     let payload = null;
     if (text) {
@@ -111,6 +109,7 @@ async function requestJson(path, options = {}) {
             payload = null;
         }
     }
+
     if (!response.ok) {
         if (response.status === 401 && !path.startsWith("/auth/login")) {
             if (typeof clearCurrentSession === "function") clearCurrentSession();
@@ -120,57 +119,77 @@ async function requestJson(path, options = {}) {
         throw new Error(toChineseError(payload?.message || text || `HTTP ${response.status}`));
     }
     if (payload && payload.success === false) {
-        throw new Error(toChineseError(payload.message || "\u8bf7\u6c42\u5931\u8d25"));
+        throw new Error(toChineseError(payload.message || "请求失败"));
     }
     return payload?.data ?? payload;
 }
 
 function toChineseError(error) {
-    const message = String(error?.message || error || "");
-    if (!message || message === "Failed to fetch") return "\u65e0\u6cd5\u8fde\u63a5\u540e\u7aef\u670d\u52a1\uff0c\u8bf7\u786e\u8ba4\u670d\u52a1\u5df2\u542f\u52a8\u5e76\u5237\u65b0\u9875\u9762";
-    if (message.includes("operatorId is required")) return "\u8bf7\u9009\u62e9\u63a5\u5355\u64cd\u4f5c\u5de5";
-    if (message.includes("only CREATED work orders can be changed to DISPATCHED")) return "\u53ea\u6709\u5f85\u6d3e\u53d1\u5de5\u5355\u624d\u80fd\u6d3e\u53d1";
-    if (message.includes("only DISPATCHED work orders can be changed to RECEIVED")) return "\u53ea\u6709\u5df2\u6d3e\u53d1\u7ed9\u5f53\u524d\u64cd\u4f5c\u5de5\u7684\u5de5\u5355\u624d\u80fd\u63a5\u6536";
-    if (message.includes("work order status does not allow work report")) return "\u8be5\u5de5\u5355\u72b6\u6001\u4e0d\u5141\u8bb8\u62a5\u5de5\uff0c\u8bf7\u5148\u6d3e\u53d1\u5e76\u63a5\u6536\u5de5\u5355";
-    if (message.includes("work order is not assigned to current operator")) return "\u8be5\u5de5\u5355\u672a\u6d3e\u53d1\u7ed9\u5f53\u524d\u64cd\u4f5c\u5de5\uff0c\u4e0d\u80fd\u62a5\u5de5";
-    if (message.includes("warehouse location is required before completing picking")) return "\u5b8c\u6210\u62e3\u8d27\u524d\u5fc5\u987b\u6709\u4ed3\u5e93\u5e93\u4f4d\uff0c\u8bf7\u5148\u7ef4\u62a4\u5e93\u4f4d\u6216\u4f7f\u7528\u5df2\u6709\u5e93\u4f4d\u7684\u4ed3\u5e93";
-    if (message.includes("only CREATED picking tasks can be completed")) return "\u53ea\u6709\u5f85\u62e3\u8d27\u72b6\u6001\u7684\u4efb\u52a1\u624d\u80fd\u5b8c\u6210\u62e3\u8d27";
-    if (message.includes("only PENDING delivery tasks can arrive")) return "\u53ea\u6709\u5f85\u914d\u9001\u72b6\u6001\u7684\u4efb\u52a1\u624d\u80fd\u6807\u8bb0\u5230\u8fbe";
-    if (message.includes("only ARRIVED delivery tasks can be confirmed")) return "\u53ea\u6709\u5df2\u5230\u8fbe\u7684\u914d\u9001\u4efb\u52a1\u624d\u80fd\u786e\u8ba4\u6536\u6599";
-    if (message.includes("only CREATED requisitions can be approved")) return "\u53ea\u6709\u5f85\u5ba1\u6838\u7684\u9886\u6599\u4efb\u52a1\u624d\u80fd\u5ba1\u6838";
-    if (message.includes("warehouse is required before approving requisition")) return "\u5ba1\u6838\u9886\u6599\u524d\u5fc5\u987b\u9009\u62e9\u76ee\u6807\u4ed3\u5e93";
-    if (message.includes("inventory is not enough")) return "\u5e93\u5b58\u4e0d\u8db3\uff0c\u8bf7\u68c0\u67e5\u7269\u6599\u548c\u6279\u6b21\u5e93\u5b58";
-    if (message.includes("requisition items are required")) return "\u9886\u6599\u660e\u7ec6\u4e0d\u80fd\u4e3a\u7a7a";
-    if (message.includes("work order status does not allow requisition")) return "\u5f53\u524d\u5de5\u5355\u72b6\u6001\u4e0d\u5141\u8bb8\u521b\u5efa\u9886\u6599\u4efb\u52a1";
-    if (message.includes("materials have already been received for this delivery task")) return "\u8be5\u914d\u9001\u4efb\u52a1\u5df2\u7ecf\u6536\u6599\uff0c\u4e0d\u80fd\u91cd\u590d\u786e\u8ba4";
-    if (message.includes("Forbidden") || message.includes("HTTP 403")) return "\u5f53\u524d\u8d26\u53f7\u6ca1\u6709\u6743\u9650\u6267\u884c\u6b64\u64cd\u4f5c";
-    if (message.includes("Unauthorized") || message.includes("HTTP 401")) return "\u767b\u5f55\u5df2\u5931\u6548\uff0c\u8bf7\u91cd\u65b0\u767b\u5f55";
-    if (message.includes("HTTP 404")) return "\u8bf7\u6c42\u7684\u6570\u636e\u4e0d\u5b58\u5728";
-    if (message.includes("database operation failed")) return "\u6570\u636e\u5e93\u64cd\u4f5c\u5931\u8d25\uff0c\u8bf7\u68c0\u67e5\u6570\u636e\u662f\u5426\u5b8c\u6574";
+    const raw = String(error?.message || error || "");
+    const message = stripHtmlError(raw);
+    if (!message || message === "Failed to fetch") return "无法连接后端服务，请确认服务已启动并刷新页面";
+    if (message.includes("HTTP 405") || message.includes("Method Not Allowed")) return "当前后端接口不支持这个操作，请重启后端并确认接口已更新";
+    if (message.includes("HTTP 500") || message.includes("Internal Server Error")) return "后端处理失败，请检查输入数据是否匹配业务流程";
+    if (message.includes("HTTP 404")) return "请求的数据或接口不存在，请检查编号是否正确";
+    if (message.includes("Forbidden") || message.includes("HTTP 403")) return "当前账号没有权限执行此操作";
+    if (message.includes("Unauthorized") || message.includes("HTTP 401")) return "登录已失效，请重新登录";
+    if (message.includes("column \"enabled\" is of type smallint") || (message.includes("enabled") && message.includes("smallint"))) return "设备启用状态格式不正确，请刷新页面后重试";
+    if (message.includes("uk_mes_equipment_equipment_code") || (message.includes("equipment_code") && message.includes("already exists"))) return "设备编码已存在，请换一个设备编码";
+    if (message.includes("uk_mes_equipment_repair_report_repair_report_no") || (message.includes("repair_report_no") && message.includes("already exists"))) return "报修单号已存在，请换一个报修单号";
+    if (message.includes("duplicate key value violates unique constraint")) return "编号已存在，请更换编号后重试";
+
+    if (message.includes("operatorId is required")) return "请选择接单操作工";
+    if (message.includes("only CREATED work orders can be changed to DISPATCHED")) return "只有待派发工单才能派发";
+    if (message.includes("only DISPATCHED work orders can be changed to RECEIVED")) return "只有已派发给当前操作工的工单才能接收";
+    if (message.includes("work order status does not allow work report")) return "该工单状态不允许报工，请先派发并接收工单";
+    if (message.includes("work order is not assigned to current operator")) return "该工单未派发给当前操作工，不能报工";
+    if (message.includes("work report does not belong to this work order")) return "报工ID不属于当前工单，请选择同一条业务链路的工单和报工";
+    if (message.includes("only APPROVED work reports can create quality inspections")) return "只有已审核通过的报工单才能创建质检单";
+    if (message.includes("work report not found")) return "报工ID不存在，请检查报工列表";
+
+    if (message.includes("warehouse location is required before completing picking")) return "完成拣货前必须有仓库库位，请先维护库位";
+    if (message.includes("only CREATED picking tasks can be completed")) return "只有待拣货状态的任务才能完成拣货";
+    if (message.includes("only PENDING delivery tasks can arrive")) return "只有待配送状态的任务才能标记到达";
+    if (message.includes("only ARRIVED delivery tasks can be confirmed")) return "只有已到达的配送任务才能确认收料";
+    if (message.includes("only CREATED requisitions can be approved")) return "只有待审核的领料任务才能审核";
+    if (message.includes("warehouse is required before approving requisition")) return "审核领料前必须选择目标仓库";
+    if (message.includes("inventory is not enough")) return "库存不足，请检查物料和批次库存";
+    if (message.includes("requisition items are required")) return "领料明细不能为空";
+    if (message.includes("work order status does not allow requisition")) return "当前工单状态不允许创建领料任务";
+    if (message.includes("materials have already been received for this delivery task")) return "该配送任务已经收料，不能重复确认";
+
+    if (message.includes("Item body is required")) return "请先填写质检项目内容";
+    if (message.includes("Judgement status and result are required")) return "请选择质检判定结果";
+    if (message.includes("Repair report body is required")) return "请先填写设备报修信息";
+    if (message.includes("Maintenance plan body is required")) return "请先填写维护计划信息";
+    if (message.includes("Product trace body is required")) return "请先填写产品追溯信息";
+    if (message.includes("Product trace not found") || message.includes("产品追溯记录不存在")) return "未找到对应的产品追溯记录";
+    if (message.includes("Metric body is required")) return "请先填写看板指标信息";
+    if (message.includes("Metric key and name are required")) return "看板指标编码和名称不能为空";
+    if (message.includes("database operation failed")) return "数据库操作失败，请检查数据是否完整";
     const exactMessages = {
-        "work order not found": "生产工单不存在",
-        "production task not found": "生产任务不存在",
-        "order not found": "客户订单不存在",
-        "product not found": "产品不存在",
-        "material not found": "物料不存在",
-        "warehouse not found": "仓库不存在",
-        "warehouse location not found": "库位不存在",
-        "inventory not found": "库存记录不存在",
-        "requisition not found": "领料单不存在",
-        "picking task not found": "拣货任务不存在",
-        "delivery task not found": "配送任务不存在",
-        "robot not found": "机器人不存在",
-        "work report not found": "报工单不存在",
-        "piecework wage not found": "计件工资记录不存在",
-        "user not found": "用户不存在",
-        "password is required": "密码不能为空"
+        "work order not found": "生产工单不存在", "production task not found": "生产任务不存在",
+        "order not found": "客户订单不存在", "product not found": "产品不存在", "material not found": "物料不存在",
+        "warehouse not found": "仓库不存在", "warehouse location not found": "库位不存在", "inventory not found": "库存记录不存在",
+        "requisition not found": "领料单不存在", "picking task not found": "拣货任务不存在", "delivery task not found": "配送任务不存在",
+        "robot not found": "机器人不存在", "work report not found": "报工单不存在", "piecework wage not found": "计件工资记录不存在",
+        "user not found": "用户不存在", "password is required": "密码不能为空"
     };
     const exact = exactMessages[message.trim().toLowerCase()];
     if (exact) return exact;
-    if (/^[\x00-\x7F]+$/.test(message) && /[A-Za-z]/.test(message)) {
-        return "操作未完成，请检查填写内容或当前业务状态";
-    }
+    if (/^[\x00-\x7F]+$/.test(message) && /[A-Za-z]/.test(message)) return "操作未完成，请检查填写内容或当前业务状态";
     return message;
+}
+
+function stripHtmlError(message) {
+    if (!message.includes("<html") && !message.includes("<!doctype")) return message;
+    const title = message.match(/<title>(.*?)<\/title>/i)?.[1] || "";
+    const serverMessage = message.match(/<p><b>Message<\/b>\s*(.*?)<\/p>/i)?.[1] || "";
+    const text = `${title} ${serverMessage}`
+        .replace(/<[^>]+>/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+    return text || message.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 }
 
 function getJson(path) {
@@ -238,8 +257,9 @@ function renderTable(containerId, rows = [], columns = [], actions = []) {
             const value = col.render ? col.render(row) : formatSmartCell(row[col.key], col.key, col.title || col.label);
             return `<td data-label="${escapeHtml(col.title || col.label || "")}">${value}</td>`;
         }).join("");
+        const rowActions = visibleActions.filter(action => !action.visible || action.visible(row));
         const actionCells = visibleActions.length
-            ? `<td><div class="row-actions">${visibleActions.map(action => {
+            ? `<td><div class="row-actions">${rowActions.map(action => {
                 const id = row[action.idKey];
                 return `<button type="button" data-action="${escapeHtml(action.name)}" data-id="${escapeHtml(id)}">${escapeHtml(action.label)}</button>`;
             }).join("")}</div></td>`
@@ -302,13 +322,13 @@ function formatTableDate(value) {
     return Number.isNaN(date.getTime()) ? value : date.toLocaleString("zh-CN", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false });
 }
 
-function formatCell(value) {
+function formatCell(value, field = "") {
     if (value === null || value === undefined) return "";
-    if (typeof value === "boolean") return value ? "\u662f" : "\u5426";
-    return escapeHtml(value);
+    if (typeof value === "boolean") return value ? "是" : "否";
+    return escapeHtml(toDisplayText(value, field));
 }
 
-function renderDetail(containerId, data, title = "\u8be6\u60c5") {
+function renderDetail(containerId, data, title = "详情") {
     const container = document.getElementById(containerId);
     if (!container) return;
     const rows = Object.entries(data ?? {}).map(([key, value]) => {
@@ -333,6 +353,177 @@ function renderStructuredDetail(value) {
         }).join("")}</div>`;
     }
     return `<div class="detail-object">${Object.entries(value).map(([key, itemValue]) => `<div><span>${escapeHtml(fieldText(key))}</span><strong>${formatSmartCell(itemValue, key, fieldText(key))}</strong></div>`).join("")}</div>`;
+}
+
+function toDisplayText(value, field = "") {
+    if (value === null || value === undefined) return "";
+    const text = String(value);
+    const key = String(field || "").toLowerCase();
+    if (key.includes("status") || key.includes("状态") || key.includes("kitting") || key === "fromstatus" || key === "tostatus") {
+        return statusText(text);
+    }
+    if (key.includes("type") || key.includes("类型") || key.includes("operation") || key.includes("action")) {
+        return typeText(text);
+    }
+    if (key.includes("level") || key.includes("级别") || key.includes("priority")) {
+        return levelText(text);
+    }
+    if (key.includes("cycle") || key.includes("周期")) {
+        return cycleText(text);
+    }
+    if (key.includes("remark") || key.includes("desc") || key.includes("description") || key.includes("说明")) {
+        return descriptionText(text);
+    }
+    return text;
+}
+
+function fieldLabelText(field) {
+    return {
+        operationType: "操作",
+        fromStatus: "原状态",
+        toStatus: "新状态",
+        remark: "说明",
+        faultDesc: "说明",
+        description: "说明",
+        resultDesc: "说明"
+    }[field] || field;
+}
+
+function statusText(status) {
+    return {
+        CREATED: "已创建",
+        PLANNED: "已计划",
+        PENDING_PLAN: "待计划",
+        RELEASED: "已发布",
+        DISPATCHED: "已派发",
+        RECEIVED: "已接收",
+        APPROVED: "已审核",
+        REPORTED: "已报修",
+        CONVERTED: "已转维修",
+        REJECTED: "已驳回",
+        CLOSED: "已关闭",
+        PENDING: "待处理",
+        SUBMITTED: "待审核",
+        COMPLETED: "已完成",
+        ARRIVED: "已到达",
+        NORMAL: "正常",
+        QUALIFIED: "合格",
+        UNQUALIFIED: "不合格",
+        QUALITY_RISK: "质量风险",
+        REWORKED: "已返工",
+        SCRAPPED: "已报废",
+        PASS: "合格",
+        FAIL: "不合格",
+        REWORK: "需返工",
+        REWORK_REQUIRED: "需返工",
+        FAILED: "不合格",
+        NG: "不合格",
+        IDLE: "空闲",
+        RUNNING: "运行中",
+        FAULT: "故障",
+        MAINTENANCE: "维护中",
+        DISABLED: "停用",
+        ASSIGNED: "已派工",
+        IN_PROGRESS: "处理中",
+        FINISHED: "待验收",
+        ACCEPTED: "已验收",
+        SCHEDULED: "已排期",
+        OPEN: "待处理",
+        SETTLED: "已结算",
+        UNSETTLED: "未结算",
+        READY: "已齐套",
+        NOT_READY: "未齐套",
+        SHORTAGE: "缺料",
+        ANALYZED: "已分析",
+        WORKING: "工作中",
+        CHARGING: "充电中",
+        LOW_BATTERY: "低电量",
+        ENABLED: "启用",
+        DISABLE: "停用",
+        ENABLE: "启用"
+    }[status] || status;
+}
+
+function typeText(type) {
+    return {
+        CREATE: "创建",
+        CREATED: "创建",
+        UPDATE: "更新",
+        DELETE: "删除",
+        DISPATCH: "派发",
+        RECEIVE: "接收",
+        APPROVE: "审核",
+        RELEASE: "发布",
+        KITTING: "齐套分析",
+        REPORT: "报工",
+        INSPECT: "质检",
+        REWORK: "返工",
+        CLOSE: "关闭",
+        QUALITY: "质量",
+        PRODUCTION: "生产",
+        EQUIPMENT: "设备",
+        WAREHOUSE: "仓储",
+        SYSTEM: "系统",
+        REQUISITION: "领料单",
+        PICKING_TASK: "拣货任务",
+        DELIVERY_TASK: "配送任务",
+        WORK_ORDER: "生产工单",
+        REPAIR_REPORT: "报修单",
+        MAINTENANCE_ORDER: "维修工单",
+        RAW: "原材料",
+        FINISHED: "成品",
+        SEMI_FINISHED: "半成品",
+        IN: "入库",
+        OUT: "出库",
+        TRANSFER: "转移",
+        MIXER: "密炼机",
+        BUILDING_MACHINE: "成型机",
+        CURING_PRESS: "硫化机",
+        INSPECTION: "检测设备"
+    }[type] || type;
+}
+
+function levelText(level) {
+    return {
+        LOW: "低",
+        MEDIUM: "中",
+        HIGH: "高",
+        URGENT: "紧急",
+        CRITICAL: "严重",
+        NORMAL: "普通",
+        IMPORTANT: "重要",
+        1: "低",
+        2: "中",
+        3: "高"
+    }[level] || level;
+}
+
+function cycleText(cycle) {
+    return {
+        DAILY: "每日",
+        WEEKLY: "每周",
+        MONTHLY: "每月",
+        QUARTERLY: "每季度",
+        YEARLY: "每年"
+    }[cycle] || cycle;
+}
+
+function descriptionText(description) {
+    return {
+        "work order created": "生产工单已创建",
+        "work order dispatched": "生产工单已派发",
+        "work order received": "生产工单已接收",
+        "production task released": "生产任务已发布",
+        "kitting analysis completed": "齐套分析已完成",
+        "work report submitted": "报工单已提交",
+        "work report approved": "报工单已审核",
+        "quality inspection created": "质检单已创建",
+        "repair report created": "报修单已创建",
+        "maintenance order created": "维修工单已创建",
+        "maintenance order assigned": "维修工单已派工",
+        "maintenance order finished": "维修工单已完成",
+        "maintenance order accepted": "维修工单已验收"
+    }[description] || description;
 }
 
 function showMessage(message, type = "info") {

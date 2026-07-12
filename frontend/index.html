@@ -246,8 +246,9 @@
                 <label>工单ID <input name="workOrderId" type="number" value="1" min="1" required></label>
                 <label>报工ID <input name="workReportId" type="number" value="1" min="1"></label>
                 <label>抽检数量 <input name="sampleQty" type="number" value="10" min="1" required></label>
-                <label>质检员ID（可稍后分配） <input name="inspectorId" type="number" min="1"></label>
+                <label>质检员ID <input name="inspectorId" type="number" min="1"></label>
                 <button type="submit">创建</button>
+                <p id="inspection-form-status" class="form-status"></p>
             </form>
             <form id="inspection-item-form" class="tool" data-permission="quality.inspect">
                 <h3>添加质检项目</h3>
@@ -256,11 +257,18 @@
                 <label>项目名称 <input name="itemName" value="外观检查" required></label>
                 <label>标准值 <input name="standardValue" value="合格"></label>
                 <label>实际值 <input name="actualValue" value="待判定"></label>
-                <label>结果 <select name="itemResult"><option value="PASS">合格</option><option value="FAIL">不合格</option><option value="REWORK">返工</option></select></label>
+                <label>结果
+                    <select name="itemResult">
+                        <option value="PASS">合格</option>
+                        <option value="FAIL">不合格</option>
+                        <option value="REWORK">需返工</option>
+                    </select>
+                </label>
                 <label>备注 <input name="remark"></label>
                 <button type="submit">添加</button>
             </form>
             <div class="tool wide"><h3>质检单</h3><div id="quality-table"></div></div>
+            <div class="tool wide"><h3 id="quality-item-title">质检项目</h3><div id="quality-item-table"><p>点击质检单右侧“项目”查看明细</p></div></div>
             <div class="tool wide"><h3>返工单</h3><div id="rework-table"></div></div>
         </div>
     </section>
@@ -275,9 +283,24 @@
                 <h3>创建设备</h3>
                 <label>设备编码 <input name="equipmentCode" value="EQ-DEMO-001" required></label>
                 <label>设备名称 <input name="equipmentName" value="密炼机一号" required></label>
-                <label>设备类型 <select name="equipmentType"><option value="MIXER">密炼设备</option><option value="BUILDING">成型设备</option><option value="CURING">硫化设备</option><option value="QUALITY">质检设备</option></select></label>
+                <label>设备类型
+                    <select name="equipmentType">
+                        <option value="MIXER">密炼机</option>
+                        <option value="BUILDING_MACHINE">成型机</option>
+                        <option value="CURING_PRESS">硫化机</option>
+                        <option value="INSPECTION">检测设备</option>
+                    </select>
+                </label>
                 <label>产线ID <input name="lineId" type="number" value="1"></label>
-                <label>状态 <select name="equipmentStatus"><option value="RUNNING">运行中</option><option value="IDLE">空闲</option><option value="FAULT">故障</option><option value="MAINTENANCE">维护中</option><option value="DISABLED">已停用</option></select></label>
+                <label>状态
+                    <select name="equipmentStatus">
+                        <option value="RUNNING">运行中</option>
+                        <option value="IDLE">空闲</option>
+                        <option value="FAULT">故障</option>
+                        <option value="MAINTENANCE">维护中</option>
+                        <option value="DISABLED">停用</option>
+                    </select>
+                </label>
                 <button type="submit">创建</button>
             </form>
             <form id="repair-form" class="tool" data-permission="equipment.fault.report">
@@ -285,14 +308,44 @@
                 <label>报修单号 <input name="repairReportNo" value="REP-DEMO-001" required></label>
                 <label>设备ID <input name="equipmentId" type="number" value="1" min="1" required></label>
                 <label>工单ID <input name="workOrderId" type="number" value="1"></label>
-                <label>故障级别 <select name="faultLevel"><option value="LOW">低</option><option value="MEDIUM">中</option><option value="HIGH" selected>高</option><option value="CRITICAL">严重</option></select></label>
+                <label>故障级别
+                    <select name="faultLevel">
+                        <option value="HIGH" selected>高</option>
+                        <option value="MEDIUM">中</option>
+                        <option value="LOW">低</option>
+                        <option value="URGENT">紧急</option>
+                        <option value="CRITICAL">严重</option>
+                    </select>
+                </label>
                 <label>故障描述 <input name="faultDesc" value="设备异常停机" required></label>
-                <label>上报人ID <input name="reporterId" type="number" value="1"></label>
                 <button type="submit">提交</button>
+            </form>
+            <form id="maintenance-plan-form" class="tool" data-permission="equipment.maintenance.assign">
+                <h3>创建维护计划</h3>
+                <label>设备ID <input name="equipmentId" type="number" value="1" min="1" required></label>
+                <label>维护周期
+                    <select name="planCycle" required>
+                        <option value="MONTHLY">每月</option>
+                        <option value="WEEKLY">每周</option>
+                        <option value="DAILY">每日</option>
+                        <option value="QUARTERLY">每季度</option>
+                        <option value="YEARLY">每年</option>
+                    </select>
+                </label>
+                <label>下次维护时间 <input name="nextPlanTime" type="datetime-local" required></label>
+                <label>计划状态
+                    <select name="planStatus">
+                        <option value="SCHEDULED">已排期</option>
+                        <option value="PENDING">待处理</option>
+                        <option value="COMPLETED">已完成</option>
+                    </select>
+                </label>
+                <button type="submit">创建</button>
             </form>
             <div class="tool wide"><h3>设备列表</h3><div id="equipment-table"></div></div>
             <div class="tool wide"><h3>报修单</h3><div id="repair-table"></div></div>
             <div class="tool wide"><h3>维修工单</h3><div id="maintenance-table"></div></div>
+            <div class="tool wide"><h3>维护计划</h3><div id="maintenance-plan-table"></div></div>
         </div>
     </section>
 
@@ -308,17 +361,25 @@
                 <label>订单ID <input name="orderId" type="number" value="1" required></label>
                 <label>任务ID <input name="taskId" type="number" value="1" required></label>
                 <label>工单ID <input name="workOrderId" type="number" value="1" required></label>
+                <label>产品ID <input name="productId" type="number" value="1"></label>
                 <label>批次号 <input name="batchNo" value="BATCH-DEMO-001" required></label>
-                <label>状态 <select name="traceStatus"><option value="NORMAL">正常</option><option value="QUALITY_RISK">质量风险</option><option value="REWORKED">已返工</option><option value="SCRAPPED">已报废</option></select></label>
+                <label>状态
+                    <select name="traceStatus">
+                        <option value="NORMAL">正常</option>
+                        <option value="QUALITY_RISK">质量风险</option>
+                        <option value="REWORKED">已返工</option>
+                        <option value="SCRAPPED">已报废</option>
+                    </select>
+                </label>
                 <button type="submit">创建</button>
             </form>
+            <div class="tool wide"><h3>追溯记录</h3><div id="trace-table"></div></div>
             <form id="trace-search-form" class="tool">
                 <h3>追溯查询</h3>
                 <label>追溯码或ID <input name="traceCode" value="TRACE-DEMO-001"></label>
                 <button type="submit">查询</button>
-                <div id="trace-detail"></div>
             </form>
-            <div class="tool wide"><h3>追溯记录</h3><div id="trace-table"></div></div>
+            <div class="tool wide"><h3>查询结果</h3><div id="trace-detail"><p>请输入追溯码或ID后点击查询</p></div></div>
         </div>
     </section>
 
@@ -339,14 +400,22 @@
                 <label>订单ID <input name="orderId" type="number" value="1" required></label>
                 <label>任务ID <input name="taskId" type="number" value="1" required></label>
                 <label>工单ID <input name="workOrderId" type="number" value="1" required></label>
-                <label>反馈类型 <select name="feedbackType"><option value="QUALITY">质量问题</option><option value="PRODUCTION">生产问题</option><option value="EQUIPMENT">设备问题</option><option value="MATERIAL">物料问题</option><option value="SYSTEM">系统问题</option></select></label>
+                <label>反馈类型
+                    <select name="feedbackType">
+                        <option value="QUALITY">质量问题</option>
+                        <option value="PRODUCTION">生产问题</option>
+                        <option value="EQUIPMENT">设备问题</option>
+                        <option value="WAREHOUSE">仓储问题</option>
+                        <option value="MATERIAL">物料问题</option>
+                        <option value="SYSTEM">系统问题</option>
+                    </select>
+                </label>
                 <label>反馈内容 <input name="feedbackContent" value="关注返工批次"></label>
                 <button type="submit">创建</button>
             </form>
             <div class="tool wide"><h3>反馈列表</h3><div id="feedback-table"></div></div>
         </div>
     </section>
-
     <section id="system" class="panel">
         <header>
             <h2>用户与权限</h2>

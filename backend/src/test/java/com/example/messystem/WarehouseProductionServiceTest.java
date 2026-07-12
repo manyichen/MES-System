@@ -17,6 +17,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Objects;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -52,7 +53,7 @@ class WarehouseProductionServiceTest {
 
         assertEquals("APPROVED", approved.requestStatus);
         assertTrue(warehouseService.listPickingTasks().stream()
-                .anyMatch(task -> task.requisitionId == requisition.requisitionId));
+                .anyMatch(task -> Objects.equals(task.requisitionId, requisition.requisitionId)));
         assertEquals("APPROVED", warehouseService.getRequisition(requisition.requisitionId).requestStatus);
     }
 
@@ -61,7 +62,7 @@ class WarehouseProductionServiceTest {
         MesMaterialRequisition requisition = createDatabaseRequisition(new BigDecimal("100"));
         warehouseService.approveRequisition(requisition.requisitionId, 1L);
         long pickingTaskId = warehouseService.listPickingTasks().stream()
-                .filter(task -> task.requisitionId == requisition.requisitionId)
+                .filter(task -> Objects.equals(task.requisitionId, requisition.requisitionId))
                 .findFirst()
                 .orElseThrow()
                 .pickingTaskId;
@@ -172,7 +173,7 @@ class WarehouseProductionServiceTest {
 
     private long pickingTaskIdFor(long requisitionId) {
         return warehouseService.listPickingTasks().stream()
-                .filter(task -> task.requisitionId == requisitionId)
+                .filter(task -> Objects.equals(task.requisitionId, requisitionId))
                 .findFirst()
                 .orElseThrow()
                 .pickingTaskId;
@@ -180,7 +181,7 @@ class WarehouseProductionServiceTest {
 
     private long deliveryTaskIdFor(long pickingTaskId) {
         return warehouseService.listDeliveryTasks().stream()
-                .filter(task -> task.pickingTaskId == pickingTaskId)
+                .filter(task -> Objects.equals(task.pickingTaskId, pickingTaskId))
                 .findFirst()
                 .orElseThrow()
                 .deliveryTaskId;

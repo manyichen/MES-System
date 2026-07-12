@@ -126,6 +126,32 @@ public class QualityInspectionDao {
         }
     }
 
+    public Optional<TraceContext> findTraceContext(long inspectionId) throws SQLException {
+        String sql = """
+                select co.order_id, wo.task_id, qi.work_order_id, coalesce(wr.batch_no, wo.batch_no) as batch_no
+                from mes_quality_inspection qi
+                join mes_work_order wo on wo.work_order_id = qi.work_order_id
+                join mes_production_task pt on pt.task_id = wo.task_id
+                join mes_customer_order co on co.order_id = pt.order_id
+                left join mes_work_report wr on wr.report_id = qi.work_report_id
+                where qi.inspection_id = ?
+                """;
+        try (Connection conn = Db.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, inspectionId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return Optional.of(new TraceContext(
+                            rs.getLong("order_id"),
+                            rs.getLong("task_id"),
+                            rs.getLong("work_order_id"),
+                            rs.getString("batch_no")
+                    ));
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
     private void ensureApprovedWorkReport(Connection conn, Long workOrderId, Long workReportId) throws SQLException {
         if (workReportId == null) {
             return;
@@ -181,5 +207,8 @@ public class QualityInspectionDao {
     private static void setLong(PreparedStatement statement, int index, Long value) throws SQLException {
         if (value == null) statement.setNull(index, java.sql.Types.BIGINT);
         else statement.setLong(index, value);
+    }
+
+    public record TraceContext(Long orderId, Long taskId, Long workOrderId, String batchNo) {
     }
 }

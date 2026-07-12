@@ -1,11 +1,12 @@
-async function loadDashboard() {
+async function loadDashboard(options = {}) {
     try {
         const dashboard = await getJson("/dashboard/my-summary");
         applyDashboardProfile(dashboard);
         renderDashboardMetrics(dashboard.metrics || []);
         renderDashboardTodos(dashboard.todos || []);
+        if (options.notify) showMessage("首页看板已刷新", "ok");
     } catch (error) {
-        showMessage(error.message, "error");
+        showMessage(toChineseError(error), "error");
     }
 }
 
@@ -13,7 +14,7 @@ function applyDashboardProfile(dashboard) {
     document.getElementById("dashboard-role-name").textContent = dashboard.roleName || dashboard.primaryRole;
     document.getElementById("dashboard-scope").textContent = `数据范围：${dashboard.dataScope || ""}`;
     document.getElementById("dashboard-restrictions").innerHTML = `
-        <h4>权限限制</h4>
+        <h4>权限边界</h4>
         <ul class="boundary-list">${(dashboard.prohibitedActions || []).map(item => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`;
 
     const visibleModules = new Set(dashboard.visibleModules || ["dashboard"]);
@@ -29,7 +30,7 @@ function applyDashboardProfile(dashboard) {
 
 function renderDashboardMetrics(metrics) {
     const container = document.getElementById("dashboard-metrics");
-    const symbols = ["▤", "◫", "◇", "⚙", "↗", "◎", "▦", "⌁"];
+    const symbols = ["◆", "●", "■", "▲", "▶", "◇", "□", "○"];
     container.innerHTML = metrics.map((metric, index) => `
         <button type="button" class="metric metric-${escapeHtml(metric.level || "normal")}" data-metric-tab="${escapeHtml(metric.targetTab || "dashboard")}">
             <span class="metric-icon">${symbols[index % symbols.length]}</span>
@@ -39,7 +40,10 @@ function renderDashboardMetrics(metrics) {
         </button>
     `).join("");
     container.querySelectorAll("[data-metric-tab]").forEach(button => {
-        button.addEventListener("click", () => switchTab(button.dataset.metricTab));
+        button.addEventListener("click", () => {
+            switchTab(button.dataset.metricTab);
+            showMessage("已跳转到对应模块", "ok");
+        });
     });
 }
 
@@ -60,74 +64,147 @@ function renderDashboardTodos(todos) {
         </button>
     `).join("");
     container.querySelectorAll("[data-todo-tab]").forEach(button => {
-        button.addEventListener("click", () => switchTab(button.dataset.todoTab, button.dataset.todoAnchor));
+        button.addEventListener("click", () => {
+            switchTab(button.dataset.todoTab, button.dataset.todoAnchor);
+            showMessage("已定位到待处理事项", "ok");
+        });
     });
 }
 
-async function loadTraces() {
+async function loadTraces(options = {}) {
     try {
         const rows = await getJson("/product-traces");
         renderTable("trace-table", rows, [
-            { key: "traceId", label: "ID" }, { key: "traceCode", label: "追溯码" },
-            { key: "orderId", label: "订单" }, { key: "taskId", label: "任务" },
-            { key: "workOrderId", label: "工单" }, { key: "batchNo", label: "批次" },
-            { key: "traceStatus", label: "状态" }
+            { key: "traceId", label: "ID" },
+            { key: "traceCode", label: "追溯码" },
+            { key: "orderId", label: "订单" },
+            { key: "taskId", label: "任务" },
+            { key: "workOrderId", label: "工单" },
+            { key: "batchNo", label: "批次" },
+            { key: "traceStatus", label: "状态", render: row => traceStatusText(row.traceStatus) }
         ]);
-    } catch (error) { showMessage(error.message, "error"); }
+        if (options.notify) showMessage("追溯记录已刷新", "ok");
+    } catch (error) {
+        showMessage(toChineseError(error), "error");
+    }
 }
 
-async function loadFeedback(workOrderId = 1) {
+async function loadFeedback(workOrderId = 1, options = {}) {
     try {
         const rows = await getJson(`/management-feedback?workOrderId=${workOrderId}`);
         renderTable("feedback-table", rows, [
-            { key: "feedbackId", label: "ID" }, { key: "feedbackNo", label: "编号" },
-            { key: "workOrderId", label: "工单" }, { key: "feedbackType", label: "类型" },
-            { key: "feedbackContent", label: "内容" }, { key: "feedbackStatus", label: "状态" }
-        ], [{ name: "close-feedback", label: "关闭", idKey: "feedbackId", permission: "feedback.close", handler: closeFeedback }]);
-    } catch (error) { showMessage(error.message, "error"); }
+            { key: "feedbackId", label: "ID" },
+            { key: "feedbackNo", label: "编号" },
+            { key: "workOrderId", label: "工单" },
+            { key: "feedbackType", label: "类型" },
+            { key: "feedbackContent", label: "内容" },
+            { key: "feedbackStatus", label: "状态", render: row => feedbackStatusText(row.feedbackStatus) }
+        ], [
+            { name: "close-feedback", label: "关闭", idKey: "feedbackId", permission: "feedback.close", visible: row => row.feedbackStatus === "OPEN", handler: closeFeedback }
+        ]);
+        if (options.notify) showMessage("管理反馈已刷新", "ok");
+    } catch (error) {
+        showMessage(toChineseError(error), "error");
+    }
 }
 
 async function closeFeedback(id) {
-    await postJson(`/management-feedback/${id}/close`);
-    showMessage("反馈已关闭");
-    const workOrderId = document.querySelector("#feedback-filter-form [name='workOrderId']").value || 1;
-    loadFeedback(workOrderId);
-    loadDashboard();
+    try {
+        await postJson(`/management-feedback/${id}/close`);
+        showMessage("反馈已关闭", "ok");
+        const workOrderId = document.querySelector("#feedback-filter-form [name='workOrderId']").value || 1;
+        await loadFeedback(workOrderId);
+        await loadDashboard();
+    } catch (error) {
+        showMessage(toChineseError(error), "error");
+    }
 }
 
 function bindDashboardEvents() {
     updateDashboardClock();
     window.setInterval(updateDashboardClock, 1000);
-    document.getElementById("refresh-dashboard")?.addEventListener("click", loadDashboard);
-    document.getElementById("refresh-trace")?.addEventListener("click", loadTraces);
+    document.getElementById("refresh-dashboard")?.addEventListener("click", () => loadDashboard({ notify: true }));
+    document.getElementById("refresh-trace")?.addEventListener("click", () => loadTraces({ notify: true }));
     document.getElementById("refresh-feedback")?.addEventListener("click", () => {
         const workOrderId = document.querySelector("#feedback-filter-form [name='workOrderId']").value || 1;
-        loadFeedback(workOrderId);
+        loadFeedback(workOrderId, { notify: true });
     });
     document.getElementById("trace-form")?.addEventListener("submit", async event => {
         event.preventDefault();
-        await postJson("/product-traces", { ...formToObject(event.target), createdAt: nowIsoLocal() });
-        showMessage("追溯记录已创建"); event.target.reset(); loadTraces();
+        try {
+            await postJson("/product-traces", { ...formToObject(event.target), createdAt: nowIsoLocal() });
+            showMessage("追溯记录已创建", "ok");
+            event.target.reset();
+            await loadTraces();
+        } catch (error) {
+            showMessage(toChineseError(error), "error");
+        }
     });
     document.getElementById("trace-search-form")?.addEventListener("submit", async event => {
         event.preventDefault();
-        const traceCode = event.target.traceCode.value.trim();
-        if (!traceCode) return;
-        const trace = await getJson(`/product-traces/${encodeURIComponent(traceCode)}`);
-        document.getElementById("trace-detail").innerHTML = `<div class="detail"><strong>${escapeHtml(trace.traceCode)}</strong><div>订单：${escapeHtml(trace.orderId)}，任务：${escapeHtml(trace.taskId)}，工单：${escapeHtml(trace.workOrderId)}</div><div>批次：${escapeHtml(trace.batchNo)}，状态：${escapeHtml(displayText(trace.traceStatus))}</div></div>`;
+        try {
+            const traceCode = event.target.traceCode.value.trim();
+            if (!traceCode) {
+                showMessage("请输入追溯码或ID", "error");
+                return;
+            }
+            const chain = await getJson(`/product-traces/${encodeURIComponent(traceCode)}`);
+            renderTraceChain(chain);
+            showMessage("追溯链路已加载", "ok");
+        } catch (error) {
+            showMessage(toChineseError(error), "error");
+        }
     });
     document.getElementById("feedback-filter-form")?.addEventListener("submit", event => {
-        event.preventDefault(); loadFeedback(event.target.workOrderId.value || 1);
+        event.preventDefault();
+        loadFeedback(event.target.workOrderId.value || 1, { notify: true });
     });
     document.getElementById("feedback-form")?.addEventListener("submit", async event => {
         event.preventDefault();
-        const payload = { ...formToObject(event.target), feedbackStatus: "OPEN", createdAt: nowIsoLocal(), closedAt: null };
-        await postJson("/management-feedback", payload);
-        showMessage("管理反馈已创建"); event.target.reset(); loadFeedback(payload.workOrderId || 1);
+        try {
+            const payload = { ...formToObject(event.target), feedbackStatus: "OPEN", createdAt: nowIsoLocal(), closedAt: null };
+            await postJson("/management-feedback", payload);
+            showMessage("管理反馈已创建", "ok");
+            event.target.reset();
+            await loadFeedback(payload.workOrderId || 1);
+        } catch (error) {
+            showMessage(toChineseError(error), "error");
+        }
     });
+}
+
+function renderTraceChain(chain) {
+    const trace = chain.trace || {};
+    const workReports = chain.workReports || [];
+    const inspections = chain.qualityInspections || [];
+    const reworks = chain.reworkOrders || [];
+    const qualityTraces = chain.qualityTraces || [];
+    document.getElementById("trace-detail").innerHTML = `
+        <div class="detail">
+            <strong>${escapeHtml(trace.traceCode || "")}</strong>
+            <div>订单：${escapeHtml(trace.orderId)}，任务：${escapeHtml(trace.taskId)}，工单：${escapeHtml(trace.workOrderId)}</div>
+            <div>批次：${escapeHtml(trace.batchNo)}，状态：${traceStatusText(trace.traceStatus)}</div>
+            <div>报工 ${workReports.length} 条，质检 ${inspections.length} 条，返工 ${reworks.length} 条，质量追溯 ${qualityTraces.length} 条</div>
+        </div>`;
 }
 
 function updateDashboardClock() {
     const clock = document.getElementById("dashboard-clock");
     if (clock) clock.textContent = new Intl.DateTimeFormat("zh-CN", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }).format(new Date());
+}
+
+function traceStatusText(status) {
+    return {
+        NORMAL: "正常",
+        QUALITY_RISK: "质量风险",
+        REWORKED: "已返工",
+        SCRAPPED: "已报废"
+    }[status] || escapeHtml(status || "");
+}
+
+function feedbackStatusText(status) {
+    return {
+        OPEN: "待处理",
+        CLOSED: "已关闭"
+    }[status] || escapeHtml(status || "");
 }
