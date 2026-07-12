@@ -33,7 +33,7 @@ public class WarehouseDao {
                 select material_id, material_code, material_name, material_type, specification,
                        unit, shelf_life_days, enabled, created_at
                 from mes_material
-                order by material_id desc
+                order by material_id asc
                 """;
         try (Connection connection = Db.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql);
@@ -122,7 +122,7 @@ public class WarehouseDao {
         String sql = """
                 select warehouse_id, warehouse_code, warehouse_name, warehouse_type, enabled
                 from mes_warehouse
-                order by warehouse_id desc
+                order by warehouse_id asc
                 """;
         try (Connection connection = Db.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql);
@@ -198,7 +198,7 @@ public class WarehouseDao {
         String sql = """
                 select location_id, warehouse_id, location_code, location_name, enabled
                 from mes_warehouse_location
-                order by location_id desc
+                order by location_id asc
                 """;
         try (Connection connection = Db.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql);
@@ -275,7 +275,7 @@ public class WarehouseDao {
                 select inventory_id, material_id, warehouse_id, location_id, batch_no,
                        available_qty, reserved_qty, frozen_qty, quality_status, last_check_time
                 from mes_inventory
-                order by inventory_id desc
+                order by inventory_id asc
                 """;
         try (Connection connection = Db.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql);
@@ -304,7 +304,7 @@ public class WarehouseDao {
                        available_qty, reserved_qty, frozen_qty, quality_status, last_check_time
                 from mes_inventory
                 where material_id = ?
-                order by inventory_id desc
+                order by inventory_id asc
                 """;
         try (Connection connection = Db.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -391,7 +391,7 @@ public class WarehouseDao {
                 select transaction_id, transaction_no, material_id, inventory_id, transaction_type,
                        qty, source_doc_type, source_doc_id, operator_id, created_at
                 from mes_inventory_transaction
-                order by transaction_id desc
+                order by created_at asc, transaction_id asc
                 """;
         try (Connection connection = Db.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql);
@@ -448,7 +448,7 @@ public class WarehouseDao {
                        i.unit, i.batch_no, i.item_status
                 from mes_material_requisition r
                 left join mes_material_requisition_item i on i.requisition_id = r.requisition_id
-                order by r.requisition_id desc, i.requisition_item_id
+                order by r.requisition_id asc, i.requisition_item_id asc
                 """;
         try (Connection connection = Db.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql);
@@ -510,7 +510,7 @@ public class WarehouseDao {
                 from mes_material_requisition r
                 left join mes_material_requisition_item i on i.requisition_id = r.requisition_id
                 where r.work_order_id = ?
-                order by r.requisition_id desc, i.requisition_item_id
+                order by r.requisition_id asc, i.requisition_item_id asc
                 """;
         try (Connection connection = Db.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -666,7 +666,7 @@ public class WarehouseDao {
                 select picking_task_id, picking_task_no, requisition_id, warehouse_id,
                        task_status, assigned_to, start_time, finish_time
                 from mes_picking_task
-                order by picking_task_id desc
+                order by picking_task_id asc
                 """;
         try (Connection connection = Db.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql);
@@ -766,7 +766,7 @@ public class WarehouseDao {
         String sql = """
                 select robot_id, robot_code, robot_name, warehouse_id, robot_status, battery_level, current_location, enabled
                 from mes_robot
-                order by robot_id desc
+                order by robot_id asc
                 """;
         try (Connection connection = Db.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql);
@@ -853,7 +853,7 @@ public class WarehouseDao {
                 select delivery_task_id, delivery_task_no, picking_task_id, robot_id,
                        from_location_id, to_line_id, delivery_status, load_time, handover_time
                 from mes_robot_delivery_task
-                order by delivery_task_id desc
+                order by delivery_task_id asc
                 """;
         try (Connection connection = Db.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql);

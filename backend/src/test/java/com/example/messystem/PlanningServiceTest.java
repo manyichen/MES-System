@@ -63,6 +63,7 @@ class PlanningServiceTest {
         MesProductionTask task = new MesProductionTask();
         task.orderId = order.orderId;
         task.targetLineId = line.lineId;
+        task.plannerId = 1L;
         task = taskService.createTask(task);
 
         MesKittingAnalysis analysis = kittingService.analyze(task.taskId);
@@ -94,6 +95,8 @@ class PlanningServiceTest {
 
         MesProductionTask task = new MesProductionTask();
         task.orderId = order.orderId;
+        task.targetLineId = createLine().lineId;
+        task.plannerId = 1L;
         task = taskService.createTask(task);
 
         MesKittingAnalysis analysis = kittingService.analyze(task.taskId);

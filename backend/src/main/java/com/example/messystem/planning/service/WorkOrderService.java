@@ -26,7 +26,7 @@ public class WorkOrderService {
                        planned_qty, actual_qty, priority_level, work_order_status, batch_no,
                        dispatch_time, receive_time, completed_time, created_at, updated_at
                 from mes_work_order
-                order by work_order_id desc
+                order by work_order_id asc
                 """;
         try (Connection connection = Db.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql);
@@ -48,7 +48,7 @@ public class WorkOrderService {
                        dispatch_time, receive_time, completed_time, created_at, updated_at
                 from mes_work_order
                 where assigned_to = ? or accepted_by = ?
-                order by work_order_id desc
+                order by work_order_id asc
                 """;
         try (Connection connection = Db.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -86,7 +86,34 @@ public class WorkOrderService {
         }
     }
 
+    public MesWorkOrder getWorkOrderForOperator(long workOrderId, long userId) {
+        String sql = """
+                select work_order_id, work_order_no, task_id, product_id, line_id, process_id,
+                       planned_qty, actual_qty, priority_level, work_order_status, batch_no,
+                       dispatch_time, receive_time, completed_time, created_at, updated_at
+                from mes_work_order
+                where work_order_id = ? and (assigned_to = ? or accepted_by = ?)
+                """;
+        try (Connection connection = Db.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, workOrderId);
+            statement.setLong(2, userId);
+            statement.setLong(3, userId);
+            try (ResultSet rs = statement.executeQuery()) {
+                if (!rs.next()) throw new NotFoundException("work order not found");
+                return mapWorkOrder(rs);
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("database operation failed: " + e.getMessage(), e);
+        }
+    }
+
     public MesWorkOrder createWorkOrder(MesWorkOrder workOrder) {
+        return createWorkOrder(workOrder, 1L);
+    }
+
+    public MesWorkOrder createWorkOrder(MesWorkOrder workOrder, Long actorId) {
+        requireId(actorId, "actorId is required");
         requireId(workOrder.taskId, "taskId is required");
         MesProductionTask task = database(() -> planningDao.findTask(workOrder.taskId))
                 .orElseThrow(() -> new BadRequestException("production task not found"));
@@ -132,7 +159,7 @@ public class WorkOrderService {
                     rs.next();
                     created = mapWorkOrder(rs);
                 }
-                addLog(connection, created.workOrderId, "CREATE", null, "CREATED", null, "work order created");
+                addLog(connection, created.workOrderId, "CREATE", null, "CREATED", actorId, "work order created");
                 connection.commit();
                 return created;
             } catch (SQLException | RuntimeException ex) {
@@ -147,11 +174,19 @@ public class WorkOrderService {
     }
 
     public MesWorkOrder dispatch(long workOrderId, Long operatorId) {
-        return changeStatus(workOrderId, "CREATED", "DISPATCHED", "DISPATCH", operatorId, "work order dispatched");
+        return changeStatus(workOrderId, "CREATED", "DISPATCHED", "DISPATCH", operatorId, operatorId,
+                "work order dispatched");
+    }
+
+    public MesWorkOrder dispatch(long workOrderId, Long assigneeId, Long actorId) {
+        requireProductionOperator(assigneeId);
+        return changeStatus(workOrderId, "CREATED", "DISPATCHED", "DISPATCH", assigneeId, actorId,
+                "work order dispatched to user " + assigneeId);
     }
 
     public MesWorkOrder receive(long workOrderId, Long operatorId) {
-        return changeStatus(workOrderId, "DISPATCHED", "RECEIVED", "RECEIVE", operatorId, "work order received");
+        return changeStatus(workOrderId, "DISPATCHED", "RECEIVED", "RECEIVE", operatorId, operatorId,
+                "work order received");
     }
 
     public List<MesWorkOrderOperationLog> listLogs(long workOrderId) {
@@ -161,7 +196,7 @@ public class WorkOrderService {
                        after_status, operator_id, operation_reason, operation_time
                 from mes_work_order_operation_log
                 where work_order_id = ?
-                order by operation_log_id desc
+                order by operation_time asc, operation_log_id asc
                 """;
         try (Connection connection = Db.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -179,8 +214,9 @@ public class WorkOrderService {
     }
 
     private MesWorkOrder changeStatus(long workOrderId, String expectedStatus, String nextStatus,
-            String operationType, Long operatorId, String remark) {
+            String operationType, Long operatorId, Long actorId, String remark) {
         requireId(operatorId, "operatorId is required");
+        requireId(actorId, "actorId is required");
         String timeColumn = "DISPATCHED".equals(nextStatus) ? "dispatch_time" : "receive_time";
         String actorColumn = "DISPATCHED".equals(nextStatus) ? "assigned_to" : "accepted_by";
         String ownershipCondition = "RECEIVED".equals(nextStatus) ? "and assigned_to = ?" : "";
@@ -212,7 +248,7 @@ public class WorkOrderService {
                     }
                     workOrder = mapWorkOrder(rs);
                 }
-                addLog(connection, workOrderId, operationType, expectedStatus, nextStatus, operatorId, remark);
+                addLog(connection, workOrderId, operationType, expectedStatus, nextStatus, actorId, remark);
                 connection.commit();
                 return workOrder;
             } catch (SQLException | RuntimeException ex) {
@@ -220,6 +256,28 @@ public class WorkOrderService {
                 throw ex;
             } finally {
                 connection.setAutoCommit(true);
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("database operation failed: " + e.getMessage(), e);
+        }
+    }
+
+    private static void requireProductionOperator(Long userId) {
+        requireId(userId, "operatorId is required");
+        String sql = """
+                select 1
+                from mes_user u
+                left join mes_user_role ur on ur.user_id = u.user_id
+                left join mes_role r on r.role_id = ur.role_id and r.enabled = 1
+                where u.user_id = ? and u.enabled = 1
+                  and (u.role_code = 'PRODUCTION_OPERATOR' or r.role_code = 'PRODUCTION_OPERATOR')
+                limit 1
+                """;
+        try (Connection connection = Db.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, userId);
+            try (ResultSet rs = statement.executeQuery()) {
+                if (!rs.next()) throw new BadRequestException("operatorId must be an enabled production operator");
             }
         } catch (SQLException e) {
             throw new IllegalStateException("database operation failed: " + e.getMessage(), e);
@@ -260,7 +318,8 @@ public class WorkOrderService {
             statement.setString(2, operationType);
             statement.setString(3, fromStatus);
             statement.setString(4, toStatus);
-            statement.setLong(5, operatorId == null ? 1L : operatorId);
+            if (operatorId == null) statement.setNull(5, java.sql.Types.BIGINT);
+            else statement.setLong(5, operatorId);
             statement.setString(6, remark);
             statement.executeUpdate();
         }

@@ -1,5 +1,6 @@
 package com.example.messystem.planning.resource;
 
+import com.example.messystem.auth.AuthFilter;
 import com.example.messystem.common.ResourceSupport;
 import com.example.messystem.planning.entity.MesProductionTask;
 import com.example.messystem.planning.service.KittingService;
@@ -12,6 +13,8 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.core.Context;
 
 @Path("/production-tasks")
 @Produces(MediaType.APPLICATION_JSON)
@@ -26,8 +29,9 @@ public class ProductionTaskResource {
     }
 
     @POST
-    public Response create(MesProductionTask task) {
+    public Response create(MesProductionTask task, @Context ContainerRequestContext context) {
         try {
+            task.plannerId = AuthFilter.currentUser(context).user.userId;
             return ResourceSupport.created("production task created", service.createTask(task));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);

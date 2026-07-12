@@ -246,7 +246,7 @@ public class PlanningDao {
                        order_qty, unit, delivery_date, priority_level, order_status, source_system,
                        remark, created_at, updated_at
                 from mes_customer_order
-                order by order_id desc
+                order by order_id asc
                 """;
         try (Connection connection = Db.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql);
@@ -324,7 +324,7 @@ public class PlanningDao {
                        close_time, remark, created_at, updated_at,
                        (select o.product_id from mes_customer_order o where o.order_id = t.order_id) as product_id
                 from mes_production_task t
-                order by task_id desc
+                order by task_id asc
                 """;
         try (Connection connection = Db.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql);
@@ -510,7 +510,7 @@ public class PlanningDao {
         String sql = """
                 select analysis_id, analysis_no, task_id, result_status, snapshot_time
                 from mes_kitting_analysis
-                order by analysis_id desc
+                order by snapshot_time asc, analysis_id asc
                 """;
         try (Connection connection = Db.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql);
@@ -527,7 +527,7 @@ public class PlanningDao {
         String sql = """
                 select alert_id, alert_no, task_id, severity, alert_status, created_at
                 from mes_shortage_alert
-                order by alert_id desc
+                order by created_at asc, alert_id asc
                 """;
         try (Connection connection = Db.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql);

@@ -25,6 +25,15 @@ public class CustomerOrderService {
     public MesCustomerOrder createOrder(MesCustomerOrder order) {
         requireText(order.customerName, "customerName is required");
         requireId(order.productId, "productId is required");
+        if (order.orderQty == null || order.orderQty <= 0) {
+            throw new BadRequestException("orderQty must be greater than 0");
+        }
+        if (order.deliveryDate != null && order.deliveryDate.isBefore(LocalDate.now())) {
+            throw new BadRequestException("deliveryDate cannot be earlier than today");
+        }
+        if (order.priorityLevel != null && (order.priorityLevel < 1 || order.priorityLevel > 5)) {
+            throw new BadRequestException("priorityLevel must be between 1 and 5");
+        }
         MesProduct product = database(() -> dao.findProduct(order.productId))
                 .orElseThrow(() -> new BadRequestException("product not found"));
         if (order.orderNo == null || order.orderNo.isBlank()) {
@@ -32,7 +41,7 @@ public class CustomerOrderService {
         }
         order.productCode = product.productCode;
         order.productModel = product.productModel;
-        order.orderQty = order.orderQty == null ? 0 : order.orderQty;
+        order.orderQty = order.orderQty;
         order.unit = order.unit == null || order.unit.isBlank() ? "条" : order.unit;
         order.deliveryDate = order.deliveryDate == null ? LocalDate.now().plusDays(14) : order.deliveryDate;
         order.priorityLevel = order.priorityLevel == null ? 3 : order.priorityLevel;

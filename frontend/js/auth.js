@@ -105,5 +105,5 @@ function renderScopeSummary(session) {
     const parts = [];
     if (lineIds.length) parts.push(`产线 ${lineIds.join(",")}`);
     if (warehouseIds.length) parts.push(`仓库 ${warehouseIds.join(",")}`);
-    return escapeHtml(parts.length ? parts.join("；") : "全局/本人范围");
+    return escapeHtml(parts.length ? parts.join("；") : "按当前角色权限访问");
 }

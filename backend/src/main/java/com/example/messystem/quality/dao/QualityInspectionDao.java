@@ -55,7 +55,7 @@ public class QualityInspectionDao {
     }
 
     public List<MesQualityInspection> findAll() throws SQLException {
-        String sql = SELECT_COLUMNS + " ORDER BY inspection_id DESC";
+        String sql = SELECT_COLUMNS + " ORDER BY inspection_id ASC";
         try (Connection conn = Db.getConnection(); PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
             List<MesQualityInspection> list = new ArrayList<>();
             while (rs.next()) {
@@ -66,7 +66,7 @@ public class QualityInspectionDao {
     }
 
     public List<MesQualityInspection> findAssignedTo(long userId) throws SQLException {
-        String sql = SELECT_COLUMNS + " WHERE assigned_to = ? OR inspector_id = ? ORDER BY inspection_id DESC";
+        String sql = SELECT_COLUMNS + " WHERE assigned_to = ? OR inspector_id = ? ORDER BY inspection_id ASC";
         try (Connection conn = Db.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, userId);
             ps.setLong(2, userId);

@@ -24,7 +24,7 @@ public class ProductionDao {
                 select report_id, report_no, work_order_id, batch_no, operator_id, report_qty,
                        qualified_qty, defect_qty, work_hours, report_time, report_status
                 from mes_work_report
-                order by report_id desc
+                order by report_id asc
                 """;
         try (Connection connection = Db.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql);
@@ -41,7 +41,7 @@ public class ProductionDao {
         String sql = """
                 select report_id, report_no, work_order_id, batch_no, operator_id, report_qty,
                        qualified_qty, defect_qty, work_hours, report_time, report_status
-                from mes_work_report where operator_id = ? order by report_id desc
+                from mes_work_report where operator_id = ? order by report_id asc
                 """;
         try (Connection connection = Db.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -165,7 +165,7 @@ public class ProductionDao {
                        qualified_qty, defect_qty, work_hours, report_time, report_status
                 from mes_work_report
                 where work_order_id = ?
-                order by report_id desc
+                order by report_id asc
                 """;
         try (Connection connection = Db.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -235,7 +235,7 @@ public class ProductionDao {
                 select wage_id, report_id, operator_id, piece_rate, qualified_qty,
                        wage_amount, settlement_status, created_at
                 from mes_piecework_wage
-                order by wage_id desc
+                order by wage_id asc
                 """;
         try (Connection connection = Db.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql);
@@ -252,7 +252,7 @@ public class ProductionDao {
         String sql = """
                 select report_id, report_no, work_order_id, batch_no, operator_id, report_qty,
                        qualified_qty, defect_qty, work_hours, report_time, report_status
-                from mes_work_report where work_order_id = ? and operator_id = ? order by report_id desc
+                from mes_work_report where work_order_id = ? and operator_id = ? order by report_id asc
                 """;
         try (Connection connection = Db.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -270,7 +270,7 @@ public class ProductionDao {
         String sql = """
                 select wage_id, report_id, operator_id, piece_rate, qualified_qty,
                        wage_amount, settlement_status, created_at
-                from mes_piecework_wage where operator_id = ? order by wage_id desc
+                from mes_piecework_wage where operator_id = ? order by wage_id asc
                 """;
         try (Connection connection = Db.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -349,7 +349,7 @@ public class ProductionDao {
                        wage_amount, settlement_status, created_at
                 from mes_piecework_wage
                 where report_id = ?
-                order by wage_id desc
+                order by wage_id asc
                 """;
         try (Connection connection = Db.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -368,7 +368,7 @@ public class ProductionDao {
         String sql = """
                 select wage_id, report_id, operator_id, piece_rate, qualified_qty,
                        wage_amount, settlement_status, created_at
-                from mes_piecework_wage where report_id = ? and operator_id = ? order by wage_id desc
+                from mes_piecework_wage where report_id = ? and operator_id = ? order by wage_id asc
                 """;
         try (Connection connection = Db.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {

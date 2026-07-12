@@ -210,6 +210,17 @@ public class DataScopeService {
             if (warehouseRestricted && !visibleWorkOrdersForWarehouses().contains(id)) throw denied("生产工单", id);
         }
 
+        public void requireTask(long id) {
+            if (lineRestricted && !ids("lineTasks", """
+                    select t.task_id from mes_production_task t join mes_user_line_scope s
+                    on s.line_id = t.target_line_id where s.user_id = ?
+                    """).contains(id)) throw denied("生产任务", id);
+        }
+
+        public void requireOrder(long id) {
+            if (lineRestricted && !visibleOrdersForLines().contains(id)) throw denied("客户订单", id);
+        }
+
         public void requireReport(long id) {
             if (lineRestricted && !ids("lineReports", """
                     select wr.report_id from mes_work_report wr join mes_work_order wo on wo.work_order_id = wr.work_order_id

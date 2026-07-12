@@ -57,7 +57,9 @@ public class DataScopeFilter implements ContainerRequestFilter, ContainerRespons
 
     private static void enforcePath(ScopeSnapshot scope, String path) {
         Long id;
-        if ((id = match(path, "^work-orders/(\\d+)(?:/.*)?$")) != null) scope.requireWorkOrder(id);
+        if ((id = match(path, "^orders/(\\d+)(?:/.*)?$")) != null) scope.requireOrder(id);
+        else if ((id = match(path, "^production-tasks/(\\d+)(?:/.*)?$")) != null) scope.requireTask(id);
+        else if ((id = match(path, "^work-orders/(\\d+)(?:/.*)?$")) != null) scope.requireWorkOrder(id);
         else if ((id = match(path, "^work-reports/by-work-order/(\\d+)$")) != null) scope.requireWorkOrder(id);
         else if ((id = match(path, "^work-reports/(\\d+)(?:/.*)?$")) != null) scope.requireReport(id);
         else if ((id = match(path, "^quality-inspections/(\\d+)(?:/.*)?$")) != null) scope.requireInspection(id);

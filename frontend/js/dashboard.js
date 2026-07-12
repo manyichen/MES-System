@@ -13,12 +13,13 @@ function applyDashboardProfile(dashboard) {
     document.getElementById("dashboard-role-name").textContent = dashboard.roleName || dashboard.primaryRole;
     document.getElementById("dashboard-scope").textContent = `数据范围：${dashboard.dataScope || ""}`;
     document.getElementById("dashboard-restrictions").innerHTML = `
-        <h4>明确禁止</h4>
+        <h4>权限限制</h4>
         <ul class="boundary-list">${(dashboard.prohibitedActions || []).map(item => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`;
 
     const visibleModules = new Set(dashboard.visibleModules || ["dashboard"]);
     document.querySelectorAll(".sidebar button[data-tab]").forEach(button => {
-        const visible = visibleModules.has(button.dataset.tab) && !button.classList.contains("permission-hidden");
+        const visible = (button.dataset.tab === "profile" || visibleModules.has(button.dataset.tab))
+            && !button.classList.contains("permission-hidden");
         button.classList.toggle("module-hidden", !visible);
     });
     document.querySelectorAll(".panel").forEach(panel => {
@@ -28,10 +29,13 @@ function applyDashboardProfile(dashboard) {
 
 function renderDashboardMetrics(metrics) {
     const container = document.getElementById("dashboard-metrics");
-    container.innerHTML = metrics.map(metric => `
+    const symbols = ["▤", "◫", "◇", "⚙", "↗", "◎", "▦", "⌁"];
+    container.innerHTML = metrics.map((metric, index) => `
         <button type="button" class="metric metric-${escapeHtml(metric.level || "normal")}" data-metric-tab="${escapeHtml(metric.targetTab || "dashboard")}">
-            <span>${escapeHtml(metric.label)}</span>
-            <strong>${escapeHtml(metric.value || "0")}<small>${escapeHtml(metric.unit || "")}</small></strong>
+            <span class="metric-icon">${symbols[index % symbols.length]}</span>
+            <span class="metric-label">${escapeHtml(metric.label)}</span>
+            <strong>${escapeHtml(metric.value ?? "0")}<small>${escapeHtml(metric.unit || "")}</small></strong>
+            <span class="metric-trend"><i style="--h:35%"></i><i style="--h:52%"></i><i style="--h:42%"></i><i style="--h:68%"></i><i style="--h:58%"></i><i style="--h:82%"></i></span>
         </button>
     `).join("");
     container.querySelectorAll("[data-metric-tab]").forEach(button => {
@@ -41,10 +45,10 @@ function renderDashboardMetrics(metrics) {
 
 function renderDashboardTodos(todos) {
     const allowed = todos.filter(todo => !todo.requiredPermission || hasPermission(todo.requiredPermission));
-    document.getElementById("dashboard-todo-count").textContent = allowed.length ? `${allowed.length} 类待处理` : "全部处理完成";
+    document.getElementById("dashboard-todo-count").textContent = allowed.length ? `${allowed.length} 项` : "暂无待办";
     const container = document.getElementById("dashboard-todos");
     if (!allowed.length) {
-        container.innerHTML = `<div class="empty-state">当前没有需要你处理的事务</div>`;
+        container.innerHTML = `<div class="empty-state">暂无待办事项</div>`;
         return;
     }
     container.innerHTML = allowed.map(todo => `
@@ -92,6 +96,8 @@ async function closeFeedback(id) {
 }
 
 function bindDashboardEvents() {
+    updateDashboardClock();
+    window.setInterval(updateDashboardClock, 1000);
     document.getElementById("refresh-dashboard")?.addEventListener("click", loadDashboard);
     document.getElementById("refresh-trace")?.addEventListener("click", loadTraces);
     document.getElementById("refresh-feedback")?.addEventListener("click", () => {
@@ -119,4 +125,9 @@ function bindDashboardEvents() {
         await postJson("/management-feedback", payload);
         showMessage("管理反馈已创建"); event.target.reset(); loadFeedback(payload.workOrderId || 1);
     });
+}
+
+function updateDashboardClock() {
+    const clock = document.getElementById("dashboard-clock");
+    if (clock) clock.textContent = new Intl.DateTimeFormat("zh-CN", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }).format(new Date());
 }

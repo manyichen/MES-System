@@ -86,7 +86,7 @@ public class MaintenanceOrderDao {
     }
 
     public List<MesMaintenanceOrder> findByMaintainer(long userId) throws SQLException {
-        String sql = "SELECT maintenance_order_id, maintenance_order_no, repair_report_id, equipment_id, maintainer_id, maintenance_status, dispatch_time, finish_time, result_desc FROM mes_maintenance_order WHERE maintainer_id = ? ORDER BY maintenance_order_id DESC";
+        String sql = "SELECT maintenance_order_id, maintenance_order_no, repair_report_id, equipment_id, maintainer_id, maintenance_status, dispatch_time, finish_time, result_desc FROM mes_maintenance_order WHERE maintainer_id = ? ORDER BY maintenance_order_id ASC";
         try (Connection conn = Db.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, userId);
             try (ResultSet rs = ps.executeQuery()) {

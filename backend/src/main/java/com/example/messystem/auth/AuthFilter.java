@@ -37,7 +37,7 @@ public class AuthFilter implements ContainerRequestFilter {
         }
         context.setProperty(CURRENT_USER_PROPERTY, currentUser);
 
-        if (path.equals("auth/me") || path.equals("auth/logout")) {
+        if (path.equals("auth/me") || path.equals("auth/logout") || path.equals("profile")) {
             return;
         }
 

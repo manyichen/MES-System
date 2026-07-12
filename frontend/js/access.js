@@ -44,14 +44,14 @@ function renderPermissionApplications(rows) {
     ], [
         { name: "review-application", label: "复核通过", idKey: "applyId", permission: "permission.review", handler: id => reviewPermissionApplication(id, "REVIEWED") },
         { name: "reject-application", label: "驳回", idKey: "applyId", permission: "permission.review", handler: id => reviewPermissionApplication(id, "REJECTED") },
-        { name: "apply-application", label: "最终应用", idKey: "applyId", permission: "role.manage", handler: applyPermissionApplication }
+        { name: "apply-application", label: "执行变更", idKey: "applyId", permission: "role.manage", handler: applyPermissionApplication }
     ]);
 }
 
 async function reviewPermissionApplication(id, decision) {
     const comment = window.prompt(decision === "REJECTED" ? "请输入驳回原因" : "请输入复核意见") || "";
     await postJson(`/access/permission-applications/${id}/review`, { decision, comment });
-    showMessage(decision === "REJECTED" ? "申请已驳回" : "申请已复核，等待系统管理员最终应用", "ok");
+    showMessage(decision === "REJECTED" ? "申请已驳回" : "复核完成，等待系统管理员执行变更", "ok");
     await loadAccessManagement();
     await loadDashboard();
 }

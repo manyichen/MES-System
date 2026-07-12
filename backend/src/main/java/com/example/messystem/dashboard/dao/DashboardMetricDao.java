@@ -46,7 +46,7 @@ public class DashboardMetricDao {
     }
 
     public List<MesDashboardMetric> findAll() throws SQLException {
-        String sql = "SELECT metric_id, dimension_key AS metric_key, metric_name, metric_value::text AS metric_value, metric_type, generated_at AS created_at FROM mes_dashboard_metric ORDER BY metric_id DESC";
+        String sql = "SELECT metric_id, dimension_key AS metric_key, metric_name, metric_value::text AS metric_value, metric_type, generated_at AS created_at FROM mes_dashboard_metric ORDER BY generated_at ASC, metric_id ASC";
         try (Connection conn = Db.getConnection(); PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
             List<MesDashboardMetric> results = new ArrayList<>();
             while (rs.next()) {

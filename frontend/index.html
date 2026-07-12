@@ -8,35 +8,48 @@
 </head>
 <body class="auth-locked">
 <section id="login-screen" class="login-screen">
+    <div class="login-visual">
+        <div class="login-brand"><span class="brand-mark">DS</span><span>双星轮胎制造执行系统</span></div>
+        <div class="login-copy"><span class="eyebrow">MES</span><h2>生产制造执行系统</h2><p>用于生产计划、仓储物流、生产报工、质量检验和设备维护。</p></div>
+        <div class="factory-lines"><i></i><i></i><i></i><i></i></div>
+    </div>
     <form id="login-form" class="login-card">
-        <h1>MES 系统登录</h1>
-        <label>用户名 <input name="username" autocomplete="username" value="admin" required></label>
-        <label>密码 <input name="password" type="password" autocomplete="current-password" required></label>
-        <button type="submit">登录</button>
+        <span class="eyebrow">用户登录</span><h1>双星轮胎 MES</h1><p class="login-hint">请使用系统账号登录</p>
+        <label><span>用户名</span><input name="username" autocomplete="username" value="admin" placeholder="请输入账号" required></label>
+        <label><span>密码</span><input name="password" type="password" autocomplete="current-password" placeholder="请输入密码" required></label>
+        <button type="submit">登录 <span>→</span></button>
         <p id="login-error"></p>
     </form>
 </section>
 <aside class="sidebar">
-    <h1>MES</h1>
-    <div id="current-user" class="current-user"></div>
-    <button id="logout-button" type="button" class="secondary">退出登录</button>
-    <button data-tab="dashboard" class="active">首页看板</button>
-    <button data-tab="planning">计划工单</button>
-    <button data-tab="warehouse">仓储物流</button>
-    <button data-tab="production">生产报工</button>
-    <button data-tab="quality">质量管理</button>
-    <button data-tab="equipment">设备维护</button>
-    <button data-tab="trace">产品追溯</button>
-    <button data-tab="feedback">管理反馈</button>
-    <button data-tab="system" data-permission="user.read|role.read">用户与角色</button>
+    <div class="sidebar-brand"><span class="brand-mark">DS</span><div><strong>双星轮胎 MES</strong><small>制造执行系统</small></div></div>
+    <nav>
+        <span class="nav-group">首页</span><button data-tab="dashboard" class="active"><i>⌂</i><span>工作台</span></button><button data-tab="profile"><i>◎</i><span>个人主页</span></button>
+        <span class="nav-group">生产业务</span><button data-tab="planning"><i>▤</i><span>计划与工单</span></button><button data-tab="warehouse"><i>▦</i><span>仓储物流</span></button><button data-tab="production"><i>◉</i><span>生产报工</span></button><button data-tab="quality"><i>◇</i><span>质量管理</span></button><button data-tab="equipment"><i>⚙</i><span>设备维护</span></button>
+        <span class="nav-group">综合管理</span><button data-tab="trace"><i>⌁</i><span>产品追溯</span></button><button data-tab="feedback"><i>✦</i><span>管理反馈</span></button><button data-tab="system" data-permission="user.read|role.read"><i>♙</i><span>用户与权限</span></button>
+    </nav>
+    <div class="sidebar-account"><div id="current-user" class="current-user"></div><button id="logout-button" type="button" class="secondary">退出</button></div>
 </aside>
 
 <main>
+    <div class="workspace-bar"><div><span class="system-pulse"></span>后端服务已连接</div><div class="workspace-meta"><span id="workspace-date"></span><span>双星轮胎工厂</span></div></div>
     <section id="dashboard" class="panel active">
         <header>
-            <h2>首页看板</h2>
+            <h2>工作台</h2>
             <button id="refresh-dashboard">刷新</button>
         </header>
+        <section class="dashboard-hero">
+            <div class="hero-copy">
+                <span class="hero-kicker">FACTORY OVERVIEW</span>
+                <h3>生产运行概览</h3>
+                <p>计划、仓储、生产、质量和设备数据集中展示</p>
+                <div class="hero-status"><span><i class="live-dot"></i>数据已同步</span><span id="dashboard-clock"></span></div>
+            </div>
+            <div class="production-flow" aria-label="生产流程">
+                <div><i>01</i><span>计划</span></div><b></b><div><i>02</i><span>备料</span></div><b></b><div><i>03</i><span>生产</span></div><b></b><div><i>04</i><span>质检</span></div><b></b><div><i>05</i><span>入库</span></div>
+            </div>
+            <div class="hero-orbit"><span></span><span></span><span></span></div>
+        </section>
         <div id="dashboard-metrics" class="metric-grid"></div>
         <div class="dashboard-layout">
             <section class="tool dashboard-role">
@@ -51,11 +64,47 @@
         </div>
     </section>
 
+    <section id="profile" class="panel profile-panel">
+        <header><h2>个人主页</h2><button id="refresh-profile" class="secondary">刷新</button></header>
+        <div class="profile-shell">
+            <aside class="profile-card">
+                <div class="profile-cover"></div>
+                <div id="profile-avatar" class="profile-avatar">U</div>
+                <h3 id="profile-display-name">用户</h3>
+                <p id="profile-position">岗位信息</p>
+                <div id="profile-role-list" class="profile-role-list"></div>
+                <p id="profile-bio-preview" class="profile-bio-preview">暂无个人简介</p>
+                <div class="profile-contact"><span>电话<strong id="profile-phone-preview">未填写</strong></span><span>邮箱<strong id="profile-email-preview">未填写</strong></span></div>
+            </aside>
+            <div class="profile-main">
+                <section class="profile-section">
+                    <div class="profile-section-title"><div><span>ACCOUNT</span><h3>账号信息</h3></div><small>以下信息由系统管理员维护</small></div>
+                    <div class="profile-facts">
+                        <div><span>用户 ID</span><strong id="profile-user-id">—</strong></div><div><span>登录账号</span><strong id="profile-username">—</strong></div>
+                        <div><span>员工编号</span><strong id="profile-employee-no">—</strong></div><div><span>所属部门</span><strong id="profile-department">—</strong></div>
+                        <div><span>岗位</span><strong id="profile-position-name">—</strong></div><div><span>最近登录</span><strong id="profile-last-login">—</strong></div>
+                    </div>
+                </section>
+                <form id="profile-form" class="profile-section profile-form">
+                    <div class="profile-section-title"><div><span>PROFILE</span><h3>个人资料</h3></div><small>修改内容仅影响当前账号</small></div>
+                    <div class="profile-form-grid">
+                        <label>姓名<input name="realName" maxlength="100" required></label>
+                        <label>联系电话<input name="phone" maxlength="50" placeholder="例如：13800138000"></label>
+                        <label>电子邮箱<input name="email" type="email" maxlength="150" placeholder="name@example.com"></label>
+                        <label>头像地址<input name="avatarUrl" maxlength="1000" placeholder="https://... 或 data:image/..." id="profile-avatar-input"></label>
+                        <label class="profile-bio-field">个人简介<textarea name="profileBio" maxlength="500" rows="5" placeholder="填写岗位职责、专业方向或工作说明"></textarea><small><span id="profile-bio-count">0</span> / 500</small></label>
+                    </div>
+                    <div class="profile-actions"><button type="button" id="profile-reset" class="secondary">撤销修改</button><button type="submit">保存个人资料</button></div>
+                </form>
+            </div>
+        </div>
+    </section>
+
     <section id="planning" class="panel">
         <header>
             <h2>计划工单</h2>
             <div class="actions">
-                <button id="seedPlanning" data-permission="demo.seed">生成演示主线</button>
+                <button id="seedPlanning" data-permission="demo.seed">初始化演示流程</button>
                 <button id="refreshPlanning">刷新</button>
             </div>
         </header>
@@ -91,7 +140,7 @@
         <header>
             <h2>仓储物流</h2>
             <div class="actions">
-                <button id="seedWarehouse" data-permission="demo.seed">生成演示数据</button>
+                <button id="seedWarehouse" data-permission="demo.seed">初始化演示数据</button>
                 <button id="refreshWarehouse">刷新</button>
             </div>
         </header>
@@ -148,7 +197,7 @@
             </div>
             <div id="warehouseDetail" class="tool wide detail-panel">
                 <h3>仓储详情</h3>
-                <p>点击表格中的详情查看记录。</p>
+                <p>请选择一条记录查看详情。</p>
             </div>
         </div>
     </section>
@@ -179,7 +228,7 @@
             </div>
             <div id="productionDetail" class="tool wide detail-panel">
                 <h3>生产详情</h3>
-                <p>点击表格中的详情查看记录。</p>
+                <p>请选择一条记录查看详情。</p>
             </div>
         </div>
     </section>
@@ -253,7 +302,7 @@
         </header>
         <div class="grid">
             <form id="trace-form" class="tool" data-permission="trace.create">
-                <h3>新增追溯</h3>
+                <h3>创建追溯记录</h3>
                 <label>追溯码 <input name="traceCode" value="TRACE-DEMO-001" required></label>
                 <label>订单ID <input name="orderId" type="number" value="1" required></label>
                 <label>任务ID <input name="taskId" type="number" value="1" required></label>
@@ -284,7 +333,7 @@
                 <button type="submit">查询</button>
             </form>
             <form id="feedback-form" class="tool" data-permission="feedback.create">
-                <h3>新增反馈</h3>
+                <h3>提交管理反馈</h3>
                 <label>反馈编号 <input name="feedbackNo" value="FB-DEMO-001" required></label>
                 <label>订单ID <input name="orderId" type="number" value="1" required></label>
                 <label>任务ID <input name="taskId" type="number" value="1" required></label>
@@ -299,7 +348,7 @@
 
     <section id="system" class="panel">
         <header>
-            <h2>用户与角色</h2>
+            <h2>用户与权限</h2>
             <button id="refresh-access">刷新</button>
         </header>
         <div class="grid">
@@ -323,7 +372,7 @@
                 <div id="role-table"></div>
             </div>
             <div class="tool wide">
-                <h3>选中角色的权限</h3>
+                <h3>角色权限详情</h3>
                 <div id="permission-table"></div>
             </div>
         </div>
@@ -340,6 +389,7 @@
 <script src="js/equipment.js"></script>
 <script src="js/access.js"></script>
 <script src="js/auth.js"></script>
+<script src="js/profile.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>
