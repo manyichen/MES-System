@@ -59,7 +59,7 @@ function refreshReportableWorkOrdersFrom(workOrders) {
     for (const order of reportable) {
         const option = document.createElement("option");
         option.value = order.workOrderId;
-        option.textContent = `${order.workOrderNo || "WO-" + order.workOrderId} / ${order.workOrderStatus} / \u8ba1\u5212 ${order.plannedQty ?? "-"}`;
+        option.textContent = `${order.workOrderNo || "WO-" + order.workOrderId} / ${statusText(order.workOrderStatus || "")} / \u8ba1\u5212 ${order.plannedQty ?? "-"}`;
         option.dataset.batchNo = order.batchNo || "";
         select.appendChild(option);
     }

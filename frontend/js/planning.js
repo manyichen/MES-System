@@ -60,9 +60,9 @@ function renderPlanningSelectors() {
     replaceInputWithSelect("orderForm", "productId", planningCache.products, "productId",
         item => `${item.productName || item.productCode || "\u4ea7\u54c1"} / ID ${item.productId}`);
     replaceInputWithSelect("taskForm", "orderId", planningCache.orders, "orderId",
-        item => `${item.orderNo || "\u8ba2\u5355"} / ${item.customerName || ""} / ${item.orderStatus || ""}`);
+        item => `${item.orderNo || "\u8ba2\u5355"} / ${item.customerName || ""} / ${statusText(item.orderStatus || "")}`);
     replaceInputWithSelect("workOrderForm", "taskId", planningCache.tasks.filter(item => item.taskStatus === "RELEASED"), "taskId",
-        item => `${item.taskNo || "\u4efb\u52a1"} / ${item.taskStatus || ""} / ${item.planQty ?? "-"}`);
+        item => `${item.taskNo || "\u4efb\u52a1"} / ${statusText(item.taskStatus || "")} / ${item.planQty ?? "-"}`);
     replaceInputWithSelect("workOrderForm", "lineId", planningCache.lines, "lineId",
         item => `${item.lineName || item.lineCode || "\u4ea7\u7ebf"} / ID ${item.lineId}`, true);
     replaceInputWithSelect("workOrderForm", "processId", planningCache.routes, "processId",

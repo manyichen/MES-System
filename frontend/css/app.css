@@ -220,3 +220,11 @@ table{width:100%;border-collapse:separate;border-spacing:0;font-size:12px}th,td{
     min-height: 40px;
     padding: 0 16px;
 }
+
+.form-status {
+    min-height: 18px;
+    margin: 10px 0 0;
+    color: #526078;
+    font-size: 12px;
+    font-weight: 700;
+}

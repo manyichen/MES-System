@@ -25,7 +25,7 @@ async function refreshWarehouse(options = {}) {
 
 function renderRequisitionSelectors() {
     replaceWarehouseInput("workOrderId", warehouseCache.workOrders.filter(item => ["DISPATCHED", "RECEIVED", "RUNNING"].includes(item.workOrderStatus)),
-        "workOrderId", item => `${item.workOrderNo || "\u5de5\u5355"} / ${item.workOrderStatus} / ID ${item.workOrderId}`);
+        "workOrderId", item => `${item.workOrderNo || "\u5de5\u5355"} / ${statusText(item.workOrderStatus || "")} / ID ${item.workOrderId}`);
     replaceWarehouseInput("warehouseId", warehouseCache.warehouses,
         "warehouseId", item => `${item.warehouseName || item.warehouseCode || "\u4ed3\u5e93"} / ID ${item.warehouseId}`);
     replaceWarehouseInput("materialId", warehouseCache.materials,

@@ -61,6 +61,21 @@ public class QualityInspectionResource {
         }
     }
 
+    @GET
+    @Path("/{id}/items")
+    public ApiResponse<List<MesQualityInspectionItem>> listItems(@PathParam("id") long id,
+            @Context ContainerRequestContext context) {
+        try {
+            AuthenticatedUser user = AuthFilter.currentUser(context);
+            if (user.hasRole("QUALITY_INSPECTOR")) {
+                service.requireAssignedInspection(id, user.user.userId);
+            }
+            return ApiResponse.ok(service.getInspectionItems(id));
+        } catch (SQLException e) {
+            throw new BadRequestException(e.getMessage());
+        }
+    }
+
     @POST
     @Path("/{id}/items")
     public ApiResponse<Long> addItem(@PathParam("id") long id, MesQualityInspectionItem item,

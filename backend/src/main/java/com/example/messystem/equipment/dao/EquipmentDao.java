@@ -27,7 +27,7 @@ public class EquipmentDao {
             }
             ps.setString(5, equipment.equipmentStatus());
             ps.setObject(6, equipment.lastMaintenanceTime());
-            ps.setObject(7, equipment.enabled());
+            ps.setInt(7, Boolean.FALSE.equals(equipment.enabled()) ? 0 : 1);
             ps.executeUpdate();
             try (ResultSet rs = ps.getGeneratedKeys()) {
                 if (rs.next()) {
@@ -94,7 +94,18 @@ public class EquipmentDao {
                 rs.getObject("line_id") == null ? null : rs.getLong("line_id"),
                 rs.getString("equipment_status"),
                 rs.getObject("last_maintenance_time", java.time.LocalDateTime.class),
-                rs.getBoolean("enabled")
+                readEnabled(rs)
         );
+    }
+
+    private boolean readEnabled(ResultSet rs) throws SQLException {
+        Object value = rs.getObject("enabled");
+        if (value instanceof Boolean booleanValue) {
+            return booleanValue;
+        }
+        if (value instanceof Number numberValue) {
+            return numberValue.intValue() != 0;
+        }
+        return value != null && Boolean.parseBoolean(value.toString());
     }
 }

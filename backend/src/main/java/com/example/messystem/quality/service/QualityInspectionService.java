@@ -1,5 +1,6 @@
 package com.example.messystem.quality.service;
 
+import com.example.messystem.common.BadRequestException;
 import com.example.messystem.quality.dao.QualityInspectionDao;
 import com.example.messystem.quality.dao.QualityInspectionItemDao;
 import com.example.messystem.quality.dao.QualityTraceDao;
@@ -8,7 +9,6 @@ import com.example.messystem.quality.entity.MesQualityInspection;
 import com.example.messystem.quality.entity.MesQualityInspectionItem;
 import com.example.messystem.quality.entity.MesQualityTrace;
 import com.example.messystem.quality.entity.MesReworkOrder;
-import com.example.messystem.common.BadRequestException;
 
 import java.sql.SQLException;
 import java.time.LocalDateTime;
@@ -50,14 +50,14 @@ public class QualityInspectionService {
 
     public boolean assignInspection(long inspectionId, long inspectorId) throws SQLException {
         if (!inspectionDao.assign(inspectionId, inspectorId)) {
-            throw new BadRequestException("质检单不存在、状态不允许分配或已被处理");
+            throw new BadRequestException("质检单不存在、状态不允许分配或已经被处理");
         }
         return true;
     }
 
     public boolean submitInspection(long inspectionId, long inspectorId) throws SQLException {
         if (!inspectionDao.submit(inspectionId, inspectorId)) {
-            throw new BadRequestException("只能提交分配给本人的未完成质检单，且至少需要一条检验项目");
+            throw new BadRequestException("只能提交分配给本人的未完成质检单，并且至少需要一条检验项目");
         }
         return true;
     }
@@ -87,41 +87,80 @@ public class QualityInspectionService {
     }
 
     public boolean judgeInspection(long inspectionId, String status, String result, long reviewedBy) throws SQLException {
-        String finalStatus = "PASS".equalsIgnoreCase(result) ? "APPROVED"
-                : "REWORK".equalsIgnoreCase(result) ? "REWORK_REQUIRED" : status;
-        boolean updated = inspectionDao.updateStatus(inspectionId, finalStatus, result, reviewedBy);
-        if (!updated) {
+        MesQualityInspection inspection = inspectionDao.findById(inspectionId)
+                .orElseThrow(() -> new BadRequestException("质检单不存在"));
+        List<MesQualityInspectionItem> items = itemDao.findByInspectionId(inspectionId);
+        if (items.isEmpty()) {
+            throw new BadRequestException("质检单至少需要一条检验项目才能判定");
+        }
+
+        String finalResult = resolveJudgementResult(result, items);
+        String finalStatus = "PASS".equals(finalResult) ? "APPROVED"
+                : "REWORK".equals(finalResult) ? "REWORK_REQUIRED" : "REJECTED";
+        if (!inspectionDao.updateStatus(inspectionId, finalStatus, finalResult, reviewedBy)) {
             throw new BadRequestException("只有质检员已提交的检验结果才能审核");
         }
-        // Optional: generate trace or rework order if needed
-        if ("REWORK".equalsIgnoreCase(result)) {
+
+        Long reworkId = null;
+        if ("REWORK".equals(finalResult)) {
             MesReworkOrder reworkOrder = new MesReworkOrder(
                     null,
                     generateCode("RW"),
-                    null,
+                    inspection.workOrderId(),
                     inspectionId,
-                    "Quality rework due to inspection",
+                    "质检判定需要返工",
                     "CREATED",
                     null,
                     LocalDateTime.now(),
                     null
             );
-            long reworkId = reworkOrderDao.insert(reworkOrder);
-            MesQualityTrace trace = new MesQualityTrace(
-                    null,
-                    generateCode("TRACE"),
-                    null,
-                    null,
-                    null,
-                    null,
-                    inspectionId,
-                    reworkId,
-                    "REWORKED",
-                    LocalDateTime.now()
-            );
-            traceDao.insert(trace);
+            reworkId = reworkOrderDao.insert(reworkOrder);
         }
+
+        Long finalReworkId = reworkId;
+        MesQualityTrace trace = inspectionDao.findTraceContext(inspectionId)
+                .map(context -> new MesQualityTrace(
+                        null,
+                        generateCode("QT"),
+                        context.orderId(),
+                        context.taskId(),
+                        context.workOrderId(),
+                        context.batchNo(),
+                        inspectionId,
+                        finalReworkId,
+                        traceStatus(finalResult),
+                        LocalDateTime.now()
+                ))
+                .orElseThrow(() -> new BadRequestException("质检单未关联到完整的订单、任务、工单链路，无法写入质量追溯"));
+        traceDao.insert(trace);
         return true;
+    }
+
+    private String resolveJudgementResult(String requestedResult, List<MesQualityInspectionItem> items) {
+        boolean hasRework = items.stream().anyMatch(item -> "REWORK".equalsIgnoreCase(item.itemResult()));
+        boolean hasFail = items.stream().anyMatch(item -> isFail(item.itemResult()));
+        if (hasRework || (hasFail && "REWORK".equalsIgnoreCase(requestedResult))) {
+            return "REWORK";
+        }
+        if (hasFail) {
+            return "FAIL";
+        }
+        return "PASS";
+    }
+
+    private boolean isFail(String result) {
+        return "FAIL".equalsIgnoreCase(result)
+                || "FAILED".equalsIgnoreCase(result)
+                || "NG".equalsIgnoreCase(result)
+                || "不合格".equals(result);
+    }
+
+    private String traceStatus(String result) {
+        return switch (result) {
+            case "PASS" -> "NORMAL";
+            case "REWORK" -> "REWORKED";
+            default -> "QUALITY_RISK";
+        };
     }
 
     private String generateCode(String prefix) {

@@ -9,6 +9,7 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Map;
 
 @Path("/product-traces")
 @Produces(MediaType.APPLICATION_JSON)
@@ -28,11 +29,9 @@ public class ProductTraceResource {
 
     @GET
     @Path("/{id}")
-    public ApiResponse<MesProductTrace> getTrace(@PathParam("id") String id) {
+    public ApiResponse<Map<String, Object>> getTrace(@PathParam("id") String id) {
         try {
-            return service.getProductTrace(id)
-                    .map(ApiResponse::ok)
-                    .orElseGet(() -> ApiResponse.fail("Product trace not found"));
+            return ApiResponse.ok(service.getProductTraceChain(id));
         } catch (SQLException e) {
             throw new BadRequestException(e.getMessage());
         }

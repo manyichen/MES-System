@@ -83,24 +83,40 @@ public class DashboardResource {
     @GET
     @Path("/summary")
     public ApiResponse<List<MesDashboardMetric>> summary() {
-        return listMetrics();
+        try {
+            return ApiResponse.ok(service.aggregateSummary());
+        } catch (SQLException e) {
+            throw new BadRequestException(e.getMessage());
+        }
     }
 
     @GET
     @Path("/quality")
     public ApiResponse<List<MesDashboardMetric>> quality() {
-        return listMetrics();
+        try {
+            return ApiResponse.ok(service.aggregateQuality());
+        } catch (SQLException e) {
+            throw new BadRequestException(e.getMessage());
+        }
     }
 
     @GET
     @Path("/equipment")
     public ApiResponse<List<MesDashboardMetric>> equipment() {
-        return listMetrics();
+        try {
+            return ApiResponse.ok(service.aggregateEquipment());
+        } catch (SQLException e) {
+            throw new BadRequestException(e.getMessage());
+        }
     }
 
     @GET
     @Path("/production")
     public ApiResponse<List<MesDashboardMetric>> production() {
-        return listMetrics();
+        try {
+            return ApiResponse.ok(service.aggregateProduction());
+        } catch (SQLException e) {
+            throw new BadRequestException(e.getMessage());
+        }
     }
 }

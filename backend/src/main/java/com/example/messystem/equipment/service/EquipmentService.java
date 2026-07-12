@@ -8,6 +8,7 @@ import com.example.messystem.equipment.entity.MesEquipment;
 import com.example.messystem.equipment.entity.MesEquipmentRepairReport;
 import com.example.messystem.equipment.entity.MesMaintenanceOrder;
 import com.example.messystem.equipment.entity.MesMaintenancePlan;
+import com.example.messystem.common.BadRequestException;
 
 import java.sql.SQLException;
 import java.time.LocalDateTime;
@@ -42,7 +43,9 @@ public class EquipmentService {
     }
 
     public long createRepairReport(MesEquipmentRepairReport report) throws SQLException {
-        return repairReportDao.insert(report);
+        long id = repairReportDao.insert(report);
+        equipmentDao.updateStatus(report.equipmentId(), "FAULT");
+        return id;
     }
 
     public Optional<MesEquipmentRepairReport> getRepairReport(long id) throws SQLException {
@@ -58,12 +61,20 @@ public class EquipmentService {
     }
 
     public boolean approveRepairReport(long id) throws SQLException {
-        return repairReportDao.updateStatus(id, "APPROVED");
+        if (!repairReportDao.updateStatus(id, "APPROVED")) {
+            throw new BadRequestException("报修单不存在，无法审核");
+        }
+        convertRepairReportToMaintenanceOrder(id);
+        return true;
     }
 
     public long convertRepairReportToMaintenanceOrder(long repairReportId) throws SQLException {
+        List<MesMaintenanceOrder> existing = maintenanceOrderDao.findByRepairReportId(repairReportId);
+        if (!existing.isEmpty()) {
+            return existing.get(0).maintenanceOrderId();
+        }
         MesEquipmentRepairReport report = repairReportDao.findById(repairReportId)
-                .orElseThrow(() -> new SQLException("Repair report not found"));
+                .orElseThrow(() -> new BadRequestException("报修单不存在"));
         long orderId = maintenanceOrderDao.insert(new MesMaintenanceOrder(
                 null,
                 "MO-" + System.currentTimeMillis(),
