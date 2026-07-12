@@ -94,6 +94,17 @@ public class ReworkOrderDao {
         }
     }
 
+    public boolean updateStatus(long id, String status, String expectedStatus) throws SQLException {
+        String sql = "UPDATE mes_rework_order SET rework_status = ?, closed_at = CASE WHEN ? = 'FINISHED' THEN NOW() ELSE closed_at END WHERE rework_order_id = ? AND rework_status = ?";
+        try (Connection conn = Db.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, status);
+            ps.setString(2, status);
+            ps.setLong(3, id);
+            ps.setString(4, expectedStatus);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
     private MesReworkOrder mapRow(ResultSet rs) throws SQLException {
         return new MesReworkOrder(
                 rs.getLong("rework_order_id"),

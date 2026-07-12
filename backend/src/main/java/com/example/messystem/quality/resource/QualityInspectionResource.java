@@ -54,7 +54,14 @@ public class QualityInspectionResource {
     @POST
     public ApiResponse<Long> create(MesQualityInspection inspection) {
         try {
-            long id = service.createInspection(inspection);
+            if (inspection == null) {
+                throw new BadRequestException("质检单内容不能为空");
+            }
+            MesQualityInspection payload = new MesQualityInspection(
+                    null, inspection.inspectionNo(), inspection.workOrderId(), inspection.workReportId(),
+                    inspection.sampleQty(), "CREATED", null, null, null, null,
+                    null, null, null, null);
+            long id = service.createInspection(payload);
             return ApiResponse.ok(id);
         } catch (SQLException e) {
             throw new BadRequestException(e.getMessage());
@@ -85,10 +92,7 @@ public class QualityInspectionResource {
                 throw new BadRequestException("质检项目不能为空");
             }
             AuthenticatedUser user = AuthFilter.currentUser(context);
-            if (!user.hasRole("SYSTEM_ADMIN")) {
-                service.requireAssignedInspection(id, user.user.userId);
-            }
-            long itemId = service.addInspectionItem(new MesQualityInspectionItem(
+            MesQualityInspectionItem payload = new MesQualityInspectionItem(
                     null,
                     id,
                     item.itemCode(),
@@ -97,7 +101,10 @@ public class QualityInspectionResource {
                     item.actualValue(),
                     item.itemResult(),
                     item.remark()
-            ));
+            );
+            long itemId = user.hasRole("SYSTEM_ADMIN")
+                    ? service.addInspectionItem(payload)
+                    : service.addAssignedInspectionItem(payload, user.user.userId);
             return ApiResponse.ok(itemId);
         } catch (SQLException e) {
             throw new BadRequestException(e.getMessage());

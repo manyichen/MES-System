@@ -56,9 +56,10 @@ public class MaintenanceOrderResource {
 
     @POST
     @Path("/{id}/accept")
-    public ApiResponse<Boolean> accept(@PathParam("id") long id) {
+    public ApiResponse<Boolean> accept(@PathParam("id") long id, @Context ContainerRequestContext context) {
         try {
-            return ApiResponse.ok(service.updateMaintenanceOrderStatus(id, "ACCEPTED"));
+            return ApiResponse.ok(service.acceptMaintenanceOrder(id,
+                    AuthFilter.currentUser(context).user.userId));
         } catch (SQLException e) {
             throw new BadRequestException(e.getMessage());
         }

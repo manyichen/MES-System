@@ -56,7 +56,7 @@ public class ReworkOrderResource {
     @Path("/{id}/dispatch")
     public ApiResponse<Boolean> dispatch(@PathParam("id") long id) {
         try {
-            return ApiResponse.ok(service.updateStatus(id, "DISPATCHED"));
+            return ApiResponse.ok(service.dispatch(id));
         } catch (SQLException e) {
             throw new BadRequestException(e.getMessage());
         }
@@ -66,7 +66,7 @@ public class ReworkOrderResource {
     @Path("/{id}/finish")
     public ApiResponse<Boolean> finish(@PathParam("id") long id) {
         try {
-            return ApiResponse.ok(service.updateStatus(id, "FINISHED"));
+            return ApiResponse.ok(service.finish(id));
         } catch (SQLException e) {
             throw new BadRequestException(e.getMessage());
         }

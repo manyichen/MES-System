@@ -125,6 +125,14 @@ public class MaintenanceOrderDao {
         }
     }
 
+    public boolean acceptFinished(long id) throws SQLException {
+        String sql = "UPDATE mes_maintenance_order SET maintenance_status = 'ACCEPTED' WHERE maintenance_order_id = ? AND maintenance_status = 'FINISHED'";
+        try (Connection conn = Db.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, id);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
     private MesMaintenanceOrder mapRow(ResultSet rs) throws SQLException {
         return new MesMaintenanceOrder(
                 rs.getLong("maintenance_order_id"),

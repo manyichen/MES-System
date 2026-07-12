@@ -90,6 +90,16 @@ public class EquipmentRepairReportDao {
         }
     }
 
+    public boolean updateStatus(long id, String status, String expectedStatus) throws SQLException {
+        String sql = "UPDATE mes_equipment_repair_report SET repair_status = ? WHERE repair_report_id = ? AND repair_status = ?";
+        try (Connection conn = Db.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, status);
+            ps.setLong(2, id);
+            ps.setString(3, expectedStatus);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
     private MesEquipmentRepairReport mapRow(ResultSet rs) throws SQLException {
         return new MesEquipmentRepairReport(
                 rs.getLong("repair_report_id"),
