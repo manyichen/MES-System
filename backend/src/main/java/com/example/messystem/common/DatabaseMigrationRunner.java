@@ -12,7 +12,7 @@ import java.util.List;
 
 public class DatabaseMigrationRunner {
     private static final String DEFAULT_ADMIN_USERNAME = "admin";
-    private static final String DEFAULT_ADMIN_PASSWORD = "Admin@MES2026";
+    private static final String DEFAULT_ADMIN_PASSWORD = "123456";
     private static final String DEFAULT_ADMIN_ROLE = "SYSTEM_ADMIN";
 
     public static void main(String[] args) throws Exception {

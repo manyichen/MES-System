@@ -12,6 +12,11 @@ public class MesUser {
     public String roleCode;
     public String department;
     public String phone;
+    public String email;
+    public String avatarUrl;
+    public String profileBio;
+    public String employeeNo;
+    public String positionName;
     public Integer enabled;
     public LocalDateTime createdAt;
     public LocalDateTime updatedAt;

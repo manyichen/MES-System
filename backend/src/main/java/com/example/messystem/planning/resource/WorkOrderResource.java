@@ -32,9 +32,10 @@ public class WorkOrderResource {
     }
 
     @POST
-    public Response create(MesWorkOrder workOrder) {
+    public Response create(MesWorkOrder workOrder, @Context ContainerRequestContext context) {
         try {
-            return ResourceSupport.created("work order created", service.createWorkOrder(workOrder));
+            Long actorId = AuthFilter.currentUser(context).user.userId;
+            return ResourceSupport.created("work order created", service.createWorkOrder(workOrder, actorId));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }
@@ -42,9 +43,12 @@ public class WorkOrderResource {
 
     @GET
     @Path("/{id}")
-    public Response get(@PathParam("id") long id) {
+    public Response get(@PathParam("id") long id, @Context ContainerRequestContext context) {
         try {
-            return ResourceSupport.ok(service.getWorkOrder(id));
+            AuthenticatedUser user = AuthFilter.currentUser(context);
+            return ResourceSupport.ok(user.hasRole("PRODUCTION_OPERATOR")
+                    ? service.getWorkOrderForOperator(id, user.user.userId)
+                    : service.getWorkOrder(id));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }
@@ -52,9 +56,11 @@ public class WorkOrderResource {
 
     @POST
     @Path("/{id}/dispatch")
-    public Response dispatch(@PathParam("id") long id, @QueryParam("operatorId") Long operatorId) {
+    public Response dispatch(@PathParam("id") long id, @QueryParam("operatorId") Long operatorId,
+            @Context ContainerRequestContext context) {
         try {
-            return ResourceSupport.action("work order dispatched", service.dispatch(id, operatorId));
+            Long actorId = AuthFilter.currentUser(context).user.userId;
+            return ResourceSupport.action("work order dispatched", service.dispatch(id, operatorId, actorId));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }
@@ -73,8 +79,10 @@ public class WorkOrderResource {
 
     @GET
     @Path("/{id}/logs")
-    public Response logs(@PathParam("id") long id) {
+    public Response logs(@PathParam("id") long id, @Context ContainerRequestContext context) {
         try {
+            AuthenticatedUser user = AuthFilter.currentUser(context);
+            if (user.hasRole("PRODUCTION_OPERATOR")) service.getWorkOrderForOperator(id, user.user.userId);
             return ResourceSupport.ok(service.listLogs(id));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);

@@ -24,15 +24,19 @@ public class ProductionTaskService {
 
     public MesProductionTask createTask(MesProductionTask task) {
         requireId(task.orderId, "orderId is required");
+        requireId(task.plannerId, "plannerId is required");
         MesCustomerOrder order = database(() -> dao.findOrder(task.orderId))
                 .orElseThrow(() -> new BadRequestException("order not found"));
         task.taskNo = task.taskNo == null || task.taskNo.isBlank() ? IdGenerator.nextCode("TASK") : task.taskNo;
         task.productId = task.productId == null ? order.productId : task.productId;
         task.planQty = task.planQty == null || task.planQty <= 0 ? order.orderQty : task.planQty;
-        task.targetLineId = task.targetLineId == null ? firstLineId() : task.targetLineId;
-        task.plannerId = task.plannerId == null ? 1L : task.plannerId;
+        requireId(task.targetLineId, "targetLineId is required");
+        if (task.planQty == null || task.planQty <= 0) throw new BadRequestException("planQty must be greater than 0");
         task.plannedStartTime = task.plannedStartTime == null ? LocalDateTime.now() : task.plannedStartTime;
         task.plannedEndTime = task.plannedEndTime == null ? task.plannedStartTime.plusDays(3) : task.plannedEndTime;
+        if (!task.plannedEndTime.isAfter(task.plannedStartTime)) {
+            throw new BadRequestException("plannedEndTime must be after plannedStartTime");
+        }
         task.taskStatus = "CREATED";
         task.kittingStatus = "PENDING";
         MesProductionTask created = database(() -> dao.insertTask(task));
@@ -53,11 +57,6 @@ public class ProductionTaskService {
         }
         return database(() -> dao.releaseTask(taskId))
                 .orElseThrow(() -> new NotFoundException("production task not found"));
-    }
-
-    private Long firstLineId() {
-        long id = database(dao::firstLineId);
-        return id == 0L ? null : id;
     }
 
     private static void requireId(Long id, String message) {

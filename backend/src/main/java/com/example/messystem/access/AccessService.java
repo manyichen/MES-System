@@ -159,7 +159,7 @@ public class AccessService {
                        a.to_role_code, a.apply_reason, a.apply_status, a.reviewer_id,
                        a.reviewed_at, a.review_comment, a.created_at
                 from mes_permission_apply a
-                """ + (all ? "" : " where a.applicant_id = ? ") + " order by a.apply_id desc";
+                """ + (all ? "" : " where a.applicant_id = ? ") + " order by a.apply_id asc";
         try (Connection connection = Db.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             if (!all) statement.setLong(1, actor.user.userId);

@@ -28,7 +28,9 @@ function initializeApp() {
     if (typeof bindDashboardEvents === "function") bindDashboardEvents();
     if (typeof bindQualityEvents === "function") bindQualityEvents();
     if (typeof bindEquipmentEvents === "function") bindEquipmentEvents();
+    if (typeof bindProfileEvents === "function") bindProfileEvents();
     if (typeof loadDashboard === "function") loadDashboard();
+    if (typeof loadProfile === "function") loadProfile();
     if ((hasPermission("planning.read") || hasPermission("planning.work_order.read")) && typeof refreshPlanning === "function") refreshPlanning();
     if (hasPermission("warehouse.read") && typeof refreshWarehouse === "function") refreshWarehouse();
     if (hasPermission("production.read") && typeof refreshProduction === "function") refreshProduction();
@@ -40,6 +42,8 @@ function initializeApp() {
 }
 
 window.addEventListener("DOMContentLoaded", () => {
+    const date = document.getElementById("workspace-date");
+    if (date) date.textContent = new Intl.DateTimeFormat("zh-CN", { year: "numeric", month: "2-digit", day: "2-digit", weekday: "short" }).format(new Date());
     if (typeof initAuthGate === "function") {
         void initAuthGate(initializeApp);
         return;
