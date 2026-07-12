@@ -2,8 +2,10 @@ const REPORTABLE_WORK_ORDER_STATUSES = new Set(["DISPATCHED", "RECEIVED", "RUNNI
 
 async function refreshProduction(options = {}) {
     try {
+        const workOrders = await getJson("/work-orders");
         const [reports, wages] = await Promise.all([getJson("/work-reports"), getJson("/piecework-wages")]);
-        await refreshReportableWorkOrders();
+        refreshReportableWorkOrdersFrom(workOrders);
+        renderProductionFocus(workOrders, reports, wages);
         renderTable("reportTable", reports, [
             { title: "ID", key: "reportId" },
             { title: "\u7f16\u53f7", key: "reportNo" },
@@ -37,9 +39,12 @@ async function refreshProduction(options = {}) {
 }
 
 async function refreshReportableWorkOrders() {
+    refreshReportableWorkOrdersFrom(await getJson("/work-orders"));
+}
+
+function refreshReportableWorkOrdersFrom(workOrders) {
     const select = document.getElementById("reportWorkOrderSelect");
     if (!select) return;
-    const workOrders = await getJson("/work-orders");
     const reportable = workOrders.filter(order => REPORTABLE_WORK_ORDER_STATUSES.has(order.workOrderStatus));
     select.innerHTML = "";
     if (!reportable.length) {
@@ -59,6 +64,31 @@ async function refreshReportableWorkOrders() {
         select.appendChild(option);
     }
     syncReportBatchNo();
+}
+
+function renderProductionFocus(workOrders, reports, wages) {
+    const grid = document.querySelector("#production .grid");
+    if (!grid) return;
+    let focus = document.getElementById("productionFocus");
+    if (!focus) {
+        focus = document.createElement("div");
+        focus.id = "productionFocus";
+        focus.className = "tool wide workflow-focus b-focus";
+        grid.prepend(focus);
+    }
+    const reportable = workOrders.filter(order => REPORTABLE_WORK_ORDER_STATUSES.has(order.workOrderStatus)).length;
+    const submitted = reports.filter(row => row.reportStatus === "SUBMITTED").length;
+    const approved = reports.filter(row => row.reportStatus === "APPROVED").length;
+    const wageCount = Array.isArray(wages) ? wages.length : Number(wages?.recordCount || 0);
+    focus.innerHTML = `
+        <h3>\u751f\u4ea7\u6267\u884c\u5de5\u4f5c\u53f0</h3>
+        <p class="focus-hint">\u64cd\u4f5c\u5de5\u4f18\u5148\u9009\u62e9\u53ef\u62a5\u5de5\u5de5\u5355\uff0c\u8f66\u95f4\u7ba1\u7406\u5458\u4f18\u5148\u5904\u7406\u5f85\u5ba1\u6838\u62a5\u5de5\u3002</p>
+        <div class="workflow-steps">
+            <button type="button" onclick="scrollBSection('reportForm')"><strong>${reportable}</strong><span>\u53ef\u62a5\u5de5\u5de5\u5355</span></button>
+            <button type="button" onclick="scrollBSection('reportTable')"><strong>${submitted}</strong><span>\u5f85\u5ba1\u6838\u62a5\u5de5</span></button>
+            <button type="button" onclick="scrollBSection('reportTable')"><strong>${approved}</strong><span>\u5df2\u5ba1\u6838\u62a5\u5de5</span></button>
+            <button type="button" onclick="scrollBSection('wageTable')"><strong>${wageCount}</strong><span>\u8ba1\u4ef6\u5de5\u8d44\u8bb0\u5f55</span></button>
+        </div>`;
 }
 
 function syncReportBatchNo() {

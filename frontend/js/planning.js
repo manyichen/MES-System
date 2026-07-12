@@ -92,6 +92,7 @@ function replaceInputWithSelect(formId, name, rows, valueKey, labelFn, allowEmpt
 }
 
 function renderPlanningTables() {
+    renderPlanningFocus();
     renderTable("orderTable", planningCache.orders, [
         { title: "ID", key: "orderId" },
         { title: "\u7f16\u53f7", key: "orderNo" },
@@ -118,6 +119,36 @@ function renderPlanningTables() {
         { title: "\u72b6\u6001", key: "workOrderStatus" },
         { title: "\u64cd\u4f5c", render: renderWorkOrderActions }
     ]);
+}
+
+function renderPlanningFocus() {
+    const grid = document.querySelector("#planning .grid");
+    if (!grid) return;
+    let focus = document.getElementById("planningFocus");
+    if (!focus) {
+        focus = document.createElement("div");
+        focus.id = "planningFocus";
+        focus.className = "tool wide workflow-focus b-focus";
+        grid.prepend(focus);
+    }
+    const pendingTasks = planningCache.tasks.filter(row => row.taskStatus !== "RELEASED").length;
+    const releasedTasks = planningCache.tasks.filter(row => row.taskStatus === "RELEASED").length;
+    const createdWorkOrders = planningCache.workOrders.filter(row => row.workOrderStatus === "CREATED").length;
+    const dispatchedWorkOrders = planningCache.workOrders.filter(row => row.workOrderStatus === "DISPATCHED").length;
+    focus.innerHTML = `
+        <h3>\u8ba1\u5212\u5de5\u5355\u5de5\u4f5c\u53f0</h3>
+        <p class="focus-hint">\u5148\u5904\u7406\u4e0b\u9762\u6570\u91cf\u5927\u4e8e 0 \u7684\u4efb\u52a1\uff0c\u518d\u67e5\u770b\u660e\u7ec6\u8868\u3002</p>
+        <div class="workflow-steps">
+            <button type="button" onclick="scrollBSection('taskTable')"><strong>${pendingTasks}</strong><span>\u5f85\u9f50\u5957/\u53d1\u5e03\u4efb\u52a1</span></button>
+            <button type="button" onclick="scrollBSection('workOrderForm')"><strong>${releasedTasks}</strong><span>\u53ef\u521b\u5efa\u5de5\u5355\u4efb\u52a1</span></button>
+            <button type="button" onclick="scrollBSection('workOrderTable')"><strong>${createdWorkOrders}</strong><span>\u5f85\u6d3e\u53d1\u5de5\u5355</span></button>
+            <button type="button" onclick="scrollBSection('workOrderTable')"><strong>${dispatchedWorkOrders}</strong><span>\u5df2\u6d3e\u53d1\u5f85\u63a5\u6536</span></button>
+        </div>`;
+}
+
+function scrollBSection(id) {
+    document.getElementById(id)?.closest(".tool")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    showMessage("\u5df2\u5b9a\u4f4d\u5230\u5bf9\u5e94\u64cd\u4f5c\u533a", "ok");
 }
 
 function renderTaskActions(row) {
