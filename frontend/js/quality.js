@@ -1,6 +1,9 @@
+let qualityInspectionCache = [];
+
 async function loadQuality(options = {}) {
     try {
         const inspections = await getJson("/quality-inspections");
+        qualityInspectionCache = inspections;
         renderTable("quality-table", inspections, [
             { key: "inspectionId", label: "ID" },
             { key: "inspectionNo", label: "质检单" },
@@ -8,7 +11,9 @@ async function loadQuality(options = {}) {
             { key: "workReportId", label: "报工" },
             { key: "sampleQty", label: "样本数" },
             { key: "inspectionStatus", label: "状态", render: row => qualityStatusText(row.inspectionStatus) },
-            { key: "judgementResult", label: "判定", render: row => qualityResultText(row.judgementResult) }
+            { key: "submittedResult", label: "质检员结果", render: row => submittedInspectionResultText(row) },
+            { key: "resultNote", label: "结果说明", render: row => escapeHtml(row.resultNote || "暂无说明") },
+            { key: "judgementResult", label: "主管判定", render: row => qualityResultText(row.judgementResult) }
         ], [
             {
                 name: "view-items",
@@ -16,6 +21,13 @@ async function loadQuality(options = {}) {
                 idKey: "inspectionId",
                 permission: "quality.read",
                 handler: loadInspectionItems
+            },
+            {
+                name: "view-result",
+                label: "质检结果",
+                idKey: "inspectionId",
+                permission: "quality.read",
+                handler: showInspectionResultDialog
             },
             {
                 name: "assign-inspection",
@@ -27,11 +39,11 @@ async function loadQuality(options = {}) {
             },
             {
                 name: "submit-inspection",
-                label: "提交审核",
+                label: "填写结果",
                 idKey: "inspectionId",
                 permission: "quality.inspect",
                 visible: row => ["CREATED", "IN_PROGRESS"].includes(row.inspectionStatus),
-                handler: submitInspection
+                handler: openSubmitInspectionDialog
             },
             {
                 name: "judge-pass",
@@ -127,6 +139,77 @@ function showInspectionItemsDialog(inspectionId, rows) {
     document.body.classList.add("overlay-open");
     drawer.querySelector(".detail-close")?.addEventListener("click", closeModuleDrawers);
 }
+
+function showInspectionResultDialog(id) {
+    const row = qualityInspectionCache.find(item => String(item.inspectionId) === String(id));
+    if (!row) {
+        showMessage("未找到质检结果", "error");
+        return;
+    }
+    let drawer = document.getElementById("quality-result-dialog");
+    if (!drawer) {
+        drawer = document.createElement("aside");
+        drawer.id = "quality-result-dialog";
+        drawer.className = "detail-drawer";
+        document.body.appendChild(drawer);
+    }
+    const submittedResult = submittedInspectionResultText(row);
+    const supervisorResult = qualityResultText(row.judgementResult) || "待质量主管审核";
+    const canReview = hasPermission("quality.review") && row.inspectionStatus === "SUBMITTED";
+    drawer.innerHTML = `
+        <div class="detail-drawer-head">
+            <div><span>质检结果</span><h3>质检单 ${escapeHtml(row.inspectionNo || id)} · 结果详情</h3></div>
+            <button type="button" class="detail-close" aria-label="关闭">×</button>
+        </div>
+        <div class="detail-drawer-body quality-review-body">
+            <section class="quality-review-card quality-review-primary">
+                <div>
+                    <span class="quality-submit-label">质检员上报</span>
+                    <strong>${escapeHtml(submittedResult)}</strong>
+                    <p>${escapeHtml(row.resultNote || "暂无说明")}</p>
+                </div>
+                <dl>
+                    <div><dt>提交人ID</dt><dd>${escapeHtml(row.submittedBy || "未提交")}</dd></div>
+                    <div><dt>提交时间</dt><dd>${escapeHtml(row.submittedAt ? formatTableDate(row.submittedAt) : "未提交")}</dd></div>
+                </dl>
+            </section>
+            <section class="quality-review-card">
+                <span class="quality-submit-label">质量主管审核</span>
+                <div class="quality-review-status">
+                    <strong>${escapeHtml(supervisorResult)}</strong>
+                    <small>${qualityStatusText(row.inspectionStatus)}</small>
+                </div>
+                <dl>
+                    <div><dt>审核人ID</dt><dd>${escapeHtml(row.reviewedBy || "未审核")}</dd></div>
+                    <div><dt>审核时间</dt><dd>${escapeHtml(row.reviewedAt ? formatTableDate(row.reviewedAt) : "未审核")}</dd></div>
+                </dl>
+            </section>
+            ${canReview ? `
+                <section class="quality-review-card quality-review-actions">
+                    <span class="quality-submit-label">审核操作</span>
+                    <div>
+                        <button type="button" data-review-result="PASS">判定合格</button>
+                        <button type="button" data-review-result="FAIL" class="secondary">判定不合格</button>
+                        <button type="button" data-review-result="REWORK" class="secondary">要求返工</button>
+                    </div>
+                </section>
+            ` : `
+                <section class="quality-review-card quality-review-waiting">
+                    <span class="quality-submit-label">审核操作</span>
+                    <strong>${row.inspectionStatus === "SUBMITTED" ? "当前账号无审核权限" : "等待质检员提交后可审核"}</strong>
+                </section>
+            `}
+        </div>`;
+    closeModuleDrawers();
+    ensureWorkspaceBackdrop().classList.add("open");
+    drawer.classList.add("open");
+    document.body.classList.add("overlay-open");
+    drawer.querySelector(".detail-close")?.addEventListener("click", closeModuleDrawers);
+    drawer.querySelectorAll("[data-review-result]").forEach(button => {
+        button.addEventListener("click", () => judgeInspection(id, button.dataset.reviewResult));
+    });
+}
+
 function variedDefaultInspectionItems(inspectionId) {
     const seed = Number(inspectionId) || 1;
     const balance = 8 + (seed * 7) % 28;
@@ -215,13 +298,90 @@ async function assignInspection(id) {
 
 async function submitInspection(id) {
     try {
-        await postJson(`/quality-inspections/${id}/submit`);
+        const result = document.querySelector("input[name='inspection-submit-result']:checked")?.value || "PASS";
+        const note = document.getElementById("inspection-submit-note")?.value?.trim() || "";
+        if (result !== "PASS" && !note) {
+            showMessage("不合格或需返工时，请说明哪些项目不合格", "error");
+            return;
+        }
+        await postJson(`/quality-inspections/${id}/submit`, { result, note });
         showMessage("检验结果已提交质量主管审核", "ok");
+        closeModuleDrawers();
         await loadQuality();
         await loadDashboard();
     } catch (error) {
         showMessage(toChineseError(error), "error");
     }
+}
+
+function openSubmitInspectionDialog(id) {
+    let drawer = document.getElementById("quality-submit-dialog");
+    if (!drawer) {
+        drawer = document.createElement("aside");
+        drawer.id = "quality-submit-dialog";
+        drawer.className = "detail-drawer";
+        document.body.appendChild(drawer);
+    }
+    drawer.innerHTML = `
+        <div class="detail-drawer-head">
+            <div><span>质检结果</span><h3>质检单 ${escapeHtml(id)} · 上报质量主管</h3></div>
+            <button type="button" class="detail-close" aria-label="关闭">×</button>
+        </div>
+        <div class="detail-drawer-body quality-submit-body">
+            <form id="inspection-submit-form" class="quality-submit-form">
+                <section class="quality-submit-card">
+                    <span class="quality-submit-label">产品判定</span>
+                    <div class="quality-result-options">
+                        <label>
+                            <input type="radio" name="inspection-submit-result" value="PASS" checked>
+                            <strong>合格</strong>
+                            <small>全部质检通过</small>
+                        </label>
+                        <label>
+                            <input type="radio" name="inspection-submit-result" value="FAIL">
+                            <strong>不合格</strong>
+                            <small>说明异常项目</small>
+                        </label>
+                        <label>
+                            <input type="radio" name="inspection-submit-result" value="REWORK">
+                            <strong>需返工</strong>
+                            <small>说明返工原因</small>
+                        </label>
+                    </div>
+                </section>
+                <section class="quality-submit-card">
+                    <div class="quality-submit-title">
+                        <span class="quality-submit-label">结果说明</span>
+                        <small id="inspection-submit-hint">合格可不填</small>
+                    </div>
+                    <textarea id="inspection-submit-note" rows="6" placeholder="合格可不填，默认表示全部质检项目通过。"></textarea>
+                </section>
+                <button type="submit" class="quality-submit-button">提交给质量主管</button>
+            </form>
+        </div>`;
+    closeModuleDrawers();
+    ensureWorkspaceBackdrop().classList.add("open");
+    drawer.classList.add("open");
+    document.body.classList.add("overlay-open");
+    drawer.querySelector(".detail-close")?.addEventListener("click", closeModuleDrawers);
+    const resultInputs = [...drawer.querySelectorAll("input[name='inspection-submit-result']")];
+    const noteInput = drawer.querySelector("#inspection-submit-note");
+    const hint = drawer.querySelector("#inspection-submit-hint");
+    const syncNoteRequirement = () => {
+        const result = resultInputs.find(input => input.checked)?.value || "PASS";
+        const required = result !== "PASS";
+        noteInput.required = required;
+        hint.textContent = required ? "必填" : "合格可不填";
+        noteInput.placeholder = required
+            ? "请说明哪些项目不合格、异常位置和建议处理方式。"
+            : "合格可不填，默认表示全部质检项目通过。";
+    };
+    resultInputs.forEach(input => input.addEventListener("change", syncNoteRequirement));
+    syncNoteRequirement();
+    drawer.querySelector("#inspection-submit-form")?.addEventListener("submit", event => {
+        event.preventDefault();
+        submitInspection(id);
+    });
 }
 
 async function judgeInspection(id, result) {
@@ -348,6 +508,12 @@ function qualityResultText(result) {
         NG: "不合格",
         REWORK: "返工"
     }[result] || escapeHtml(result || "");
+}
+
+function submittedInspectionResultText(row) {
+    if (row.submittedResult) return qualityResultText(row.submittedResult);
+    if (row.submittedBy && row.judgementResult) return `历史提交：${qualityResultText(row.judgementResult)}`;
+    return "待质检员提交";
 }
 
 function reworkStatusText(status) {

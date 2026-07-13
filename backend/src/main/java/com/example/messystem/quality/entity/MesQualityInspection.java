@@ -15,6 +15,8 @@ public record MesQualityInspection(
         String judgementResult,
         Long submittedBy,
         LocalDateTime submittedAt,
+        String submittedResult,
+        String resultNote,
         Long reviewedBy,
         LocalDateTime reviewedAt
 ) {

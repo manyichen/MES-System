@@ -328,6 +328,8 @@ ALTER TABLE mes_work_report ADD COLUMN IF NOT EXISTS approved_at TIMESTAMP;
 ALTER TABLE mes_quality_inspection ADD COLUMN IF NOT EXISTS assigned_to BIGINT;
 ALTER TABLE mes_quality_inspection ADD COLUMN IF NOT EXISTS reviewed_by BIGINT;
 ALTER TABLE mes_quality_inspection ADD COLUMN IF NOT EXISTS reviewed_at TIMESTAMP;
+ALTER TABLE mes_quality_inspection ADD COLUMN IF NOT EXISTS submitted_result VARCHAR(30);
+ALTER TABLE mes_quality_inspection ADD COLUMN IF NOT EXISTS result_note TEXT;
 ALTER TABLE mes_rework_order ADD COLUMN IF NOT EXISTS approved_by BIGINT;
 ALTER TABLE mes_rework_order ADD COLUMN IF NOT EXISTS approved_at TIMESTAMP;
 ALTER TABLE mes_equipment_repair_report ADD COLUMN IF NOT EXISTS reviewed_by BIGINT;

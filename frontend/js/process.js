@@ -89,7 +89,15 @@ function editProcessRoute(id) {
     form.processSeq.value = route.processSeq || 1;
     form.workCenter.value = route.workCenter || "";
     form.enabled.value = route.enabled == null ? "1" : String(route.enabled);
-    form.scrollIntoView({ behavior: "smooth", block: "start" });
+    const drawer = form.closest(".module-drawer");
+    if (drawer && typeof selectActionView === "function") {
+        selectActionView(drawer, form.dataset.actionView);
+    }
+    if (drawer && typeof openModuleDrawer === "function") {
+        openModuleDrawer(drawer);
+    } else {
+        form.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
 }
 
 async function deleteProcessRoute(id) {

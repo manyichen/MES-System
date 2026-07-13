@@ -60,7 +60,7 @@ public class QualityInspectionResource {
             MesQualityInspection payload = new MesQualityInspection(
                     null, inspection.inspectionNo(), inspection.workOrderId(), inspection.workReportId(),
                     inspection.sampleQty(), "CREATED", null, null, null, null,
-                    null, null, null, null);
+                    null, null, null, null, null, null);
             long id = service.createInspection(payload);
             return ApiResponse.ok(id);
         } catch (SQLException e) {
@@ -123,9 +123,14 @@ public class QualityInspectionResource {
 
     @POST
     @Path("/{id}/submit")
-    public ApiResponse<Boolean> submit(@PathParam("id") long id, @Context ContainerRequestContext context) {
+    public ApiResponse<Boolean> submit(@PathParam("id") long id, QualitySubmitResult result,
+            @Context ContainerRequestContext context) {
         try {
-            return ApiResponse.ok(service.submitInspection(id, AuthFilter.currentUser(context).user.userId));
+            if (result == null || result.result() == null || result.result().isBlank()) {
+                throw new BadRequestException("质检结果不能为空");
+            }
+            return ApiResponse.ok(service.submitInspection(id, AuthFilter.currentUser(context).user.userId,
+                    result.result(), result.note()));
         } catch (SQLException e) {
             throw new BadRequestException(e.getMessage());
         }
@@ -147,5 +152,8 @@ public class QualityInspectionResource {
     }
 
     public record QualityJudgement(String status, String result) {
+    }
+
+    public record QualitySubmitResult(String result, String note) {
     }
 }

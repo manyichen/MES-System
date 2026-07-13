@@ -92,21 +92,22 @@ public class QualityInspectionDao {
         }
     }
 
-    public boolean submit(long inspectionId, long inspectorId) throws SQLException {
+    public boolean submit(long inspectionId, long inspectorId, String submittedResult, String resultNote) throws SQLException {
         String sql = """
                 update mes_quality_inspection
                 set inspection_status = 'SUBMITTED', submitted_by = ?, submitted_at = current_timestamp,
+                    submitted_result = ?, result_note = ?,
                     inspection_time = coalesce(inspection_time, current_timestamp)
                 where inspection_id = ? and (assigned_to = ? or inspector_id = ?)
                   and inspection_status in ('CREATED','IN_PROGRESS')
-                  and exists (select 1 from mes_quality_inspection_item i where i.inspection_id = ?)
                 """;
         try (Connection conn = Db.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, inspectorId);
-            ps.setLong(2, inspectionId);
-            ps.setLong(3, inspectorId);
-            ps.setLong(4, inspectorId);
-            ps.setLong(5, inspectionId);
+            ps.setString(2, submittedResult);
+            ps.setString(3, resultNote);
+            ps.setLong(4, inspectionId);
+            ps.setLong(5, inspectorId);
+            ps.setLong(6, inspectorId);
             return ps.executeUpdate() > 0;
         }
     }
@@ -187,6 +188,8 @@ public class QualityInspectionDao {
                 rs.getString("judgement_result"),
                 getLong(rs, "submitted_by"),
                 rs.getObject("submitted_at", java.time.LocalDateTime.class),
+                rs.getString("submitted_result"),
+                rs.getString("result_note"),
                 getLong(rs, "reviewed_by"),
                 rs.getObject("reviewed_at", java.time.LocalDateTime.class)
         );
@@ -195,7 +198,7 @@ public class QualityInspectionDao {
     private static final String SELECT_COLUMNS = """
             SELECT inspection_id, inspection_no, work_order_id, work_report_id, sample_qty,
                    inspection_status, inspector_id, assigned_to, inspection_time, judgement_result,
-                   submitted_by, submitted_at, reviewed_by, reviewed_at
+                   submitted_by, submitted_at, submitted_result, result_note, reviewed_by, reviewed_at
             FROM mes_quality_inspection
             """;
 

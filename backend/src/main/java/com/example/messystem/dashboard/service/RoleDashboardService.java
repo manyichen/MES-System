@@ -86,10 +86,10 @@ public class RoleDashboardService {
                 card(cards, "rework", "相关返工单", count(c, "select count(*) from mes_rework_order r join mes_quality_inspection q on q.inspection_id = r.inspection_id where q.assigned_to = ?", userId), "单", "warning", "quality");
             }
             case "PROCESS_ENGINEER" -> {
-                card(cards, "draft_sop", "待发布 SOP", count(c, "select count(*) from mes_sop where sop_status = 'DRAFT'"), "份", "warning", "quality");
-                card(cards, "active_parameters", "有效工艺参数", count(c, "select count(*) from mes_process_parameter where enabled = 1"), "项", "normal", "quality");
-                card(cards, "defect_reasons", "启用不良原因", count(c, "select count(*) from mes_defect_reason where enabled = 1"), "项", "normal", "quality");
-                card(cards, "rework", "待工艺分析返工", count(c, "select count(*) from mes_rework_order where rework_status = 'CREATED'"), "单", "danger", "quality");
+                card(cards, "draft_sop", "待发布 SOP", count(c, "select count(*) from mes_sop where sop_status = 'DRAFT'"), "份", "warning", "process");
+                card(cards, "active_parameters", "有效工艺参数", count(c, "select count(*) from mes_process_parameter where enabled = 1"), "项", "normal", "process");
+                card(cards, "defect_reasons", "启用不良原因", count(c, "select count(*) from mes_defect_reason where enabled = 1"), "项", "normal", "process");
+                card(cards, "process_routes", "制造方法/工艺路线", count(c, "select count(*) from mes_process_route where enabled = 1"), "项", "normal", "process");
             }
             case "EQUIPMENT_ADMIN" -> {
                 card(cards, "faults", "待核实报修", count(c, "select count(*) from mes_equipment_repair_report where repair_status = 'REPORTED'"), "单", "danger", "equipment");
@@ -159,16 +159,14 @@ public class RoleDashboardService {
                         count(c, "select count(*) from mes_quality_inspection where inspection_status = 'SUBMITTED'"), "HIGH", "quality", "quality-table", "quality.review");
                 todo(todos, "quality-assign", "分配未指派质检任务", "根据产品、批次和工作量指定质检员。",
                         count(c, "select count(*) from mes_quality_inspection where inspection_status = 'CREATED' and assigned_to is null"), "HIGH", "quality", "quality-table", "quality.inspection.assign");
-                todo(todos, "rework", "处理未闭环返工单", "确认返工原因、影响范围和后续复检要求。",
-                        count(c, "select count(*) from mes_rework_order where rework_status not in ('FINISHED','CLOSED')"), "MEDIUM", "quality", "rework-table", "quality.rework.manage");
             }
             case "QUALITY_INSPECTOR" -> todo(todos, "my-inspection", "完成分配给我的质检任务", "录入全部检验项目后提交质量主管审核，不得自行最终放行。",
                     count(c, "select count(*) from mes_quality_inspection where assigned_to = ? and inspection_status in ('CREATED','IN_PROGRESS')", userId), "HIGH", "quality", "quality-table", "quality.inspect");
             case "PROCESS_ENGINEER" -> {
                 todo(todos, "sop-publish", "复核待发布 SOP", "确认版本、适用产品和关键工艺参数后发布。",
-                        count(c, "select count(*) from mes_sop where sop_status = 'DRAFT'"), "HIGH", "quality", "quality-table", "process.manage");
-                todo(todos, "rework-analysis", "分析返工的工艺原因", "结合缺陷原因、工序参数和批次追溯提出改进。",
-                        count(c, "select count(*) from mes_rework_order where rework_status = 'CREATED'"), "MEDIUM", "quality", "rework-table", "process.read");
+                        count(c, "select count(*) from mes_sop where sop_status = 'DRAFT'"), "HIGH", "process", "process-route-table", "process.manage");
+                todo(todos, "route-maintain", "维护轮胎制造方法", "确认工序顺序、设备/工作中心和启停状态。",
+                        count(c, "select count(*) from mes_process_route where enabled = 1"), "MEDIUM", "process", "process-route-table", "process.manage");
             }
             case "EQUIPMENT_ADMIN" -> {
                 todo(todos, "repair-review", "审核设备故障上报", "核实故障等级、生产影响和描述后决定是否转维修。",
@@ -250,8 +248,8 @@ public class RoleDashboardService {
             case "QUALITY_INSPECTOR" -> profile(role, "质检员", "仅本人被分配的质检任务及相关批次追溯",
                     modules("dashboard", "quality", "trace", "equipment", "feedback"),
                     "不能审核或最终放行自己的检验结果", "不能维护质检标准", "不能查看其他质检员任务", "不能修改生产、库存和用户数据");
-            case "PROCESS_ENGINEER" -> profile(role, "工艺工程师", "工艺、SOP、相关生产质量设备数据",
-                    modules("dashboard", "planning", "quality", "equipment", "process", "trace", "feedback"),
+            case "PROCESS_ENGINEER" -> profile(role, "工艺工程师", "工艺路线、SOP、产品和原料主数据",
+                    modules("dashboard", "process", "trace", "feedback"),
                     "不能审核质检放行", "不能提交或审核报工", "不能修改库存或维修状态", "不能管理用户");
             case "EQUIPMENT_ADMIN" -> profile(role, "设备管理员", "全厂设备、维修和维护计划数据",
                     modules("dashboard", "planning", "equipment", "trace", "feedback"),
