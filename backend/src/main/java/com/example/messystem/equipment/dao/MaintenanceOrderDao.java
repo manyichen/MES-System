@@ -106,11 +106,20 @@ public class MaintenanceOrderDao {
         }
     }
 
-    public boolean finishOwn(long id, long maintainerId) throws SQLException {
-        String sql = "UPDATE mes_maintenance_order SET maintenance_status = 'FINISHED', finish_time = current_timestamp WHERE maintenance_order_id = ? AND maintainer_id = ? AND maintenance_status IN ('ASSIGNED','IN_PROGRESS')";
+    public boolean finishOwn(long id, long maintainerId, String resultDesc) throws SQLException {
+        String sql = """
+                UPDATE mes_maintenance_order
+                SET maintenance_status = 'FINISHED',
+                    finish_time = current_timestamp,
+                    result_desc = COALESCE(NULLIF(?, ''), result_desc)
+                WHERE maintenance_order_id = ?
+                  AND maintainer_id = ?
+                  AND maintenance_status IN ('ASSIGNED','IN_PROGRESS')
+                """;
         try (Connection conn = Db.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setLong(1, id);
-            ps.setLong(2, maintainerId);
+            ps.setString(1, resultDesc);
+            ps.setLong(2, id);
+            ps.setLong(3, maintainerId);
             return ps.executeUpdate() > 0;
         }
     }
@@ -121,6 +130,14 @@ public class MaintenanceOrderDao {
             ps.setString(1, status);
             ps.setString(2, status);
             ps.setLong(3, id);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
+    public boolean acceptFinished(long id) throws SQLException {
+        String sql = "UPDATE mes_maintenance_order SET maintenance_status = 'ACCEPTED' WHERE maintenance_order_id = ? AND maintenance_status = 'FINISHED'";
+        try (Connection conn = Db.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, id);
             return ps.executeUpdate() > 0;
         }
     }

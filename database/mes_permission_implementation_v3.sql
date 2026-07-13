@@ -77,16 +77,17 @@ USING mes_role r, mes_permission p
 WHERE rp.role_id = r.role_id AND rp.permission_id = p.permission_id
   AND (
       (r.role_code = 'QUALITY_MANAGER' AND p.permission_code = 'quality.inspect')
-      OR (r.role_code = 'SYSTEM_MAINTAINER' AND p.permission_code = 'user.update_role')
       OR (r.role_code = 'VIEWER' AND p.permission_code = 'trace.read')
+      OR (r.role_code = 'SYSTEM_ADMIN' AND p.module_code NOT IN ('system', 'dashboard'))
   );
 
 WITH grants(role_code, permission_code) AS (
     VALUES
-    ('SYSTEM_MAINTAINER','dashboard.read'), ('SYSTEM_MAINTAINER','dashboard.system.read'),
-    ('SYSTEM_MAINTAINER','system.health.read'), ('SYSTEM_MAINTAINER','user.read'),
-    ('SYSTEM_MAINTAINER','role.read'), ('SYSTEM_MAINTAINER','permission.review'),
-    ('SYSTEM_MAINTAINER','audit.read'),
+    ('SYSTEM_ADMIN','dashboard.read'), ('SYSTEM_ADMIN','dashboard.system.read'),
+    ('SYSTEM_ADMIN','system.health.read'), ('SYSTEM_ADMIN','user.read'),
+    ('SYSTEM_ADMIN','user.create'), ('SYSTEM_ADMIN','user.update_role'),
+    ('SYSTEM_ADMIN','role.read'), ('SYSTEM_ADMIN','role.manage'),
+    ('SYSTEM_ADMIN','permission.review'), ('SYSTEM_ADMIN','audit.read'),
 
     ('HR_MANAGER','dashboard.read'), ('HR_MANAGER','user.read'), ('HR_MANAGER','role.read'),
     ('HR_MANAGER','permission.apply'), ('HR_MANAGER','production.wage.read_all'),
@@ -158,6 +159,7 @@ WITH grants(role_code, permission_code) AS (
     ('EQUIPMENT_ADMIN','feedback.create'), ('EQUIPMENT_ADMIN','master.read'),
 
     ('EQUIPMENT_MAINTAINER','dashboard.read'), ('EQUIPMENT_MAINTAINER','equipment.read'),
+    ('EQUIPMENT_MAINTAINER','equipment.fault.report'),
     ('EQUIPMENT_MAINTAINER','equipment.maintenance.execute'),
     ('EQUIPMENT_MAINTAINER','feedback.read'), ('EQUIPMENT_MAINTAINER','feedback.create'),
 
@@ -170,9 +172,10 @@ JOIN mes_role r ON r.role_code = g.role_code
 JOIN mes_permission p ON p.permission_code = g.permission_code
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
--- 系统管理员始终拥有全部启用权限。
-INSERT INTO mes_role_permission (role_id, permission_id)
-SELECT r.role_id, p.permission_id
-FROM mes_role r CROSS JOIN mes_permission p
-WHERE r.role_code = 'SYSTEM_ADMIN' AND p.enabled = 1
-ON CONFLICT (role_id, permission_id) DO NOTHING;
+-- Keep system administrators focused on platform administration, not production operations.
+DELETE FROM mes_role_permission rp
+USING mes_role r, mes_permission p
+WHERE rp.role_id = r.role_id
+  AND rp.permission_id = p.permission_id
+  AND r.role_code = 'SYSTEM_ADMIN'
+  AND p.module_code NOT IN ('system', 'dashboard');

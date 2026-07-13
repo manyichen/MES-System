@@ -9,6 +9,7 @@ import com.example.messystem.equipment.entity.MesEquipmentRepairReport;
 import com.example.messystem.equipment.entity.MesMaintenanceOrder;
 import com.example.messystem.equipment.entity.MesMaintenancePlan;
 import com.example.messystem.common.BadRequestException;
+import com.example.messystem.common.UserRoleValidator;
 
 import java.sql.SQLException;
 import java.time.LocalDateTime;
@@ -61,8 +62,8 @@ public class EquipmentService {
     }
 
     public boolean approveRepairReport(long id) throws SQLException {
-        if (!repairReportDao.updateStatus(id, "APPROVED")) {
-            throw new BadRequestException("报修单不存在，无法审核");
+        if (!repairReportDao.updateStatus(id, "APPROVED", "REPORTED")) {
+            throw new BadRequestException("只有待核实的报修单才能审核");
         }
         convertRepairReportToMaintenanceOrder(id);
         return true;
@@ -75,6 +76,9 @@ public class EquipmentService {
         }
         MesEquipmentRepairReport report = repairReportDao.findById(repairReportId)
                 .orElseThrow(() -> new BadRequestException("报修单不存在"));
+        if (!"APPROVED".equals(report.repairStatus())) {
+            throw new BadRequestException("报修单审核通过后才能转为维修工单");
+        }
         long orderId = maintenanceOrderDao.insert(new MesMaintenanceOrder(
                 null,
                 "MO-" + System.currentTimeMillis(),
@@ -86,7 +90,7 @@ public class EquipmentService {
                 null,
                 report.faultDesc()
         ));
-        repairReportDao.updateStatus(repairReportId, "CONVERTED");
+        repairReportDao.updateStatus(repairReportId, "CONVERTED", "APPROVED");
         return orderId;
     }
 
@@ -111,6 +115,7 @@ public class EquipmentService {
     }
 
     public boolean assignMaintenanceOrder(long id, long maintainerId) throws SQLException {
+        UserRoleValidator.requireEnabledRole(maintainerId, "EQUIPMENT_MAINTAINER", "设备维护员");
         if (!maintenanceOrderDao.assign(id, maintainerId)) {
             throw new com.example.messystem.common.BadRequestException("维修工单不存在、已派工或状态不允许派工");
         }
@@ -118,27 +123,32 @@ public class EquipmentService {
     }
 
     public boolean finishMaintenanceOrder(long id, long maintainerId) throws SQLException {
-        if (!maintenanceOrderDao.finishOwn(id, maintainerId)) {
+        return finishMaintenanceOrder(id, maintainerId, "");
+    }
+
+    public boolean finishMaintenanceOrder(long id, long maintainerId, String resultDesc) throws SQLException {
+        if (resultDesc == null || resultDesc.isBlank()) {
+            throw new BadRequestException("请填写维修结果、处理措施或故障原因");
+        }
+        if (!maintenanceOrderDao.finishOwn(id, maintainerId, resultDesc.trim())) {
             throw new com.example.messystem.common.BadRequestException("只能完成分配给本人的维修工单");
         }
         return true;
     }
 
-    public boolean updateMaintenanceOrderStatus(long id, String status) throws SQLException {
-        boolean updated = maintenanceOrderDao.updateStatus(id, status);
-        if (updated && "ACCEPTED".equals(status)) {
-            getMaintenanceOrder(id)
-                    .map(MesMaintenanceOrder::equipmentId)
-                    .filter(equipmentId -> equipmentId != null)
-                    .ifPresent(equipmentId -> {
-                        try {
-                            equipmentDao.updateStatus(equipmentId, "RUNNING");
-                        } catch (SQLException e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
+    public boolean acceptMaintenanceOrder(long id, long acceptedBy) throws SQLException {
+        MesMaintenanceOrder order = maintenanceOrderDao.findById(id)
+                .orElseThrow(() -> new BadRequestException("维修工单不存在"));
+        if (Long.valueOf(acceptedBy).equals(order.maintainerId())) {
+            throw new BadRequestException("维修执行人不能验收自己的维修工单");
         }
-        return updated;
+        if (!maintenanceOrderDao.acceptFinished(id)) {
+            throw new BadRequestException("只有已完成的维修工单才能验收");
+        }
+        if (order.equipmentId() != null) {
+            equipmentDao.updateStatus(order.equipmentId(), "RUNNING");
+        }
+        return true;
     }
 
     public long createMaintenancePlan(MesMaintenancePlan plan) throws SQLException {

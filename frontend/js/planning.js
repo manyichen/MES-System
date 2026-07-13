@@ -99,7 +99,7 @@ function renderPlanningTables() {
         { title: "ID", key: "orderId" },
         { title: "\u7f16\u53f7", key: "orderNo" },
         { title: "\u5ba2\u6237", key: "customerName" },
-        { title: "\u4ea7\u54c1", key: "productId" },
+        { title: "\u4ea7\u54c1", key: "productCode", render: renderOrderProduct },
         { title: "\u6570\u91cf", key: "orderQty" },
         { title: "\u72b6\u6001", key: "orderStatus" }
     ]);
@@ -121,6 +121,14 @@ function renderPlanningTables() {
         { title: "\u72b6\u6001", key: "workOrderStatus" },
         { title: "\u64cd\u4f5c", render: renderWorkOrderActions }
     ]);
+}
+
+function renderOrderProduct(row) {
+    const product = planningCache.products.find(item => item.productId === row.productId);
+    const code = row.productCode || product?.productCode || "";
+    const model = row.productModel || product?.productModel || product?.productName || "";
+    const label = [code, model].filter(Boolean).join(" / ");
+    return escapeHtml(label || `ID ${row.productId ?? "-"}`);
 }
 
 function renderPlanningFocus() {
@@ -149,13 +157,45 @@ function renderPlanningFocus() {
 }
 
 function scrollBSection(id) {
-    document.getElementById(id)?.closest(".tool")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    jumpPlanningWorkbench(id);
+}
+
+function jumpPlanningWorkbench(id) {
+    const target = document.getElementById(id);
+    const panel = document.getElementById("planning");
+    if (!target || !panel) return;
+
+    const actionForm = target.matches("form[data-action-view]") ? target : target.closest("form[data-action-view]");
+    if (actionForm) {
+        const drawer = actionForm.closest(".module-drawer");
+        if (drawer) {
+            if (typeof selectActionView === "function") selectActionView(drawer, actionForm.dataset.actionView);
+            if (typeof openModuleDrawer === "function") openModuleDrawer(drawer);
+        }
+        window.setTimeout(() => actionForm.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+        showMessage("\u5df2\u5b9a\u4f4d\u5230\u5bf9\u5e94\u64cd\u4f5c\u533a", "ok");
+        return;
+    }
+
+    const workspaceView = target.closest("[data-workspace-view]");
+    if (workspaceView?.dataset.workspaceView && typeof selectModuleView === "function") {
+        selectModuleView(panel, workspaceView.dataset.workspaceView);
+    }
+    window.setTimeout(() => target.closest(".tool")?.scrollIntoView({ behavior: "smooth", block: "center" }), 80);
     showMessage("\u5df2\u5b9a\u4f4d\u5230\u5bf9\u5e94\u64cd\u4f5c\u533a", "ok");
 }
 
 function renderTaskActions(row) {
     if (!hasPermission("planning.task.release")) return "";
-    return `<button onclick="analyzeTask(${row.taskId})">\u9f50\u5957</button><button onclick="openAiPlanningForTask(${row.taskId})">AI 建议</button><button onclick="releaseTask(${row.taskId})">\u53d1\u5e03</button>`;
+    const primaryActions = `<button onclick="analyzeTask(${row.taskId})">齐套分析</button><button onclick="openAiPlanningForTask(${row.taskId})">AI 建议</button>`;
+    if (row.taskStatus === "RELEASED") {
+        return `${primaryActions}<button type="button" disabled>已发布</button>`;
+    }
+    if (row.kittingStatus !== "READY") {
+        const label = row.kittingStatus === "SHORTAGE" ? "缺料不可发布" : "先齐套";
+        return `${primaryActions}<button type="button" disabled>${label}</button>`;
+    }
+    return `${primaryActions}<button onclick="releaseTask(${row.taskId})">发布</button>`;
 }
 
 function renderAiPlanningPanel() {
@@ -267,10 +307,17 @@ function renderWorkOrderActions(row) {
     if (row.workOrderStatus === "CREATED" && hasPermission("planning.work_order.dispatch")) {
         actions.unshift(`<button onclick="dispatchWorkOrder(${row.workOrderId})">\u6d3e\u53d1</button>`);
     }
-    if (row.workOrderStatus === "DISPATCHED" && hasPermission("planning.work_order.receive")) {
+    if (row.workOrderStatus === "DISPATCHED" && canReceiveWorkOrder(row)) {
         actions.unshift(`<button onclick="receiveWorkOrder(${row.workOrderId})">\u63a5\u6536</button>`);
     }
     return actions.join("");
+}
+
+function canReceiveWorkOrder(row) {
+    const currentUserId = Number(getCurrentSession()?.user?.userId);
+    return hasPermission("planning.work_order.receive")
+        && hasRole("PRODUCTION_OPERATOR")
+        && Number(row.assignedTo) === currentUserId;
 }
 
 async function seedPlanning() {

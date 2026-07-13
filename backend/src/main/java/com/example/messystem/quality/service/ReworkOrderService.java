@@ -2,6 +2,7 @@ package com.example.messystem.quality.service;
 
 import com.example.messystem.quality.dao.ReworkOrderDao;
 import com.example.messystem.quality.entity.MesReworkOrder;
+import com.example.messystem.common.BadRequestException;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -29,5 +30,19 @@ public class ReworkOrderService {
 
     public boolean updateStatus(long id, String status) throws SQLException {
         return dao.updateStatus(id, status);
+    }
+
+    public boolean dispatch(long id) throws SQLException {
+        if (!dao.updateStatus(id, "DISPATCHED", "CREATED")) {
+            throw new BadRequestException("只有新建的返工单才能派发");
+        }
+        return true;
+    }
+
+    public boolean finish(long id) throws SQLException {
+        if (!dao.updateStatus(id, "FINISHED", "DISPATCHED")) {
+            throw new BadRequestException("只有已派发的返工单才能完成");
+        }
+        return true;
     }
 }

@@ -117,7 +117,12 @@ async function assignMaintenance(id) {
 
 async function finishMaintenance(id) {
     try {
-        await postJson(`/maintenance-orders/${id}/finish`);
+        const resultDesc = window.prompt("请输入维修结果、故障原因或处理措施");
+        if (!resultDesc || !resultDesc.trim()) {
+            showMessage("已取消完成维修，请先填写维修结果", "info");
+            return;
+        }
+        await postJson(`/maintenance-orders/${id}/finish`, { resultDesc: resultDesc.trim() });
         showMessage("维修工单已完成，等待设备管理员验收", "ok");
         await loadEquipment();
         await loadDashboard();

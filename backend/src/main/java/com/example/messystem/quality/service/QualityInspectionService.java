@@ -1,6 +1,7 @@
 package com.example.messystem.quality.service;
 
 import com.example.messystem.common.BadRequestException;
+import com.example.messystem.common.UserRoleValidator;
 import com.example.messystem.quality.dao.QualityInspectionDao;
 import com.example.messystem.quality.dao.QualityInspectionItemDao;
 import com.example.messystem.quality.dao.QualityTraceDao;
@@ -49,6 +50,7 @@ public class QualityInspectionService {
     }
 
     public boolean assignInspection(long inspectionId, long inspectorId) throws SQLException {
+        UserRoleValidator.requireEnabledRole(inspectorId, "QUALITY_INSPECTOR", "质检员");
         if (!inspectionDao.assign(inspectionId, inspectorId)) {
             throw new BadRequestException("质检单不存在、状态不允许分配或已经被处理");
         }
@@ -63,6 +65,14 @@ public class QualityInspectionService {
     }
 
     public long addInspectionItem(MesQualityInspectionItem item) throws SQLException {
+        return itemDao.insert(item);
+    }
+
+    public long addAssignedInspectionItem(MesQualityInspectionItem item, long inspectorId) throws SQLException {
+        MesQualityInspection inspection = requireAssignedInspection(item.inspectionId(), inspectorId);
+        if (!List.of("CREATED", "IN_PROGRESS").contains(inspection.inspectionStatus())) {
+            throw new BadRequestException("质检结果已提交，不能继续修改检验项目");
+        }
         return itemDao.insert(item);
     }
 

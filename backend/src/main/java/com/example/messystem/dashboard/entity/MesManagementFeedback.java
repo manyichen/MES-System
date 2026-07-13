@@ -10,6 +10,7 @@ public record MesManagementFeedback(
         Long workOrderId,
         String feedbackType,
         String feedbackContent,
+        String decisionAction,
         String feedbackStatus,
         LocalDateTime createdAt,
         LocalDateTime closedAt

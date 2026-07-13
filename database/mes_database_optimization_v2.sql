@@ -124,7 +124,7 @@ CREATE TABLE IF NOT EXISTS mes_permission_apply (
 CREATE UNIQUE INDEX IF NOT EXISTS uk_mes_permission_apply_apply_no ON mes_permission_apply (apply_no);
 CREATE INDEX IF NOT EXISTS idx_mes_permission_apply_target_user_id ON mes_permission_apply (target_user_id);
 CREATE INDEX IF NOT EXISTS idx_mes_permission_apply_status ON mes_permission_apply (apply_status);
-COMMENT ON TABLE mes_permission_apply IS '权限变更申请表：人事经理发起，系统维护员处理，系统管理员复核。';
+COMMENT ON TABLE mes_permission_apply IS '权限变更申请表：人事经理发起，系统管理员处理。';
 
 CREATE TABLE IF NOT EXISTS mes_user_session (
     session_id BIGSERIAL PRIMARY KEY,
@@ -363,7 +363,6 @@ ON CONFLICT (dept_code) DO NOTHING;
 INSERT INTO mes_role (role_code, role_name, role_type, role_level, data_scope, builtin, description)
 VALUES
     ('SYSTEM_ADMIN', '系统管理员', 'SYSTEM', 1, 'ALL', 1, '最高系统权限'),
-    ('SYSTEM_MAINTAINER', '系统维护员', 'SYSTEM', 10, 'ALL', 1, '系统运维和权限变更处理'),
     ('HR_MANAGER', '人事经理', 'BUSINESS', 30, 'DEPT', 1, '员工信息维护和权限申请'),
     ('GENERAL_MANAGER', '总经理/管理层', 'MANAGEMENT', 20, 'ALL', 1, '经营看板和决策查询'),
     ('PMC_PLANNER', 'PMC计划员', 'BUSINESS', 50, 'DEPT', 1, '订单、计划、齐套、工单'),
@@ -402,21 +401,11 @@ ON CONFLICT (permission_code) DO NOTHING;
 INSERT INTO mes_role_permission (role_id, permission_id)
 SELECT r.role_id, p.permission_id
 FROM mes_role r
-CROSS JOIN mes_permission p
-WHERE r.role_code = 'SYSTEM_ADMIN'
-ON CONFLICT (role_id, permission_id) DO NOTHING;
-
-INSERT INTO mes_role_permission (role_id, permission_id)
-SELECT r.role_id, p.permission_id
-FROM mes_role r
 JOIN mes_permission p ON p.permission_code IN (
-    'user.read',
-    'user.update_role',
-    'permission.review',
-    'audit.read',
-    'dashboard.read'
+    'dashboard.read', 'user.read', 'user.create', 'user.update_role',
+    'permission.review', 'audit.read'
 )
-WHERE r.role_code = 'SYSTEM_MAINTAINER'
+WHERE r.role_code = 'SYSTEM_ADMIN'
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 INSERT INTO mes_role_permission (role_id, permission_id)

@@ -27,7 +27,7 @@ final class AuthorizationPolicy {
             rule("POST|PUT|DELETE", "warehouses/locations(?:/.*)?", "warehouse.master.manage"),
             rule("POST|PUT|DELETE", "inventory(?:/.*)?", "warehouse.inventory.adjust"),
             rule("POST", "requisitions", "warehouse.requisition.create"),
-            rule("POST", "requisitions/\\d+/approve", "warehouse.requisition.approve"),
+            rule("POST", "requisitions/\\d+/(?:approve|reject)", "warehouse.requisition.approve"),
             rule("POST", "picking-tasks(?:/.*)?", "warehouse.picking.execute"),
             rule("POST", "robot-delivery-tasks(?:/.*)?", "warehouse.delivery.execute"),
 
@@ -86,6 +86,7 @@ final class AuthorizationPolicy {
             rule("PUT", "users/\\d+/role", "user.update_role"),
             rule("GET", "access/roles(?:/.*)?", "role.read"),
             rule("GET", "access/permissions(?:/.*)?", "role.read"),
+            rule("GET", "access/system-maintenance", "system.health.read"),
             any("GET", "access/permission-applications", "permission.apply", "permission.review", "role.manage"),
             rule("POST", "access/permission-applications", "permission.apply"),
             rule("POST", "access/permission-applications/\\d+/review", "permission.review"),
