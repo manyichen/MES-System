@@ -33,15 +33,9 @@ public class RoleDashboardService {
         switch (role) {
             case "SYSTEM_ADMIN" -> {
                 card(cards, "users", "系统用户", count(c, "select count(*) from mes_user"), "人", "normal", "system");
-                card(cards, "sessions", "当前有效会话", count(c, "select count(*) from mes_user_session where revoked_at is null and expires_at > current_timestamp"), "个", "normal", "system");
+                card(cards, "sessions", "当前有效会话", count(c, "select count(*) from mes_user_session where revoked_at is null and expires_at > current_timestamp"), "个", "normal", "systemOps");
                 card(cards, "permission_apply", "待处理权限申请", count(c, "select count(*) from mes_permission_apply where apply_status = 'SUBMITTED'"), "项", "warning", "system");
-                card(cards, "open_feedback", "未闭环管理反馈", count(c, "select count(*) from mes_management_feedback where feedback_status = 'OPEN'"), "项", "warning", "feedback");
-            }
-            case "SYSTEM_MAINTAINER" -> {
-                card(cards, "sessions", "有效会话", count(c, "select count(*) from mes_user_session where revoked_at is null and expires_at > current_timestamp"), "个", "normal", "system");
-                card(cards, "login_failures", "24小时登录失败", count(c, "select count(*) from mes_audit_log where event_type = 'LOGIN' and result = 'FAILED' and created_at >= current_timestamp - interval '24 hours'"), "次", "danger", "system");
-                card(cards, "permission_apply", "待复核权限申请", count(c, "select count(*) from mes_permission_apply where apply_status = 'SUBMITTED'"), "项", "warning", "system");
-                card(cards, "locked_users", "锁定账号", count(c, "select count(*) from mes_user where locked_until > current_timestamp"), "人", "danger", "system");
+                card(cards, "locked_users", "锁定账号", count(c, "select count(*) from mes_user where locked_until > current_timestamp"), "个", "warning", "systemOps");
             }
             case "HR_MANAGER" -> {
                 card(cards, "users", "在册账号", count(c, "select count(*) from mes_user"), "人", "normal", "system");
@@ -122,11 +116,11 @@ public class RoleDashboardService {
     private static List<DashboardTodo> todos(Connection c, String role, long userId) throws SQLException {
         List<DashboardTodo> todos = new ArrayList<>();
         switch (role) {
-            case "SYSTEM_ADMIN", "SYSTEM_MAINTAINER" -> {
+            case "SYSTEM_ADMIN" -> {
                 todo(todos, "permission-review", "审批权限变更申请", "核对申请人、目标用户、原角色与申请角色后处理。",
                         count(c, "select count(*) from mes_permission_apply where apply_status = 'SUBMITTED'"), "HIGH", "system", "permission-apply-table", "permission.review");
                 todo(todos, "login-risk", "处理异常登录", "检查连续失败或已锁定账号，必要时联系用户并重置。",
-                        count(c, "select count(*) from mes_user where locked_until > current_timestamp"), "HIGH", "system", "user-table", "audit.read");
+                        count(c, "select count(*) from mes_user where locked_until > current_timestamp"), "HIGH", "systemOps", "locked-user-table", "system.health.read");
             }
             case "HR_MANAGER" -> todo(todos, "permission-apply", "补充并提交权限申请", "为岗位变化人员发起角色变更，系统管理员审批后生效。",
                     count(c, "select count(*) from mes_permission_apply where applicant_id = ? and apply_status in ('DRAFT','RETURNED')", userId), "MEDIUM", "system", "permission-apply-form", "permission.apply");
@@ -230,11 +224,9 @@ public class RoleDashboardService {
 
     private static Profile profileFor(String role) {
         return switch (role) {
-            case "SYSTEM_ADMIN" -> profile(role, "系统管理员", "全厂、全系统；所有高风险操作写入审计日志",
-                    modules("dashboard", "planning", "warehouse", "production", "quality", "equipment", "trace", "feedback", "system"),
-                    "不能查看任何用户的明文密码", "不能绕过审计日志执行高风险操作");
-            case "SYSTEM_MAINTAINER" -> profile(role, "系统维护员", "全系统技术数据，不包含经营和个人工资明细",
-                    modules("dashboard", "system"), "不能创建生产计划或工单", "不能审核报工、质检、库存和维修业务", "不能查看个人计件工资明细");
+            case "SYSTEM_ADMIN" -> profile(role, "系统管理员", "系统账号、角色权限、数据范围、会话与运行健康；不参与具体生产业务",
+                    modules("dashboard", "systemOps", "audit", "system"),
+                    "不能查看任何用户的明文密码", "不能绕过审计日志执行高风险操作", "不能排产、报工、改库存、审核质检或处理设备维修");
             case "HR_MANAGER" -> profile(role, "人事经理", "组织与账号范围；角色变更只能申请，不能直接授权",
                     modules("dashboard", "system"), "不能直接修改用户角色", "不能查看工艺配方、质量判定和库存明细", "不能操作生产、仓储或设备流程");
             case "GENERAL_MANAGER" -> profile(role, "总经理/管理层", "全厂经营汇总和异常下钻，只读业务数据",

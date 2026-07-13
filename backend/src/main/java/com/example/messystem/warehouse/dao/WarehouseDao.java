@@ -629,6 +629,34 @@ public class WarehouseDao {
         }
     }
 
+    public MesMaterialRequisition rejectRequisition(long requisitionId, Long approvedBy, String reason) throws SQLException {
+        String sql = """
+                update mes_material_requisition
+                set request_status = 'REJECTED',
+                    approved_by = ?,
+                    approved_time = current_timestamp,
+                    remark = coalesce(nullif(?, ''), remark)
+                where requisition_id = ? and request_status = 'CREATED'
+                returning requisition_id, requisition_no, work_order_id, warehouse_id, requested_by,
+                          request_status, request_time, approved_by, approved_time, remark
+                """;
+        try (Connection connection = Db.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, approvedBy == null ? 1L : approvedBy);
+            statement.setString(2, reason);
+            statement.setLong(3, requisitionId);
+            try (ResultSet rs = statement.executeQuery()) {
+                if (!rs.next()) {
+                    ensureRequisitionExistsAndCreated(connection, requisitionId);
+                    throw new BadRequestException("only CREATED requisitions can be rejected");
+                }
+                MesMaterialRequisition requisition = mapRequisition(rs);
+                requisition.items = findRequisition(requisitionId).items;
+                return requisition;
+            }
+        }
+    }
+
     private void ensureInventoryEnoughForRequisition(Connection connection, long requisitionId) throws SQLException {
         String sql = """
                 select i.material_id, i.required_qty, i.batch_no,

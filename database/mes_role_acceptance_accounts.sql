@@ -3,19 +3,19 @@
 
 WITH accounts(username, real_name, role_code, department, password_hash) AS (
     VALUES
-    ('admin', '绯荤粺绠＄悊鍛?, 'SYSTEM_ADMIN', '淇℃伅鎶€鏈儴', 'pbkdf2_sha256$120000$SJwp/esDPi+QeXO5mzSm8g==$4jC2gVqoKr905JSM9t4KRahNrTicPNMYRWHvZ6jTGR8='),
-    ('mes_sysmaint', '绯荤粺缁存姢楠屾敹鍛?, 'SYSTEM_MAINTAINER', '淇℃伅鎶€鏈儴', 'pbkdf2_sha256$120000$SJwp/esDPi+QeXO5mzSm8g==$4jC2gVqoKr905JSM9t4KRahNrTicPNMYRWHvZ6jTGR8='),
-    ('mes_hr', '浜轰簨缁忕悊楠屾敹鍛?, 'HR_MANAGER', '浜轰簨閮?, 'pbkdf2_sha256$120000$SJwp/esDPi+QeXO5mzSm8g==$4jC2gVqoKr905JSM9t4KRahNrTicPNMYRWHvZ6jTGR8='),
-    ('mes_general', '鎬荤粡鐞嗛獙鏀跺憳', 'GENERAL_MANAGER', '缁忚惀绠＄悊灞?, 'pbkdf2_sha256$120000$SJwp/esDPi+QeXO5mzSm8g==$4jC2gVqoKr905JSM9t4KRahNrTicPNMYRWHvZ6jTGR8='),
-    ('mes_pmc', 'PMC璁″垝楠屾敹鍛?, 'PMC_PLANNER', '鐢熶骇璁″垝閮?, 'pbkdf2_sha256$120000$SJwp/esDPi+QeXO5mzSm8g==$4jC2gVqoKr905JSM9t4KRahNrTicPNMYRWHvZ6jTGR8='),
-    ('mes_workshop', '杞﹂棿绠＄悊楠屾敹鍛?, 'WORKSHOP_MANAGER', '鐢熶骇杞﹂棿', 'pbkdf2_sha256$120000$SJwp/esDPi+QeXO5mzSm8g==$4jC2gVqoKr905JSM9t4KRahNrTicPNMYRWHvZ6jTGR8='),
-    ('mes_operator', '鐢熶骇鎿嶄綔楠屾敹鍛?, 'PRODUCTION_OPERATOR', '鐢熶骇杞﹂棿', 'pbkdf2_sha256$120000$SJwp/esDPi+QeXO5mzSm8g==$4jC2gVqoKr905JSM9t4KRahNrTicPNMYRWHvZ6jTGR8='),
-    ('mes_warehouse', '浠撳簱绠＄悊楠屾敹鍛?, 'WAREHOUSE_ADMIN', '浠撳偍鐗╂祦閮?, 'pbkdf2_sha256$120000$SJwp/esDPi+QeXO5mzSm8g==$4jC2gVqoKr905JSM9t4KRahNrTicPNMYRWHvZ6jTGR8='),
-    ('mes_quality_mgr', '璐ㄩ噺涓荤楠屾敹鍛?, 'QUALITY_MANAGER', '璐ㄩ噺閮?, 'pbkdf2_sha256$120000$SJwp/esDPi+QeXO5mzSm8g==$4jC2gVqoKr905JSM9t4KRahNrTicPNMYRWHvZ6jTGR8='),
-    ('mes_inspector', '璐ㄦ鍛橀獙鏀跺憳', 'QUALITY_INSPECTOR', '璐ㄩ噺閮?, 'pbkdf2_sha256$120000$SJwp/esDPi+QeXO5mzSm8g==$4jC2gVqoKr905JSM9t4KRahNrTicPNMYRWHvZ6jTGR8='),
-    ('mes_process', '宸ヨ壓宸ョ▼楠屾敹鍛?, 'PROCESS_ENGINEER', '宸ヨ壓鎶€鏈儴', 'pbkdf2_sha256$120000$SJwp/esDPi+QeXO5mzSm8g==$4jC2gVqoKr905JSM9t4KRahNrTicPNMYRWHvZ6jTGR8='),
-    ('mes_equipment_mgr', '璁惧绠＄悊楠屾敹鍛?, 'EQUIPMENT_ADMIN', '璁惧閮?, 'pbkdf2_sha256$120000$SJwp/esDPi+QeXO5mzSm8g==$4jC2gVqoKr905JSM9t4KRahNrTicPNMYRWHvZ6jTGR8='),
-    ('mes_maintainer', '璁惧缁翠慨楠屾敹鍛?, 'EQUIPMENT_MAINTAINER', '璁惧閮?, 'pbkdf2_sha256$120000$SJwp/esDPi+QeXO5mzSm8g==$4jC2gVqoKr905JSM9t4KRahNrTicPNMYRWHvZ6jTGR8=')
+    ('admin', '系统管理员', 'SYSTEM_ADMIN', '信息技术部', 'pbkdf2_sha256$120000$SJwp/esDPi+QeXO5mzSm8g==$4jC2gVqoKr905JSM9t4KRahNrTicPNMYRWHvZ6jTGR8='),
+    ('mes_sysmaint', '系统维护员验收员', 'SYSTEM_MAINTAINER', '信息技术部', 'pbkdf2_sha256$120000$SJwp/esDPi+QeXO5mzSm8g==$4jC2gVqoKr905JSM9t4KRahNrTicPNMYRWHvZ6jTGR8='),
+    ('mes_hr', '人事经理验收员', 'HR_MANAGER', '人事部', 'pbkdf2_sha256$120000$SJwp/esDPi+QeXO5mzSm8g==$4jC2gVqoKr905JSM9t4KRahNrTicPNMYRWHvZ6jTGR8='),
+    ('mes_general', '总经理验收员', 'GENERAL_MANAGER', '经营管理层', 'pbkdf2_sha256$120000$SJwp/esDPi+QeXO5mzSm8g==$4jC2gVqoKr905JSM9t4KRahNrTicPNMYRWHvZ6jTGR8='),
+    ('mes_pmc', 'PMC计划验收员', 'PMC_PLANNER', '生产计划部', 'pbkdf2_sha256$120000$SJwp/esDPi+QeXO5mzSm8g==$4jC2gVqoKr905JSM9t4KRahNrTicPNMYRWHvZ6jTGR8='),
+    ('mes_workshop', '车间管理验收员', 'WORKSHOP_MANAGER', '生产车间', 'pbkdf2_sha256$120000$SJwp/esDPi+QeXO5mzSm8g==$4jC2gVqoKr905JSM9t4KRahNrTicPNMYRWHvZ6jTGR8='),
+    ('mes_operator', '生产操作验收员', 'PRODUCTION_OPERATOR', '生产车间', 'pbkdf2_sha256$120000$SJwp/esDPi+QeXO5mzSm8g==$4jC2gVqoKr905JSM9t4KRahNrTicPNMYRWHvZ6jTGR8='),
+    ('mes_warehouse', '仓库管理验收员', 'WAREHOUSE_ADMIN', '仓储物流部', 'pbkdf2_sha256$120000$SJwp/esDPi+QeXO5mzSm8g==$4jC2gVqoKr905JSM9t4KRahNrTicPNMYRWHvZ6jTGR8='),
+    ('mes_quality_mgr', '质量主管验收员', 'QUALITY_MANAGER', '质量部', 'pbkdf2_sha256$120000$SJwp/esDPi+QeXO5mzSm8g==$4jC2gVqoKr905JSM9t4KRahNrTicPNMYRWHvZ6jTGR8='),
+    ('mes_inspector', '质检员验收员', 'QUALITY_INSPECTOR', '质量部', 'pbkdf2_sha256$120000$SJwp/esDPi+QeXO5mzSm8g==$4jC2gVqoKr905JSM9t4KRahNrTicPNMYRWHvZ6jTGR8='),
+    ('mes_process', '工艺工程师验收员', 'PROCESS_ENGINEER', '工艺技术部', 'pbkdf2_sha256$120000$SJwp/esDPi+QeXO5mzSm8g==$4jC2gVqoKr905JSM9t4KRahNrTicPNMYRWHvZ6jTGR8='),
+    ('mes_equipment_mgr', '设备管理验收员', 'EQUIPMENT_ADMIN', '设备部', 'pbkdf2_sha256$120000$SJwp/esDPi+QeXO5mzSm8g==$4jC2gVqoKr905JSM9t4KRahNrTicPNMYRWHvZ6jTGR8='),
+    ('mes_maintainer', '设备维修验收员', 'EQUIPMENT_MAINTAINER', '设备部', 'pbkdf2_sha256$120000$SJwp/esDPi+QeXO5mzSm8g==$4jC2gVqoKr905JSM9t4KRahNrTicPNMYRWHvZ6jTGR8=')
 )
 INSERT INTO mes_user
     (username, real_name, role_code, department, enabled, password_hash,

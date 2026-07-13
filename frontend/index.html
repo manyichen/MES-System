@@ -26,8 +26,9 @@
     <div class="sidebar-brand"><span class="brand-mark"><img src="assets/mes-icon.svg" alt=""></span><div><strong>双星轮胎 MES</strong><small>制造执行系统</small></div></div>
     <nav>
         <span class="nav-group">首页</span><button data-tab="dashboard" class="active"><i>⌂</i><span>工作台</span></button><button data-tab="profile"><i>◎</i><span>个人主页</span></button>
-        <span class="nav-group">生产业务</span><button data-tab="planning"><i>▤</i><span>计划与工单</span></button><button data-tab="warehouse"><i>▦</i><span>仓储物流</span></button><button data-tab="production"><i>◉</i><span>生产报工</span></button><button data-tab="quality"><i>◇</i><span>质量管理</span></button><button data-tab="equipment"><i>⚙</i><span>设备维护</span></button>
-        <span class="nav-group">综合管理</span><button data-tab="process" data-permission="process.read"><i>⌘</i><span>工艺管理</span></button><button data-tab="trace"><i>⌁</i><span>产品追溯</span></button><button data-tab="feedback"><i>✦</i><span>管理反馈</span></button><button data-tab="system" data-permission="user.read|role.read"><i>♙</i><span>用户与权限</span></button>
+        <span class="nav-group">生产业务</span><button data-tab="planning" data-permission="planning.read|planning.work_order.read"><i>▤</i><span>计划与工单</span></button><button data-tab="warehouse" data-permission="warehouse.read|warehouse.requisition.create"><i>▦</i><span>仓储物流</span></button><button data-tab="production" data-permission="production.read"><i>◉</i><span>生产报工</span></button><button data-tab="quality" data-permission="quality.read"><i>◇</i><span>质量管理</span></button><button data-tab="equipment" data-permission="equipment.read|equipment.fault.report"><i>⚙</i><span>设备维护</span></button>
+        <span class="nav-group">综合管理</span><button data-tab="process" data-permission="process.read"><i>⌘</i><span>工艺管理</span></button><button data-tab="trace" data-permission="trace.read"><i>⌁</i><span>产品追溯</span></button><button data-tab="feedback" data-permission="feedback.read|feedback.create"><i>✦</i><span>管理反馈</span></button>
+        <span class="nav-group">系统管理</span><button data-tab="systemOps" data-permission="system.health.read"><i>⚙</i><span>系统运维</span></button><button data-tab="audit" data-permission="audit.read"><i>◎</i><span>审计日志</span></button><button data-tab="system" data-permission="user.read|role.read"><i>♙</i><span>用户与权限</span></button>
     </nav>
     <div class="sidebar-account"><div id="current-user" class="current-user"></div><button id="logout-button" type="button" class="secondary">退出</button></div>
 </aside>
@@ -183,6 +184,10 @@
             <div class="tool">
                 <h3>领料任务</h3>
                 <div id="requisitionTable"></div>
+            </div>
+            <div class="tool wide">
+                <h3>已驳回领料任务</h3>
+                <div id="rejectedRequisitionTable"></div>
             </div>
             <div class="tool">
                 <h3>拣货任务</h3>
@@ -380,6 +385,17 @@
             <button id="refresh-trace">刷新</button>
         </header>
         <div class="grid">
+            <form id="tire-label-form" class="tool" data-permission="trace.tire.generate">
+                <h3>生成单条轮胎二维码</h3>
+                <p class="form-help">质检合格入库后按实际数量生成，每条轮胎对应唯一二维码。</p>
+                <label>生产工单ID <input name="workOrderId" type="number" min="1" required></label>
+                <label>已通过质检单ID <input name="inspectionId" type="number" min="1" required></label>
+                <label>入库仓库ID <input name="warehouseId" type="number" min="1" required></label>
+                <label>入库库位ID（可选） <input name="locationId" type="number" min="1"></label>
+                <label>轮胎数量 <input name="quantity" type="number" value="1" min="1" max="1000" required></label>
+                <button type="submit">批量生成轮胎二维码</button>
+                <p id="tire-label-form-status" class="form-status"></p>
+            </form>
             <form id="trace-form" class="tool" data-permission="trace.create">
                 <h3>创建追溯记录</h3>
                 <label>追溯码 <input name="traceCode" value="TRACE-DEMO-001" required></label>
@@ -398,6 +414,10 @@
                 </label>
                 <button type="submit">创建</button>
             </form>
+            <div class="tool wide"><h3>单条轮胎二维码标签</h3><div id="tire-label-table"></div></div>
+            <div id="tire-label-preview" class="tool wide tire-label-preview">
+                <h3>二维码与标签预览</h3><p>点击轮胎记录右侧“预览”查看二维码和打印标签。</p>
+            </div>
             <div class="tool wide"><h3>追溯记录</h3><div id="trace-table"></div></div>
             <form id="trace-search-form" class="tool">
                 <h3>追溯查询</h3>
@@ -471,6 +491,42 @@
             <div class="tool wide"><h3>反馈列表</h3><div id="feedback-table"></div></div>
         </div>
     </section>
+    <section id="systemOps" class="panel">
+        <header>
+            <h2>系统运维</h2>
+            <button id="refresh-system-ops">刷新</button>
+        </header>
+        <div class="grid">
+            <div class="tool wide" data-permission="system.health.read">
+                <h3>系统运维中心</h3>
+                <div id="system-maintenance-metrics" class="system-maintenance-metrics"></div>
+            </div>
+            <div class="tool wide" data-permission="system.health.read">
+                <h3>有效登录会话</h3>
+                <div id="session-table"></div>
+            </div>
+            <div class="tool wide" data-permission="system.health.read">
+                <h3>锁定账号</h3>
+                <div id="locked-user-table"></div>
+            </div>
+            <div class="tool wide" data-permission="system.health.read">
+                <h3>数据同步日志</h3>
+                <div id="sync-log-table"></div>
+            </div>
+        </div>
+    </section>
+    <section id="audit" class="panel">
+        <header>
+            <h2>审计日志</h2>
+            <button id="refresh-audit">刷新</button>
+        </header>
+        <div class="grid">
+            <div class="tool wide" data-permission="audit.read">
+                <h3>最近审计日志</h3>
+                <div id="audit-log-table"></div>
+            </div>
+        </div>
+    </section>
     <section id="system" class="panel">
         <header>
             <h2>用户与权限</h2>
@@ -495,10 +551,6 @@
             <div class="tool wide">
                 <h3>角色权限清单</h3>
                 <div id="role-table"></div>
-            </div>
-            <div class="tool wide">
-                <h3>角色权限详情</h3>
-                <div id="permission-table"></div>
             </div>
         </div>
     </section>

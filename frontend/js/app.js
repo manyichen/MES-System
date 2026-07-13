@@ -9,6 +9,8 @@ const MODULE_PRESENTATION = {
     process: { icon: "⌘", eyebrow: "工艺工程", title: "工艺管理", description: "查看原料和产品主数据，维护轮胎制造方法和工艺路线。" },
     trace: { icon: "⌁", eyebrow: "全程追溯", title: "产品追溯", description: "按追溯码、批次和工单查询产品生产履历。" },
     feedback: { icon: "✦", eyebrow: "经营管理", title: "管理反馈", description: "记录并跟踪生产经营过程中的管理意见。" },
+    systemOps: { icon: "⚙", eyebrow: "系统运行", title: "系统运维", description: "巡检会话、锁定账号、系统健康和数据同步状态。" },
+    audit: { icon: "◎", eyebrow: "安全审计", title: "审计日志", description: "查看登录、授权和关键操作留下的审计记录。" },
     system: { icon: "♙", eyebrow: "系统管理", title: "用户与权限", description: "管理用户角色、数据范围和权限变更申请。" }
 };
 
@@ -186,7 +188,7 @@ function initializeApp() {
     if (hasPermission("process.read") && typeof loadProcess === "function") loadProcess();
     if (hasPermission("trace.read") && typeof loadTraces === "function") loadTraces();
     if (hasPermission("feedback.read") && typeof loadFeedback === "function") loadFeedback(1);
-    if (hasPermission("user.read") && typeof loadAccessManagement === "function") loadAccessManagement();
+    if (typeof loadAccessManagement === "function") loadAccessManagement();
 }
 
 window.addEventListener("DOMContentLoaded", () => {

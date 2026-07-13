@@ -235,9 +235,56 @@ table{width:100%;border-collapse:separate;border-spacing:0;font-size:12px}th,td{
     font-weight: 700;
 }
 
+.system-maintenance-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+}
+
+.system-maintenance-card {
+    min-height: 86px;
+    padding: 14px;
+    border: 1px solid #dfe8f3;
+    border-left: 4px solid #2f80ed;
+    border-radius: 8px;
+    background: #f8fbff;
+}
+
+.system-maintenance-card span {
+    display: block;
+    color: #66768c;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.system-maintenance-card strong {
+    display: block;
+    margin-top: 10px;
+    color: #1f2d44;
+    font-size: 26px;
+}
+
+.system-maintenance-card small {
+    margin-left: 4px;
+    color: #718096;
+    font-size: 12px;
+}
+
+.system-maintenance-card.level-warning {
+    border-left-color: #f59e0b;
+    background: #fffbeb;
+}
+
+.system-maintenance-card.level-danger {
+    border-left-color: #ef4444;
+    background: #fff5f5;
+}
+
 .multiline-cell {
     display: block;
     max-width: 360px;
     white-space: pre-wrap;
     line-height: 1.55;
 }
+.form-help{margin:-7px 0 3px;color:#7d899a;font-size:11px;line-height:1.65}.tire-label-preview{min-height:220px}.tire-preview-grid{display:grid;grid-template-columns:minmax(220px,.65fr) minmax(280px,1fr);gap:18px;margin-top:18px}.tire-preview-grid figure{display:grid;place-items:center;margin:0;padding:18px;border:1px solid #e1e8f0;border-radius:13px;background:#f8fafc}.tire-preview-grid img{display:block;max-width:100%;max-height:620px;border-radius:7px;background:#fff;box-shadow:0 8px 25px rgba(20,42,70,.09)}.tire-preview-grid figure:first-child img{width:min(320px,100%)}.tire-preview-grid figcaption{margin-top:12px;color:#7d899a;font-size:10px}.tire-preview-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}@media(max-width:760px){.tire-preview-grid{grid-template-columns:1fr}}
+.ai-planning-panel{border-color:#d5e4f4;background:linear-gradient(180deg,#fff,#f8fbff)}.ai-planning-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}.ai-planning-head span{color:#2d6cdf;font-size:11px;font-weight:800}.ai-planning-head h3{margin:4px 0 5px}.ai-planning-head p{margin:0;color:#6f7d90;line-height:1.6}.ai-planning-form{display:grid;grid-template-columns:130px minmax(260px,1fr) minmax(260px,.9fr);gap:12px;margin-top:16px}.ai-planning-form label{display:grid;gap:7px;margin:0;color:#536174;font-size:12px;font-weight:800}.ai-planning-form input,.ai-planning-form select{width:100%;border:1px solid #d9e3ef;border-radius:8px;background:#fff}.ai-planning-form small{color:#7b8798}.ai-task-picker select{min-height:104px}.ai-planning-result{margin-top:16px;padding:14px;border:1px solid #e3eaf3;border-radius:10px;background:#fff}.ai-planning-result>p{margin:0;color:#718096}.ai-summary{display:grid;grid-template-columns:1fr 150px 160px;gap:10px}.ai-summary div{padding:12px;border:1px solid #e7edf5;border-radius:8px;background:#fbfdff}.ai-summary span{display:block;color:#7b8798;font-size:11px}.ai-summary strong{display:block;margin-top:5px;color:#1b2740}.risk-low{color:#12805c!important}.risk-medium{color:#b87912!important}.risk-high{color:#c43d3d!important}.ai-strategy{margin:13px 0!important;color:#304056!important;line-height:1.7}.ai-task-list{display:grid;gap:10px}.ai-task-list section{padding:13px;border-left:4px solid #2d6cdf;border-radius:8px;background:#f6f9fd}.ai-task-list b,.ai-task-list strong,.ai-task-list span{display:block}.ai-task-list span{margin:6px 0;color:#637188;font-size:12px}.ai-task-list p{margin:6px 0 0;color:#4b586b;line-height:1.6}.ai-list{margin-top:12px}.ai-list h4{margin:0 0 7px;color:#23324a}.ai-list ul{margin:0;padding-left:18px;color:#526078;line-height:1.75}.ai-list.warning{padding:10px 12px;border:1px solid #f0d5a1;border-radius:8px;background:#fff8e8}.ai-error{color:#c43d3d!important;font-weight:700}@media(max-width:980px){.ai-planning-head,.ai-planning-form,.ai-summary{grid-template-columns:1fr}.ai-planning-head{display:grid}}

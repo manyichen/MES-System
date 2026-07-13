@@ -74,6 +74,22 @@ WHERE NOT EXISTS (
     SELECT 1 FROM mes_warehouse_location l WHERE l.location_code = v.location_code
 );
 
+INSERT INTO mes_sync_log(source_system, sync_object, business_key, sync_status, error_message, sync_time)
+SELECT v.source_system, v.sync_object, v.business_key, v.sync_status, v.error_message, CURRENT_TIMESTAMP - v.age
+FROM (VALUES
+('ERP', 'PRODUCT_MASTER', 'TYRE-2055516', 'SUCCESS', NULL, INTERVAL '8 minutes'),
+('WMS', 'INVENTORY_BALANCE', 'BATCH-NR-202607', 'SUCCESS', NULL, INTERVAL '16 minutes'),
+('EQUIPMENT_IOT', 'EQUIPMENT_STATUS', 'EQ-CUR-01', 'FAILED', 'missing temperature field in equipment payload', INTERVAL '28 minutes'),
+('ERP', 'CUSTOMER_ORDER', 'ORD-TEST-202607-002', 'SUCCESS', NULL, INTERVAL '45 minutes')
+) AS v(source_system, sync_object, business_key, sync_status, error_message, age)
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM mes_sync_log s
+    WHERE s.source_system = v.source_system
+      AND s.sync_object = v.sync_object
+      AND s.business_key = v.business_key
+);
+
 INSERT INTO mes_process_route(product_id, process_code, process_name, process_seq, standard_hours, required_equipment_type, enabled)
 SELECT p.product_id, v.process_code, v.process_name, v.process_seq, v.standard_hours, v.required_equipment_type, 1
 FROM (VALUES

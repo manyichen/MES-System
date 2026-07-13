@@ -78,14 +78,16 @@ WHERE rp.role_id = r.role_id AND rp.permission_id = p.permission_id
   AND (
       (r.role_code = 'QUALITY_MANAGER' AND p.permission_code = 'quality.inspect')
       OR (r.role_code = 'SYSTEM_MAINTAINER' AND p.permission_code = 'user.update_role')
+      OR (r.role_code = 'VIEWER' AND p.permission_code = 'trace.read')
   );
 
 WITH grants(role_code, permission_code) AS (
     VALUES
-    ('SYSTEM_MAINTAINER','dashboard.read'), ('SYSTEM_MAINTAINER','dashboard.system.read'),
-    ('SYSTEM_MAINTAINER','system.health.read'), ('SYSTEM_MAINTAINER','user.read'),
-    ('SYSTEM_MAINTAINER','role.read'), ('SYSTEM_MAINTAINER','permission.review'),
-    ('SYSTEM_MAINTAINER','audit.read'),
+    ('SYSTEM_ADMIN','dashboard.read'), ('SYSTEM_ADMIN','dashboard.system.read'),
+    ('SYSTEM_ADMIN','system.health.read'), ('SYSTEM_ADMIN','user.read'),
+    ('SYSTEM_ADMIN','user.create'), ('SYSTEM_ADMIN','user.update_role'),
+    ('SYSTEM_ADMIN','role.read'), ('SYSTEM_ADMIN','role.manage'),
+    ('SYSTEM_ADMIN','permission.review'), ('SYSTEM_ADMIN','audit.read'),
 
     ('HR_MANAGER','dashboard.read'), ('HR_MANAGER','user.read'), ('HR_MANAGER','role.read'),
     ('HR_MANAGER','permission.apply'), ('HR_MANAGER','production.wage.read_all'),

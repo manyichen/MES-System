@@ -171,6 +171,10 @@ public class WarehouseService {
         return database(() -> dao.approveRequisition(requisitionId, approvedBy));
     }
 
+    public MesMaterialRequisition rejectRequisition(long requisitionId, Long approvedBy, String reason) {
+        return database(() -> dao.rejectRequisition(requisitionId, approvedBy, reason));
+    }
+
     public List<MesPickingTask> listPickingTasks() {
         return database(dao::listPickingTasks);
     }

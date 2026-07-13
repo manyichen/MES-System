@@ -9,6 +9,7 @@ const TXT = {
     demoDone: "\u6f14\u793a\u4e3b\u7ebf\u6570\u636e\u5df2\u751f\u6210",
     kittingDone: "\u9f50\u5957\u5206\u6790\u5df2\u5b8c\u6210",
     releaseDone: "\u751f\u4ea7\u4efb\u52a1\u5df2\u53d1\u5e03",
+    aiAdviceDone: "AI 排产建议已生成",
     dispatchDone: "\u751f\u4ea7\u5de5\u5355\u5df2\u6d3e\u53d1\u7ed9\u64cd\u4f5c\u5de5",
     dispatchCancel: "\u5df2\u53d6\u6d88\u6d3e\u53d1",
     receiveDone: "\u751f\u4ea7\u5de5\u5355\u5df2\u63a5\u6536\uff0c\u53ef\u4ee5\u8fdb\u5165\u751f\u4ea7\u62a5\u5de5",
@@ -93,6 +94,7 @@ function replaceInputWithSelect(formId, name, rows, valueKey, labelFn, allowEmpt
 
 function renderPlanningTables() {
     renderPlanningFocus();
+    renderAiPlanningPanel();
     renderTable("orderTable", planningCache.orders, [
         { title: "ID", key: "orderId" },
         { title: "\u7f16\u53f7", key: "orderNo" },
@@ -155,13 +157,149 @@ function renderPlanningFocus() {
 }
 
 function scrollBSection(id) {
-    document.getElementById(id)?.closest(".tool")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    jumpPlanningWorkbench(id);
+}
+
+function jumpPlanningWorkbench(id) {
+    const target = document.getElementById(id);
+    const panel = document.getElementById("planning");
+    if (!target || !panel) return;
+
+    const actionForm = target.matches("form[data-action-view]") ? target : target.closest("form[data-action-view]");
+    if (actionForm) {
+        const drawer = actionForm.closest(".module-drawer");
+        if (drawer) {
+            if (typeof selectActionView === "function") selectActionView(drawer, actionForm.dataset.actionView);
+            if (typeof openModuleDrawer === "function") openModuleDrawer(drawer);
+        }
+        window.setTimeout(() => actionForm.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+        showMessage("\u5df2\u5b9a\u4f4d\u5230\u5bf9\u5e94\u64cd\u4f5c\u533a", "ok");
+        return;
+    }
+
+    const workspaceView = target.closest("[data-workspace-view]");
+    if (workspaceView?.dataset.workspaceView && typeof selectModuleView === "function") {
+        selectModuleView(panel, workspaceView.dataset.workspaceView);
+    }
+    window.setTimeout(() => target.closest(".tool")?.scrollIntoView({ behavior: "smooth", block: "center" }), 80);
     showMessage("\u5df2\u5b9a\u4f4d\u5230\u5bf9\u5e94\u64cd\u4f5c\u533a", "ok");
 }
 
 function renderTaskActions(row) {
     if (!hasPermission("planning.task.release")) return "";
-    return `<button onclick="analyzeTask(${row.taskId})">\u9f50\u5957</button><button onclick="releaseTask(${row.taskId})">\u53d1\u5e03</button>`;
+    const primaryActions = `<button onclick="analyzeTask(${row.taskId})">齐套分析</button><button onclick="openAiPlanningForTask(${row.taskId})">AI 建议</button>`;
+    if (row.taskStatus === "RELEASED") {
+        return `${primaryActions}<button type="button" disabled>已发布</button>`;
+    }
+    if (row.kittingStatus !== "READY") {
+        const label = row.kittingStatus === "SHORTAGE" ? "缺料不可发布" : "先齐套";
+        return `${primaryActions}<button type="button" disabled>${label}</button>`;
+    }
+    return `${primaryActions}<button onclick="releaseTask(${row.taskId})">发布</button>`;
+}
+
+function renderAiPlanningPanel() {
+    const grid = document.querySelector("#planning .grid");
+    if (!grid) return;
+    let panel = document.getElementById("aiPlanningPanel");
+    if (!hasPermission("planning.task.release")) {
+        panel?.remove();
+        return;
+    }
+    if (!panel) {
+        panel = document.createElement("div");
+        panel.id = "aiPlanningPanel";
+        panel.className = "tool wide ai-planning-panel";
+        const focus = document.getElementById("planningFocus");
+        if (focus?.nextSibling) grid.insertBefore(panel, focus.nextSibling);
+        else grid.prepend(panel);
+    }
+    const previous = new Set([...panel.querySelectorAll("#aiPlanningTaskIds option:checked")].map(option => option.value));
+    const candidates = planningCache.tasks.filter(task => task.taskStatus !== "RELEASED");
+    const selected = previous.size ? previous : new Set(candidates.map(task => String(task.taskId)));
+    panel.innerHTML = `
+        <div class="ai-planning-head">
+            <div><span>百炼大模型</span><h3>AI 排产辅助决策</h3><p>根据任务、订单、BOM、库存、产线、齐套和缺料预警生成建议，结果需由 PMC 人工确认。</p></div>
+            <button type="button" id="aiPlanningRun">生成建议</button>
+        </div>
+        <div class="ai-planning-form">
+            <label>计划周期<input id="aiPlanningHorizon" type="number" min="1" max="30" value="7"><small>天</small></label>
+            <label class="ai-objective">排产目标<input id="aiPlanningObjective" value="优先满足交期，同时降低缺料和产线冲突风险"></label>
+            <label class="ai-task-picker">候选任务<select id="aiPlanningTaskIds" multiple size="${Math.min(Math.max(candidates.length, 3), 8)}">${candidates.map(task => `<option value="${escapeHtml(task.taskId)}" ${selected.has(String(task.taskId)) ? "selected" : ""}>${escapeHtml(task.taskNo || "任务")} / ID ${escapeHtml(task.taskId)} / ${escapeHtml(statusText(task.taskStatus || ""))} / ${escapeHtml(statusText(task.kittingStatus || ""))}</option>`).join("")}</select></label>
+        </div>
+        <div id="aiPlanningResult" class="ai-planning-result">${candidates.length ? "<p>选择候选任务后点击生成建议。</p>" : "<p>暂无未发布任务可分析。</p>"}</div>`;
+    panel.querySelector("#aiPlanningRun")?.addEventListener("click", requestAiPlanningAdvice);
+}
+
+function openAiPlanningForTask(taskId) {
+    document.getElementById("aiPlanningPanel")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    document.querySelectorAll("#aiPlanningTaskIds option").forEach(option => {
+        option.selected = option.value === String(taskId);
+    });
+    showMessage("已选择该生产任务，可生成 AI 排产建议", "ok");
+}
+
+async function requestAiPlanningAdvice() {
+    const panel = document.getElementById("aiPlanningPanel");
+    const button = document.getElementById("aiPlanningRun");
+    const result = document.getElementById("aiPlanningResult");
+    const taskIds = [...document.querySelectorAll("#aiPlanningTaskIds option:checked")].map(option => Number(option.value)).filter(Boolean);
+    if (!taskIds.length) {
+        showMessage("请至少选择一个候选生产任务", "error");
+        return;
+    }
+    try {
+        button.disabled = true;
+        button.textContent = "生成中...";
+        result.innerHTML = "<p>正在读取排产数据并调用百炼大模型...</p>";
+        const data = await postJson("/ai/planning/advice", {
+            taskIds,
+            horizonDays: Number(document.getElementById("aiPlanningHorizon")?.value) || 7,
+            objective: document.getElementById("aiPlanningObjective")?.value || ""
+        });
+        renderAiPlanningAdvice(data);
+        showMessage(TXT.aiAdviceDone, "ok");
+        panel?.classList.add("has-result");
+    } catch (error) {
+        result.innerHTML = `<p class="ai-error">${escapeHtml(toChineseError(error))}</p>`;
+        showMessage(toChineseError(error), "error");
+    } finally {
+        button.disabled = false;
+        button.textContent = "生成建议";
+    }
+}
+
+function renderAiPlanningAdvice(data) {
+    const result = document.getElementById("aiPlanningResult");
+    if (!result) return;
+    const advice = data?.advice || {};
+    const tasks = Array.isArray(advice.recommendedTasks) ? advice.recommendedTasks : [];
+    const materialRisks = Array.isArray(advice.materialRisks) ? advice.materialRisks : [];
+    const capacityRisks = Array.isArray(advice.capacityRisks) ? advice.capacityRisks : [];
+    const nextActions = Array.isArray(advice.nextActions) ? advice.nextActions : [];
+    const warnings = Array.isArray(data?.validationWarnings) ? data.validationWarnings : [];
+    result.innerHTML = `
+        <div class="ai-summary">
+            <div><span>总体建议</span><strong>${escapeHtml(advice.summary || "已生成建议")}</strong></div>
+            <div><span>风险等级</span><strong class="risk-${escapeHtml(String(advice.riskLevel || "MEDIUM").toLowerCase())}">${escapeHtml(displayText(advice.riskLevel || "MEDIUM"))}</strong></div>
+            <div><span>模型</span><strong>${escapeHtml(data?.model || "-")}</strong></div>
+        </div>
+        <p class="ai-strategy">${escapeHtml(advice.strategy || "请结合当前齐套和产线状态人工确认。")}</p>
+        ${tasks.length ? `<div class="ai-task-list">${tasks.map(task => `<section>
+            <b>#${escapeHtml(task.priority ?? "-")} 任务 ${escapeHtml(task.taskId ?? "-")}</b>
+            <span>建议产线：${escapeHtml(task.suggestedLineId ?? "待确认")} ｜ ${escapeHtml(task.suggestedStart || "-")} 至 ${escapeHtml(task.suggestedEnd || "-")}</span>
+            <strong>${escapeHtml(task.decision || "")}</strong>
+            <p>${escapeHtml(task.reason || "")}</p>
+        </section>`).join("")}</div>` : ""}
+        ${renderAiList("物料风险", materialRisks)}
+        ${renderAiList("产能风险", capacityRisks)}
+        ${renderAiList("下一步人工操作", nextActions)}
+        ${warnings.length ? renderAiList("校验提醒", warnings, "warning") : ""}`;
+}
+
+function renderAiList(title, rows, type = "") {
+    if (!rows.length) return "";
+    return `<div class="ai-list ${type}"><h4>${escapeHtml(title)}</h4><ul>${rows.map(row => `<li>${escapeHtml(row)}</li>`).join("")}</ul></div>`;
 }
 
 function renderWorkOrderActions(row) {
@@ -169,10 +307,17 @@ function renderWorkOrderActions(row) {
     if (row.workOrderStatus === "CREATED" && hasPermission("planning.work_order.dispatch")) {
         actions.unshift(`<button onclick="dispatchWorkOrder(${row.workOrderId})">\u6d3e\u53d1</button>`);
     }
-    if (row.workOrderStatus === "DISPATCHED" && hasPermission("planning.work_order.receive")) {
+    if (row.workOrderStatus === "DISPATCHED" && canReceiveWorkOrder(row)) {
         actions.unshift(`<button onclick="receiveWorkOrder(${row.workOrderId})">\u63a5\u6536</button>`);
     }
     return actions.join("");
+}
+
+function canReceiveWorkOrder(row) {
+    const currentUserId = Number(getCurrentSession()?.user?.userId);
+    return hasPermission("planning.work_order.receive")
+        && hasRole("PRODUCTION_OPERATOR")
+        && Number(row.assignedTo) === currentUserId;
 }
 
 async function seedPlanning() {

@@ -22,6 +22,7 @@ import java.util.List;
 public class AccessResource {
     private final AccessService service = new AccessService();
     private final DataScopeService dataScopeService = new DataScopeService();
+    private final SystemMaintenanceService systemMaintenanceService = new SystemMaintenanceService();
 
     @GET
     @Path("/roles")
@@ -38,6 +39,16 @@ public class AccessResource {
     public Response permissions(@QueryParam("roleCode") String roleCode) {
         try {
             return ResourceSupport.ok(service.listPermissions(roleCode));
+        } catch (RuntimeException ex) {
+            return ResourceSupport.handle(ex);
+        }
+    }
+
+    @GET
+    @Path("/system-maintenance")
+    public Response systemMaintenance() {
+        try {
+            return ResourceSupport.ok(systemMaintenanceService.loadSummary());
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }

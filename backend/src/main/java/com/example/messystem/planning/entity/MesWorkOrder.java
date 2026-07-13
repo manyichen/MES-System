@@ -14,6 +14,8 @@ public class MesWorkOrder {
     public Integer priorityLevel;
     public String workOrderStatus;
     public String batchNo;
+    public Long assignedTo;
+    public Long acceptedBy;
     public LocalDateTime dispatchTime;
     public LocalDateTime receiveTime;
     public LocalDateTime completedTime;

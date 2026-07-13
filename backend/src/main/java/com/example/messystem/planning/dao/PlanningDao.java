@@ -584,7 +584,31 @@ public class PlanningDao {
     }
 
     public List<MesSyncLog> listSyncLogs() {
-        return List.of();
+        String sql = """
+                select sync_log_id, sync_object, source_system, business_key, sync_status, error_message, sync_time
+                from mes_sync_log
+                order by sync_time desc, sync_log_id desc
+                limit 50
+                """;
+        try (Connection connection = Db.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet rs = statement.executeQuery()) {
+            List<MesSyncLog> rows = new ArrayList<>();
+            while (rs.next()) {
+                MesSyncLog log = new MesSyncLog();
+                log.syncLogId = rs.getLong("sync_log_id");
+                log.syncType = rs.getString("sync_object");
+                log.sourceSystem = rs.getString("source_system");
+                log.targetTable = rs.getString("business_key");
+                log.syncStatus = rs.getString("sync_status");
+                log.message = rs.getString("error_message");
+                log.createdAt = getLocalDateTime(rs, "sync_time");
+                rows.add(log);
+            }
+            return rows;
+        } catch (SQLException ex) {
+            throw new IllegalStateException("database operation failed: " + ex.getMessage(), ex);
+        }
     }
 
     private static void insertShortage(Connection connection, long analysisId, MesKittingShortageItem item) throws SQLException {

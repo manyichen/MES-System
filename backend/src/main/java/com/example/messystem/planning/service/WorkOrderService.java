@@ -24,6 +24,7 @@ public class WorkOrderService {
         String sql = """
                 select work_order_id, work_order_no, task_id, product_id, line_id, process_id,
                        planned_qty, actual_qty, priority_level, work_order_status, batch_no,
+                       assigned_to, accepted_by,
                        dispatch_time, receive_time, completed_time, created_at, updated_at
                 from mes_work_order
                 order by work_order_id asc
@@ -45,6 +46,7 @@ public class WorkOrderService {
         String sql = """
                 select work_order_id, work_order_no, task_id, product_id, line_id, process_id,
                        planned_qty, actual_qty, priority_level, work_order_status, batch_no,
+                       assigned_to, accepted_by,
                        dispatch_time, receive_time, completed_time, created_at, updated_at
                 from mes_work_order
                 where assigned_to = ? or accepted_by = ?
@@ -68,6 +70,7 @@ public class WorkOrderService {
         String sql = """
                 select work_order_id, work_order_no, task_id, product_id, line_id, process_id,
                        planned_qty, actual_qty, priority_level, work_order_status, batch_no,
+                       assigned_to, accepted_by,
                        dispatch_time, receive_time, completed_time, created_at, updated_at
                 from mes_work_order
                 where work_order_id = ?
@@ -90,6 +93,7 @@ public class WorkOrderService {
         String sql = """
                 select work_order_id, work_order_no, task_id, product_id, line_id, process_id,
                        planned_qty, actual_qty, priority_level, work_order_status, batch_no,
+                       assigned_to, accepted_by,
                        dispatch_time, receive_time, completed_time, created_at, updated_at
                 from mes_work_order
                 where work_order_id = ? and (assigned_to = ? or accepted_by = ?)
@@ -140,6 +144,7 @@ public class WorkOrderService {
                 values (?, ?, ?, ?, ?, ?, ?, ?, 'CREATED', ?)
                 returning work_order_id, work_order_no, task_id, product_id, line_id, process_id,
                           planned_qty, actual_qty, priority_level, work_order_status, batch_no,
+                          assigned_to, accepted_by,
                           dispatch_time, receive_time, completed_time, created_at, updated_at
                 """;
         try (Connection connection = Db.getConnection()) {
@@ -230,6 +235,7 @@ public class WorkOrderService {
                     %s
                 returning work_order_id, work_order_no, task_id, product_id, line_id, process_id,
                           planned_qty, actual_qty, priority_level, work_order_status, batch_no,
+                          assigned_to, accepted_by,
                           dispatch_time, receive_time, completed_time, created_at, updated_at
                 """.formatted(actorColumn, timeColumn, ownershipCondition);
         try (Connection connection = Db.getConnection()) {
@@ -344,6 +350,8 @@ public class WorkOrderService {
         item.priorityLevel = rs.getInt("priority_level");
         item.workOrderStatus = rs.getString("work_order_status");
         item.batchNo = rs.getString("batch_no");
+        item.assignedTo = getLong(rs, "assigned_to");
+        item.acceptedBy = getLong(rs, "accepted_by");
         item.dispatchTime = getLocalDateTime(rs, "dispatch_time");
         item.receiveTime = getLocalDateTime(rs, "receive_time");
         item.completedTime = getLocalDateTime(rs, "completed_time");

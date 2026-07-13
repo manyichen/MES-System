@@ -28,7 +28,7 @@
 |---:|---|---|---|
 | 16 | 组织人员管理 | 支撑部门、车间、仓库、质量、设备、人事等组织结构；补充员工工号、部门、岗位等字段 | mes_department<br>mes_user 增强字段 |
 | 17 | RBAC 权限管理 | 支撑角色、权限点、用户多角色、角色数据范围 | mes_role<br>mes_permission<br>mes_role_permission<br>mes_user_role<br>mes_role_data_scope |
-| 18 | 权限申请与系统会话 | 支撑人事经理发起权限申请、系统维护员处理、登录会话可校验可撤销 | mes_permission_apply<br>mes_user_session |
+| 18 | 权限申请与系统会话 | 支撑人事经理发起权限申请、系统管理员处理、登录会话可校验可撤销 | mes_permission_apply<br>mes_user_session |
 | 19 | 审计与系统集成 | 记录关键操作；区分机器人、WMS、财务系统等非人工客户端 | mes_audit_log<br>mes_api_client |
 | 20 | 通用审批与通知 | 统一记录报工、领料、质检、维修、权限申请等审批；支持系统消息提醒 | mes_approval_record<br>mes_notification |
 | 21 | 工艺标准管理 | 支撑工艺工程师维护 SOP、工序不良原因、轮胎用料和工艺参数 | mes_sop<br>mes_defect_reason<br>mes_process_parameter |
