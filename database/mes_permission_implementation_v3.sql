@@ -158,6 +158,7 @@ WITH grants(role_code, permission_code) AS (
     ('EQUIPMENT_ADMIN','feedback.create'), ('EQUIPMENT_ADMIN','master.read'),
 
     ('EQUIPMENT_MAINTAINER','dashboard.read'), ('EQUIPMENT_MAINTAINER','equipment.read'),
+    ('EQUIPMENT_MAINTAINER','equipment.fault.report'),
     ('EQUIPMENT_MAINTAINER','equipment.maintenance.execute'),
     ('EQUIPMENT_MAINTAINER','feedback.read'), ('EQUIPMENT_MAINTAINER','feedback.create'),
 

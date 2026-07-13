@@ -267,6 +267,16 @@
                 <label>备注 <input name="remark"></label>
                 <button type="submit">添加</button>
             </form>
+            <form id="rework-form" class="tool" data-permission="quality.rework.manage">
+                <h3>创建返工单</h3>
+                <label>返工单号 <input name="reworkOrderNo" value="RW-DEMO-001" required></label>
+                <label>来源工单ID <input name="sourceWorkOrderId" type="number" value="1" min="1" required></label>
+                <label>来源质检单ID <input name="inspectionId" type="number" min="1"></label>
+                <label>返工产线ID <input name="assignedLineId" type="number" min="1"></label>
+                <label>返工原因 <textarea name="reworkReason" rows="3" required>质检不合格，需按质量主管要求返工处理</textarea></label>
+                <button type="submit">创建返工单</button>
+                <p id="rework-form-status" class="form-status"></p>
+            </form>
             <div class="tool wide"><h3>质检单</h3><div id="quality-table"></div></div>
             <div class="tool wide"><h3 id="quality-item-title">质检项目</h3><div id="quality-item-table"><p>点击质检单右侧“项目”查看明细</p></div></div>
             <div class="tool wide"><h3>返工单</h3><div id="rework-table"></div></div>

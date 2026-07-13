@@ -212,6 +212,34 @@ function bindQualityEvents() {
             showMessage(toChineseError(error), "error");
         }
     });
+
+    document.getElementById("rework-form")?.addEventListener("submit", async event => {
+        event.preventDefault();
+        const status = document.getElementById("rework-form-status");
+        if (status) status.textContent = "正在创建返工单...";
+        try {
+            const payload = formToObject(event.target);
+            payload.sourceWorkOrderId = Number(payload.sourceWorkOrderId);
+            payload.inspectionId = payload.inspectionId ? Number(payload.inspectionId) : null;
+            payload.assignedLineId = payload.assignedLineId ? Number(payload.assignedLineId) : null;
+            payload.reworkStatus = "CREATED";
+            payload.createdAt = nowIsoLocal();
+            payload.closedAt = null;
+            if (payload.reworkOrderNo === "RW-DEMO-001") {
+                payload.reworkOrderNo = `RW-${Date.now()}`;
+            }
+            const id = await postJson("/rework-orders", payload);
+            if (status) status.textContent = `返工单创建成功，ID：${id}`;
+            showMessage(`返工单创建成功，ID：${id}`, "ok");
+            event.target.reset();
+            await loadQuality();
+            await loadDashboard();
+        } catch (error) {
+            const message = toChineseError(error);
+            if (status) status.textContent = `创建失败：${message}`;
+            showMessage(message, "error");
+        }
+    });
 }
 
 function qualityStatusText(status) {

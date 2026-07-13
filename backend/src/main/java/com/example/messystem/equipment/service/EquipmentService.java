@@ -123,7 +123,14 @@ public class EquipmentService {
     }
 
     public boolean finishMaintenanceOrder(long id, long maintainerId) throws SQLException {
-        if (!maintenanceOrderDao.finishOwn(id, maintainerId)) {
+        return finishMaintenanceOrder(id, maintainerId, "");
+    }
+
+    public boolean finishMaintenanceOrder(long id, long maintainerId, String resultDesc) throws SQLException {
+        if (resultDesc == null || resultDesc.isBlank()) {
+            throw new BadRequestException("请填写维修结果、处理措施或故障原因");
+        }
+        if (!maintenanceOrderDao.finishOwn(id, maintainerId, resultDesc.trim())) {
             throw new com.example.messystem.common.BadRequestException("只能完成分配给本人的维修工单");
         }
         return true;
