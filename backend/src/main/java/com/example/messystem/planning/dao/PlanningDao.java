@@ -1,6 +1,7 @@
 package com.example.messystem.planning.dao;
 
 import com.example.messystem.common.Db;
+import com.example.messystem.common.NotFoundException;
 import com.example.messystem.master.entity.MesProcessRoute;
 import com.example.messystem.master.entity.MesProduct;
 import com.example.messystem.master.entity.MesProductBom;
@@ -197,6 +198,41 @@ public class PlanningDao {
                 return mapProcessRoute(rs);
             }
         }
+    }
+
+    public MesProcessRoute updateProcessRoute(long processId, MesProcessRoute route) throws SQLException {
+        String sql = """
+                update mes_process_route
+                set product_id = ?,
+                    process_code = ?,
+                    process_name = ?,
+                    process_seq = ?,
+                    required_equipment_type = ?,
+                    enabled = ?
+                where process_id = ?
+                returning process_id, product_id, process_code, process_name, process_seq,
+                          required_equipment_type, enabled, null::timestamp as created_at
+                """;
+        try (Connection connection = Db.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            setLong(statement, 1, route.productId);
+            statement.setString(2, route.processCode);
+            statement.setString(3, route.processName);
+            statement.setInt(4, route.processSeq == null ? 1 : route.processSeq);
+            statement.setString(5, route.workCenter);
+            statement.setInt(6, route.enabled == null ? 1 : route.enabled);
+            statement.setLong(7, processId);
+            try (ResultSet rs = statement.executeQuery()) {
+                if (rs.next()) {
+                    return mapProcessRoute(rs);
+                }
+                throw new NotFoundException("process route not found");
+            }
+        }
+    }
+
+    public void deleteProcessRoute(long processId) throws SQLException {
+        deleteById("delete from mes_process_route where process_id = ?", processId, "process route not found");
     }
 
     public List<MesProductionLine> listProductionLines() throws SQLException {
@@ -724,6 +760,16 @@ public class PlanningDao {
             statement.setNull(index, java.sql.Types.INTEGER);
         } else {
             statement.setInt(index, value);
+        }
+    }
+
+    private static void deleteById(String sql, long id, String notFoundMessage) throws SQLException {
+        try (Connection connection = Db.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, id);
+            if (statement.executeUpdate() == 0) {
+                throw new NotFoundException(notFoundMessage);
+            }
         }
     }
 

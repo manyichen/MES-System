@@ -225,7 +225,7 @@ public class RoleDashboardService {
 
     private static String primaryRole(AuthenticatedUser user) {
         if (user.roles.contains("SYSTEM_ADMIN")) return "SYSTEM_ADMIN";
-        return user.roles.stream().findFirst().orElse("VIEWER");
+        return user.roles.stream().findFirst().orElse("UNASSIGNED");
     }
 
     private static Profile profileFor(String role) {
@@ -259,7 +259,7 @@ public class RoleDashboardService {
                     modules("dashboard", "quality", "trace", "equipment", "feedback"),
                     "不能审核或最终放行自己的检验结果", "不能维护质检标准", "不能查看其他质检员任务", "不能修改生产、库存和用户数据");
             case "PROCESS_ENGINEER" -> profile(role, "工艺工程师", "工艺、SOP、相关生产质量设备数据",
-                    modules("dashboard", "planning", "quality", "equipment", "trace", "feedback"),
+                    modules("dashboard", "planning", "quality", "equipment", "process", "trace", "feedback"),
                     "不能审核质检放行", "不能提交或审核报工", "不能修改库存或维修状态", "不能管理用户");
             case "EQUIPMENT_ADMIN" -> profile(role, "设备管理员", "全厂设备、维修和维护计划数据",
                     modules("dashboard", "planning", "equipment", "trace", "feedback"),
@@ -267,8 +267,8 @@ public class RoleDashboardService {
             case "EQUIPMENT_MAINTAINER" -> profile(role, "设备维护员", "本人被分配的维修工单和相关设备",
                     modules("dashboard", "equipment", "feedback"),
                     "不能给自己派工或验收自己的维修", "不能修改设备基础台账", "不能操作生产、库存、质量和用户数据");
-            default -> profile("VIEWER", "只读访客", "脱敏演示汇总，不提供业务详情和写操作",
-                    modules("dashboard"), "不能进入业务明细模块", "不能新增、修改、审批或删除任何数据", "不能查看用户、工资、审计和权限数据");
+            default -> profile("UNASSIGNED", "未配置角色", "当前账号未配置业务角色，请联系系统管理员分配岗位权限。",
+                    modules("dashboard"), "不能进入业务模块", "不能新增、修改、审批或删除任何数据");
         };
     }
 

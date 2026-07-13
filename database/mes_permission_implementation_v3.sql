@@ -78,7 +78,6 @@ WHERE rp.role_id = r.role_id AND rp.permission_id = p.permission_id
   AND (
       (r.role_code = 'QUALITY_MANAGER' AND p.permission_code = 'quality.inspect')
       OR (r.role_code = 'SYSTEM_MAINTAINER' AND p.permission_code = 'user.update_role')
-      OR (r.role_code = 'VIEWER' AND p.permission_code = 'trace.read')
   );
 
 WITH grants(role_code, permission_code) AS (
@@ -158,11 +157,8 @@ WITH grants(role_code, permission_code) AS (
     ('EQUIPMENT_ADMIN','feedback.create'), ('EQUIPMENT_ADMIN','master.read'),
 
     ('EQUIPMENT_MAINTAINER','dashboard.read'), ('EQUIPMENT_MAINTAINER','equipment.read'),
-    ('EQUIPMENT_MAINTAINER','equipment.fault.report'),
     ('EQUIPMENT_MAINTAINER','equipment.maintenance.execute'),
-    ('EQUIPMENT_MAINTAINER','feedback.read'), ('EQUIPMENT_MAINTAINER','feedback.create'),
-
-    ('VIEWER','dashboard.read')
+    ('EQUIPMENT_MAINTAINER','feedback.read'), ('EQUIPMENT_MAINTAINER','feedback.create')
 )
 INSERT INTO mes_role_permission (role_id, permission_id)
 SELECT r.role_id, p.permission_id
@@ -170,6 +166,15 @@ FROM grants g
 JOIN mes_role r ON r.role_code = g.role_code
 JOIN mes_permission p ON p.permission_code = g.permission_code
 ON CONFLICT (role_id, permission_id) DO NOTHING;
+
+DELETE FROM mes_role_permission rp
+USING mes_role r
+WHERE rp.role_id = r.role_id
+  AND r.role_code = 'VIEWER';
+
+UPDATE mes_role
+SET enabled = 0
+WHERE role_code = 'VIEWER';
 
 -- 系统管理员始终拥有全部启用权限。
 INSERT INTO mes_role_permission (role_id, permission_id)
