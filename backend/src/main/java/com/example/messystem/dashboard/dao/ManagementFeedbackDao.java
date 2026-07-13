@@ -21,7 +21,7 @@ public class ManagementFeedbackDao {
             ps.setString(3, "WORK_ORDER");
             ps.setLong(4, feedback.workOrderId() == null ? 0L : feedback.workOrderId());
             ps.setString(5, feedback.feedbackContent());
-            ps.setString(6, "");
+            ps.setString(6, feedback.decisionAction() == null ? "" : feedback.decisionAction());
             ps.setString(7, feedback.feedbackStatus());
             ps.setLong(8, createdBy);
             ps.setObject(9, feedback.createdAt());
@@ -36,7 +36,7 @@ public class ManagementFeedbackDao {
     }
 
     public Optional<MesManagementFeedback> findById(long id) throws SQLException {
-        String sql = "SELECT feedback_id, feedback_no, related_doc_id AS work_order_id, feedback_type, feedback_content, feedback_status, created_at FROM mes_management_feedback WHERE feedback_id = ?";
+        String sql = "SELECT feedback_id, feedback_no, related_doc_id AS work_order_id, feedback_type, feedback_content, decision_action, feedback_status, created_at FROM mes_management_feedback WHERE feedback_id = ?";
         try (Connection conn = Db.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, id);
             try (ResultSet rs = ps.executeQuery()) {
@@ -49,7 +49,7 @@ public class ManagementFeedbackDao {
     }
 
     public List<MesManagementFeedback> findByWorkOrderId(long workOrderId) throws SQLException {
-        String sql = "SELECT feedback_id, feedback_no, related_doc_id AS work_order_id, feedback_type, feedback_content, feedback_status, created_at FROM mes_management_feedback WHERE related_doc_type = 'WORK_ORDER' AND related_doc_id = ?";
+        String sql = "SELECT feedback_id, feedback_no, related_doc_id AS work_order_id, feedback_type, feedback_content, decision_action, feedback_status, created_at FROM mes_management_feedback WHERE related_doc_type = 'WORK_ORDER' AND related_doc_id = ?";
         try (Connection conn = Db.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, workOrderId);
             try (ResultSet rs = ps.executeQuery()) {
@@ -63,7 +63,7 @@ public class ManagementFeedbackDao {
     }
 
     public List<MesManagementFeedback> findByWorkOrderIdAndCreator(long workOrderId, long createdBy) throws SQLException {
-        String sql = "SELECT feedback_id, feedback_no, related_doc_id AS work_order_id, feedback_type, feedback_content, feedback_status, created_at FROM mes_management_feedback WHERE related_doc_type = 'WORK_ORDER' AND related_doc_id = ? AND created_by = ?";
+        String sql = "SELECT feedback_id, feedback_no, related_doc_id AS work_order_id, feedback_type, feedback_content, decision_action, feedback_status, created_at FROM mes_management_feedback WHERE related_doc_type = 'WORK_ORDER' AND related_doc_id = ? AND created_by = ?";
         try (Connection conn = Db.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, workOrderId);
             ps.setLong(2, createdBy);
@@ -76,7 +76,7 @@ public class ManagementFeedbackDao {
     }
 
     public Optional<MesManagementFeedback> findByIdAndCreator(long id, long createdBy) throws SQLException {
-        String sql = "SELECT feedback_id, feedback_no, related_doc_id AS work_order_id, feedback_type, feedback_content, feedback_status, created_at FROM mes_management_feedback WHERE feedback_id = ? AND created_by = ?";
+        String sql = "SELECT feedback_id, feedback_no, related_doc_id AS work_order_id, feedback_type, feedback_content, decision_action, feedback_status, created_at FROM mes_management_feedback WHERE feedback_id = ? AND created_by = ?";
         try (Connection conn = Db.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, id);
             ps.setLong(2, createdBy);
@@ -103,6 +103,7 @@ public class ManagementFeedbackDao {
                 rs.getLong("work_order_id"),
                 rs.getString("feedback_type"),
                 rs.getString("feedback_content"),
+                rs.getString("decision_action"),
                 rs.getString("feedback_status"),
                 rs.getObject("created_at", java.time.LocalDateTime.class),
                 null
