@@ -16,6 +16,7 @@ final class AuthorizationPolicy {
             rule("GET", "production-tasks(?:/.*)?", "planning.read"),
             rule("POST", "production-tasks", "planning.task.create"),
             rule("POST", "production-tasks/\\d+/(?:kitting|release)", "planning.task.release"),
+            rule("POST", "ai/planning/advice", "planning.task.release"),
             any("GET", "work-orders(?:/.*)?", "planning.read", "planning.work_order.read"),
             rule("POST", "work-orders", "planning.work_order.create"),
             rule("POST", "work-orders/\\d+/dispatch", "planning.work_order.dispatch"),
@@ -73,6 +74,9 @@ final class AuthorizationPolicy {
 
             rule("GET", "product-traces(?:/.*)?", "trace.read"),
             rule("POST", "product-traces", "trace.create"),
+            any("GET", "tire-labels(?:/.*)?", "trace.read", "warehouse.read"),
+            rule("POST", "tire-labels/generate", "trace.tire.generate"),
+            rule("POST", "tire-labels/\\d+/print", "trace.tire.print"),
             rule("GET", "management-feedback(?:/.*)?", "feedback.read"),
             rule("POST", "management-feedback", "feedback.create"),
             rule("POST", "management-feedback/\\d+/close", "feedback.close"),

@@ -355,6 +355,17 @@
             <button id="refresh-trace">刷新</button>
         </header>
         <div class="grid">
+            <form id="tire-label-form" class="tool" data-permission="trace.tire.generate">
+                <h3>生成单条轮胎二维码</h3>
+                <p class="form-help">质检合格入库后按实际数量生成，每条轮胎对应唯一二维码。</p>
+                <label>生产工单ID <input name="workOrderId" type="number" min="1" required></label>
+                <label>已通过质检单ID <input name="inspectionId" type="number" min="1" required></label>
+                <label>入库仓库ID <input name="warehouseId" type="number" min="1" required></label>
+                <label>入库库位ID（可选） <input name="locationId" type="number" min="1"></label>
+                <label>轮胎数量 <input name="quantity" type="number" value="1" min="1" max="1000" required></label>
+                <button type="submit">批量生成轮胎二维码</button>
+                <p id="tire-label-form-status" class="form-status"></p>
+            </form>
             <form id="trace-form" class="tool" data-permission="trace.create">
                 <h3>创建追溯记录</h3>
                 <label>追溯码 <input name="traceCode" value="TRACE-DEMO-001" required></label>
@@ -373,6 +384,10 @@
                 </label>
                 <button type="submit">创建</button>
             </form>
+            <div class="tool wide"><h3>单条轮胎二维码标签</h3><div id="tire-label-table"></div></div>
+            <div id="tire-label-preview" class="tool wide tire-label-preview">
+                <h3>二维码与标签预览</h3><p>点击轮胎记录右侧“预览”查看二维码和打印标签。</p>
+            </div>
             <div class="tool wide"><h3>追溯记录</h3><div id="trace-table"></div></div>
             <form id="trace-search-form" class="tool">
                 <h3>追溯查询</h3>

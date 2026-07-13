@@ -20,7 +20,7 @@ public class AuthFilter implements ContainerRequestFilter {
     public void filter(ContainerRequestContext context) {
         String path = normalize(context.getUriInfo().getPath());
         String method = context.getMethod().toUpperCase();
-        if ("OPTIONS".equals(method) || "auth/login".equals(path)) {
+        if ("OPTIONS".equals(method) || "auth/login".equals(path) || path.startsWith("public/tire-traces/")) {
             return;
         }
 

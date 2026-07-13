@@ -5,6 +5,7 @@ tomcat.*/
 .m2/
 .tools/
 .env
+/storage/
 .env.*
 !.env.example
 
