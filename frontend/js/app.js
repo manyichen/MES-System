@@ -8,6 +8,8 @@ const MODULE_PRESENTATION = {
     equipment: { icon: "⚙", eyebrow: "设备保障", title: "设备维护", description: "掌握设备状态，处理报修、维修和验收任务。" },
     trace: { icon: "⌁", eyebrow: "全程追溯", title: "产品追溯", description: "按追溯码、批次和工单查询产品生产履历。" },
     feedback: { icon: "✦", eyebrow: "经营管理", title: "管理反馈", description: "记录并跟踪生产经营过程中的管理意见。" },
+    systemOps: { icon: "⚙", eyebrow: "系统运行", title: "系统运维", description: "巡检会话、锁定账号、系统健康和数据同步状态。" },
+    audit: { icon: "◎", eyebrow: "安全审计", title: "审计日志", description: "查看登录、授权和关键操作留下的审计记录。" },
     system: { icon: "♙", eyebrow: "系统管理", title: "用户与权限", description: "管理用户角色、数据范围和权限变更申请。" }
 };
 
@@ -167,7 +169,7 @@ function initializeApp() {
     if (hasPermission("equipment.read") && typeof loadEquipment === "function") loadEquipment();
     if (hasPermission("trace.read") && typeof loadTraces === "function") loadTraces();
     if (hasPermission("feedback.read") && typeof loadFeedback === "function") loadFeedback(1);
-    if (hasPermission("user.read") && typeof loadAccessManagement === "function") loadAccessManagement();
+    if (typeof loadAccessManagement === "function") loadAccessManagement();
 }
 
 window.addEventListener("DOMContentLoaded", () => {

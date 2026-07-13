@@ -82,6 +82,19 @@ public class MaterialRequisitionResource {
         }
     }
 
+    @POST
+    @Path("/{id}/reject")
+    public Response reject(@PathParam("id") long id, MesMaterialRequisition request,
+            @Context ContainerRequestContext context) {
+        try {
+            String reason = request == null ? null : request.remark;
+            return ResourceSupport.action("领料单已驳回",
+                    service.rejectRequisition(id, AuthFilter.currentUser(context).user.userId, reason));
+        } catch (RuntimeException ex) {
+            return ResourceSupport.handle(ex);
+        }
+    }
+
     private static void requireOperatorWorkOrder(long workOrderId, long userId) {
         String sql = """
                 select 1 from mes_work_order

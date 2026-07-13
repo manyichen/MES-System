@@ -30,6 +30,16 @@ function applyPermissionVisibility() {
         const allowed = element.dataset.permission.split("|").some(hasPermission);
         element.classList.toggle("permission-hidden", !allowed);
     });
+    document.querySelectorAll(".sidebar .nav-group").forEach(group => {
+        let hasVisibleItem = false;
+        for (let item = group.nextElementSibling; item && !item.classList.contains("nav-group"); item = item.nextElementSibling) {
+            if (item.matches("button[data-tab]") && !item.classList.contains("permission-hidden")) {
+                hasVisibleItem = true;
+                break;
+            }
+        }
+        group.classList.toggle("permission-hidden", !hasVisibleItem);
+    });
 }
 
 async function initAuthGate(onAuthenticated) {

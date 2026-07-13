@@ -139,21 +139,54 @@ function renderPlanningFocus() {
         <h3>\u8ba1\u5212\u5de5\u5355\u5de5\u4f5c\u53f0</h3>
         <p class="focus-hint">\u5148\u5904\u7406\u4e0b\u9762\u6570\u91cf\u5927\u4e8e 0 \u7684\u4efb\u52a1\uff0c\u518d\u67e5\u770b\u660e\u7ec6\u8868\u3002</p>
         <div class="workflow-steps">
-            <button type="button" onclick="scrollBSection('taskTable')"><strong>${pendingTasks}</strong><span>\u5f85\u9f50\u5957/\u53d1\u5e03\u4efb\u52a1</span></button>
-            <button type="button" onclick="scrollBSection('workOrderForm')"><strong>${releasedTasks}</strong><span>\u53ef\u521b\u5efa\u5de5\u5355\u4efb\u52a1</span></button>
-            <button type="button" onclick="scrollBSection('workOrderTable')"><strong>${createdWorkOrders}</strong><span>\u5f85\u6d3e\u53d1\u5de5\u5355</span></button>
-            <button type="button" onclick="scrollBSection('workOrderTable')"><strong>${dispatchedWorkOrders}</strong><span>\u5df2\u6d3e\u53d1\u5f85\u63a5\u6536</span></button>
+            <button type="button" onclick="jumpPlanningWorkbench('taskTable')"><strong>${pendingTasks}</strong><span>\u5f85\u9f50\u5957/\u53d1\u5e03\u4efb\u52a1</span></button>
+            <button type="button" onclick="jumpPlanningWorkbench('workOrderForm')"><strong>${releasedTasks}</strong><span>\u53ef\u521b\u5efa\u5de5\u5355\u4efb\u52a1</span></button>
+            <button type="button" onclick="jumpPlanningWorkbench('workOrderTable')"><strong>${createdWorkOrders}</strong><span>\u5f85\u6d3e\u53d1\u5de5\u5355</span></button>
+            <button type="button" onclick="jumpPlanningWorkbench('workOrderTable')"><strong>${dispatchedWorkOrders}</strong><span>\u5df2\u6d3e\u53d1\u5f85\u63a5\u6536</span></button>
         </div>`;
 }
 
 function scrollBSection(id) {
-    document.getElementById(id)?.closest(".tool")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    jumpPlanningWorkbench(id);
+}
+
+function jumpPlanningWorkbench(id) {
+    const target = document.getElementById(id);
+    const panel = document.getElementById("planning");
+    if (!target || !panel) return;
+
+    const actionForm = target.matches("form[data-action-view]") ? target : target.closest("form[data-action-view]");
+    if (actionForm) {
+        const drawer = actionForm.closest(".module-drawer");
+        if (drawer) {
+            if (typeof selectActionView === "function") selectActionView(drawer, actionForm.dataset.actionView);
+            if (typeof openModuleDrawer === "function") openModuleDrawer(drawer);
+        }
+        window.setTimeout(() => actionForm.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+        showMessage("\u5df2\u5b9a\u4f4d\u5230\u5bf9\u5e94\u64cd\u4f5c\u533a", "ok");
+        return;
+    }
+
+    const workspaceView = target.closest("[data-workspace-view]");
+    if (workspaceView?.dataset.workspaceView && typeof selectModuleView === "function") {
+        selectModuleView(panel, workspaceView.dataset.workspaceView);
+    }
+    window.setTimeout(() => target.closest(".tool")?.scrollIntoView({ behavior: "smooth", block: "center" }), 80);
     showMessage("\u5df2\u5b9a\u4f4d\u5230\u5bf9\u5e94\u64cd\u4f5c\u533a", "ok");
 }
 
 function renderTaskActions(row) {
     if (!hasPermission("planning.task.release")) return "";
-    return `<button onclick="analyzeTask(${row.taskId})">\u9f50\u5957</button><button onclick="releaseTask(${row.taskId})">\u53d1\u5e03</button>`;
+    const actions = [`<button onclick="analyzeTask(${row.taskId})">\u9f50\u5957\u5206\u6790</button>`];
+    if (row.taskStatus === "RELEASED") {
+        actions.push(`<button type="button" disabled>\u5df2\u53d1\u5e03</button>`);
+    } else if (row.kittingStatus !== "READY") {
+        const label = row.kittingStatus === "SHORTAGE" ? "\u7f3a\u6599\u4e0d\u53ef\u53d1\u5e03" : "\u5148\u9f50\u5957";
+        actions.push(`<button type="button" disabled>${label}</button>`);
+    } else {
+        actions.push(`<button onclick="releaseTask(${row.taskId})">\u53d1\u5e03</button>`);
+    }
+    return actions.join("");
 }
 
 function renderWorkOrderActions(row) {
@@ -161,10 +194,17 @@ function renderWorkOrderActions(row) {
     if (row.workOrderStatus === "CREATED" && hasPermission("planning.work_order.dispatch")) {
         actions.unshift(`<button onclick="dispatchWorkOrder(${row.workOrderId})">\u6d3e\u53d1</button>`);
     }
-    if (row.workOrderStatus === "DISPATCHED" && hasPermission("planning.work_order.receive")) {
+    if (row.workOrderStatus === "DISPATCHED" && canReceiveWorkOrder(row)) {
         actions.unshift(`<button onclick="receiveWorkOrder(${row.workOrderId})">\u63a5\u6536</button>`);
     }
     return actions.join("");
+}
+
+function canReceiveWorkOrder(row) {
+    const currentUserId = Number(getCurrentSession()?.user?.userId);
+    return hasPermission("planning.work_order.receive")
+        && hasRole("PRODUCTION_OPERATOR")
+        && Number(row.assignedTo) === currentUserId;
 }
 
 async function seedPlanning() {

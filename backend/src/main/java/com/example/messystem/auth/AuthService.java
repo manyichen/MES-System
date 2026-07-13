@@ -15,6 +15,7 @@ import java.util.Set;
 
 public class AuthService {
     private static final int SESSION_HOURS = 8;
+    private static final Set<String> DEPRECATED_LOGIN_USERNAMES = Set.of("mes_sysmaint");
 
     public LoginSession login(LoginRequest request, String loginIp, String userAgent) {
         if (request == null || request.username == null || request.username.isBlank()
@@ -22,10 +23,15 @@ public class AuthService {
             throw new BadRequestException("用户名和密码不能为空");
         }
 
+        String username = request.username.trim();
+        if (DEPRECATED_LOGIN_USERNAMES.contains(username)) {
+            throw new BadRequestException("用户名或密码错误");
+        }
+
         try (Connection connection = Db.getConnection()) {
             connection.setAutoCommit(false);
             try {
-                MesUser user = findLoginUser(connection, request.username.trim());
+                MesUser user = findLoginUser(connection, username);
                 verifyLogin(connection, user, request.password);
                 resetLoginState(connection, user.userId);
 
@@ -63,6 +69,9 @@ public class AuthService {
                     return null;
                 }
                 MesUser user = mapUser(rs);
+                if (DEPRECATED_LOGIN_USERNAMES.contains(user.username)) {
+                    return null;
+                }
                 return loadAccess(connection, user, getLocalDateTime(rs, "expires_at"));
             }
         } catch (SQLException ex) {

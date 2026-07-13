@@ -2,6 +2,7 @@ package com.example.messystem.planning.resource;
 
 import com.example.messystem.auth.AuthFilter;
 import com.example.messystem.auth.AuthenticatedUser;
+import com.example.messystem.common.BadRequestException;
 import com.example.messystem.common.ResourceSupport;
 import com.example.messystem.planning.entity.MesWorkOrder;
 import com.example.messystem.planning.service.WorkOrderService;
@@ -70,8 +71,12 @@ public class WorkOrderResource {
     @Path("/{id}/receive")
     public Response receive(@PathParam("id") long id, @Context ContainerRequestContext context) {
         try {
+            AuthenticatedUser user = AuthFilter.currentUser(context);
+            if (!user.hasRole("PRODUCTION_OPERATOR")) {
+                throw new BadRequestException("只有被派发的生产操作工才能接收工单");
+            }
             return ResourceSupport.action("生产工单已接收",
-                    service.receive(id, AuthFilter.currentUser(context).user.userId));
+                    service.receive(id, user.user.userId));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }

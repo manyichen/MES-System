@@ -1,7 +1,7 @@
 const API_BASE = "./api";
 
 const DISPLAY_TEXT = {
-    SYSTEM_ADMIN: "系统管理员", SYSTEM_MAINTAINER: "系统维护员", HR_MANAGER: "人事经理",
+    SYSTEM_ADMIN: "系统管理员", HR_MANAGER: "人事经理",
     GENERAL_MANAGER: "总经理", PMC_PLANNER: "PMC计划员", WORKSHOP_MANAGER: "车间管理员",
     PRODUCTION_OPERATOR: "生产操作工", WORKSHOP_OPERATOR: "生产操作工", WAREHOUSE_ADMIN: "仓库管理员",
     WAREHOUSE_KEEPER: "仓储人员", QUALITY_MANAGER: "质量主管", QUALITY_INSPECTOR: "质检员",

@@ -4,7 +4,6 @@
 WITH accounts(username, real_name, role_code, department, password_hash) AS (
     VALUES
     ('admin', '系统管理员', 'SYSTEM_ADMIN', '信息技术部', 'pbkdf2_sha256$120000$SJwp/esDPi+QeXO5mzSm8g==$4jC2gVqoKr905JSM9t4KRahNrTicPNMYRWHvZ6jTGR8='),
-    ('mes_sysmaint', '系统维护验收员', 'SYSTEM_MAINTAINER', '信息技术部', 'pbkdf2_sha256$120000$SJwp/esDPi+QeXO5mzSm8g==$4jC2gVqoKr905JSM9t4KRahNrTicPNMYRWHvZ6jTGR8='),
     ('mes_hr', '人事经理验收员', 'HR_MANAGER', '人事部', 'pbkdf2_sha256$120000$SJwp/esDPi+QeXO5mzSm8g==$4jC2gVqoKr905JSM9t4KRahNrTicPNMYRWHvZ6jTGR8='),
     ('mes_general', '总经理验收员', 'GENERAL_MANAGER', '经营管理层', 'pbkdf2_sha256$120000$SJwp/esDPi+QeXO5mzSm8g==$4jC2gVqoKr905JSM9t4KRahNrTicPNMYRWHvZ6jTGR8='),
     ('mes_pmc', 'PMC计划验收员', 'PMC_PLANNER', '生产计划部', 'pbkdf2_sha256$120000$SJwp/esDPi+QeXO5mzSm8g==$4jC2gVqoKr905JSM9t4KRahNrTicPNMYRWHvZ6jTGR8='),
@@ -34,11 +33,28 @@ ON CONFLICT (username) DO UPDATE SET
     locked_until = NULL,
     updated_at = CURRENT_TIMESTAMP;
 
+DELETE FROM mes_user_session
+WHERE user_id IN (
+    SELECT user_id
+    FROM mes_user
+    WHERE username = 'mes_sysmaint'
+);
+
+DELETE FROM mes_user_role
+WHERE user_id IN (
+    SELECT user_id
+    FROM mes_user
+    WHERE username = 'mes_sysmaint'
+);
+
+DELETE FROM mes_user
+WHERE username = 'mes_sysmaint';
+
 DELETE FROM mes_user_role ur
 USING mes_user u
 WHERE ur.user_id = u.user_id
   AND u.username IN (
-      'admin', 'mes_sysmaint', 'mes_hr', 'mes_general', 'mes_pmc', 'mes_workshop',
+      'admin', 'mes_hr', 'mes_general', 'mes_pmc', 'mes_workshop',
       'mes_operator', 'mes_warehouse', 'mes_quality_mgr', 'mes_inspector',
       'mes_process', 'mes_equipment_mgr', 'mes_maintainer', 'mes_viewer'
   );
@@ -48,7 +64,7 @@ SELECT u.user_id, r.role_id, CURRENT_TIMESTAMP
 FROM mes_user u
 JOIN mes_role r ON r.role_code = u.role_code AND r.enabled = 1
 WHERE u.username IN (
-    'admin', 'mes_sysmaint', 'mes_hr', 'mes_general', 'mes_pmc', 'mes_workshop',
+    'admin', 'mes_hr', 'mes_general', 'mes_pmc', 'mes_workshop',
     'mes_operator', 'mes_warehouse', 'mes_quality_mgr', 'mes_inspector',
     'mes_process', 'mes_equipment_mgr', 'mes_maintainer', 'mes_viewer'
 )
@@ -60,7 +76,7 @@ WHERE revoked_at IS NULL
   AND user_id IN (
       SELECT user_id FROM mes_user
       WHERE username IN (
-          'admin', 'mes_sysmaint', 'mes_hr', 'mes_general', 'mes_pmc', 'mes_workshop',
+          'admin', 'mes_hr', 'mes_general', 'mes_pmc', 'mes_workshop',
           'mes_operator', 'mes_warehouse', 'mes_quality_mgr', 'mes_inspector',
           'mes_process', 'mes_equipment_mgr', 'mes_maintainer', 'mes_viewer'
       )

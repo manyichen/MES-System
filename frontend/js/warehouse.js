@@ -59,7 +59,10 @@ function renderWarehouseTables(data) {
     const visibleLocations = data.locations.slice(0, 5);
     const visibleInventory = data.inventory.slice(0, 5);
     const visibleRobots = prioritizeRows(data.robots, row => ["IDLE", "WORKING", "CHARGING"].includes(row.robotStatus), 5);
-    const visibleRequisitions = prioritizeRows(data.requisitions, row => row.requestStatus === "CREATED", 8);
+    const activeRequisitions = data.requisitions.filter(row => row.requestStatus !== "REJECTED");
+    const rejectedRequisitions = data.requisitions.filter(row => row.requestStatus === "REJECTED");
+    const visibleRequisitions = prioritizeRows(activeRequisitions, row => row.requestStatus === "CREATED", 8);
+    const visibleRejectedRequisitions = rejectedRequisitions.slice(0, 8);
     const visiblePicking = prioritizeRows(data.pickingTasks, row => row.taskStatus === "CREATED", 8);
     const visibleDelivery = prioritizeRows(data.deliveryTasks, row => ["PENDING", "ARRIVED"].includes(row.deliveryStatus), 8);
     const visibleTransactions = data.transactions.slice(0, 8);
@@ -111,6 +114,14 @@ function renderWarehouseTables(data) {
         { title: "\u72b6\u6001", key: "requestStatus" },
         { title: "\u64cd\u4f5c", render: renderRequisitionActions }
     ]);
+    renderTable("rejectedRequisitionTable", visibleRejectedRequisitions, [
+        { title: "ID", key: "requisitionId" },
+        { title: "\u7f16\u53f7", key: "requisitionNo" },
+        { title: "\u5de5\u5355", key: "workOrderId" },
+        { title: "\u4ed3\u5e93", key: "warehouseId" },
+        { title: "\u72b6\u6001", key: "requestStatus" },
+        { title: "\u64cd\u4f5c", render: renderRejectedRequisitionActions }
+    ]);
     renderTable("pickingTable", visiblePicking, [
         { title: "ID", key: "pickingTaskId" },
         { title: "\u7f16\u53f7", key: "pickingTaskNo" },
@@ -134,7 +145,7 @@ function renderWarehouseTables(data) {
         { title: "\u6765\u6e90", key: "sourceDocType" },
         { title: "\u64cd\u4f5c", render: row => `<button onclick="showTransactionDetail(${row.transactionId})">\u8be6\u60c5</button>` }
     ]);
-    updateWarehouseSectionCounts(data);
+    updateWarehouseSectionCounts(data, { activeRequisitions, rejectedRequisitions });
 }
 
 function prioritizeRows(rows, predicate, limit) {
@@ -172,13 +183,16 @@ function scrollWarehouseSection(id) {
     showMessage("\u5df2\u5b9a\u4f4d\u5230\u5bf9\u5e94\u64cd\u4f5c\u533a", "ok");
 }
 
-function updateWarehouseSectionCounts(data) {
+function updateWarehouseSectionCounts(data, derived = {}) {
+    const activeRequisitionCount = derived.activeRequisitions?.length ?? data.requisitions.filter(row => row.requestStatus !== "REJECTED").length;
+    const rejectedRequisitionCount = derived.rejectedRequisitions?.length ?? data.requisitions.filter(row => row.requestStatus === "REJECTED").length;
     setToolCount("materialTable", data.materials.length, 5);
     setToolCount("warehouseTable", data.warehouses.length, 5);
     setToolCount("locationTable", data.locations.length, 5);
     setToolCount("inventoryTable", data.inventory.length, 5);
     setToolCount("robotTable", data.robots.length, 5);
-    setToolCount("requisitionTable", data.requisitions.length, 8);
+    setToolCount("requisitionTable", activeRequisitionCount, 8);
+    setToolCount("rejectedRequisitionTable", rejectedRequisitionCount, 8);
     setToolCount("pickingTable", data.pickingTasks.length, 8);
     setToolCount("deliveryTable", data.deliveryTasks.length, 8);
     setToolCount("transactionTable", data.transactions.length, 8);
@@ -213,9 +227,16 @@ function fillInventory(materialId, batchNo) {
 function renderRequisitionActions(row) {
     const actions = [`<button onclick="showRequisitionDetail(${row.requisitionId})">\u8be6\u60c5</button>`];
     if (row.requestStatus === "CREATED" && hasPermission("warehouse.requisition.approve")) {
-        actions.push(`<button onclick="approveRequisition(${row.requisitionId})">\u5ba1\u6838</button>`);
+        actions.push(`<button onclick="openRequisitionReview(${row.requisitionId})">\u5ba1\u6838</button>`);
     }
     return actions.join("");
+}
+
+function renderRejectedRequisitionActions(row) {
+    return [
+        `<button onclick="showRequisitionDetail(${row.requisitionId})">\u8be6\u60c5</button>`,
+        `<button onclick="showRejectReason(${row.requisitionId})">\u9a73\u56de\u539f\u56e0</button>`
+    ].join("");
 }
 
 function renderPickingActions(row) {
@@ -256,6 +277,146 @@ function showPickingDetail(id) { return showWarehouseResource(`/picking-tasks/${
 function showDeliveryDetail(id) { return showWarehouseResource(`/robot-delivery-tasks/${id}`, "\u914d\u9001\u4efb\u52a1\u8be6\u60c5"); }
 function showTransactionDetail(id) { return showWarehouseResource(`/inventory/transactions/${id}`, "\u5e93\u5b58\u6d41\u6c34\u8be6\u60c5"); }
 
+async function showRejectReason(id) {
+    try {
+        const requisition = await getJson(`/requisitions/${id}`);
+        const reason = requisition.remark || "\u6682\u672a\u586b\u5199\u9a73\u56de\u539f\u56e0";
+        const mask = document.createElement("div");
+        mask.className = "modal-mask";
+        mask.innerHTML = `
+            <div class="modal-card requisition-reject-modal">
+                <h3>\u9a73\u56de\u539f\u56e0</h3>
+                <div class="review-summary">
+                    <div><span>\u9886\u6599\u5355</span><strong>${escapeHtml(requisition.requisitionNo || requisition.requisitionId)}</strong></div>
+                    <div><span>\u72b6\u6001</span><strong>${escapeHtml(statusText(requisition.requestStatus || ""))}</strong></div>
+                </div>
+                <p class="reject-reason-text">${escapeHtml(reason)}</p>
+                <div class="modal-actions">
+                    <button type="button" id="rejectReasonClose">\u5173\u95ed</button>
+                </div>
+            </div>`;
+        document.body.appendChild(mask);
+        mask.querySelector("#rejectReasonClose").addEventListener("click", () => mask.remove());
+    } catch (error) {
+        showMessage(toChineseError(error), "error");
+    }
+}
+
+async function openRequisitionReview(id) {
+    try {
+        const requisition = await getJson(`/requisitions/${id}`);
+        showRequisitionReviewDialog(requisition);
+    } catch (error) {
+        showMessage(toChineseError(error), "error");
+    }
+}
+
+function showRequisitionReviewDialog(requisition) {
+    const itemRows = reviewItemRows(requisition);
+    const checks = buildRequisitionReviewChecks(requisition, itemRows);
+    const canApprove = checks.filter(item => item.blocking).every(item => item.pass);
+    const mask = document.createElement("div");
+    mask.className = "modal-mask";
+    mask.innerHTML = `
+        <div class="modal-card requisition-review-modal">
+            <h3>\u9886\u6599\u5ba1\u6838</h3>
+            <div class="review-summary">
+                <div><span>\u9886\u6599\u5355</span><strong>${escapeHtml(requisition.requisitionNo || requisition.requisitionId)}</strong></div>
+                <div><span>\u5de5\u5355</span><strong>${escapeHtml(requisition.workOrderId)}</strong></div>
+                <div><span>\u4ed3\u5e93</span><strong>${escapeHtml(warehouseName(requisition.warehouseId))}</strong></div>
+                <div><span>\u72b6\u6001</span><strong>${escapeHtml(statusText(requisition.requestStatus || ""))}</strong></div>
+            </div>
+            <h4>\u5ba1\u6838\u5224\u65ad</h4>
+            <div class="review-checks">
+                ${checks.map(item => `<div class="${item.pass ? "pass" : "fail"}"><strong>${item.pass ? "\u901a\u8fc7" : "\u9a73\u56de"}</strong><span>${escapeHtml(item.label)}</span><small>${escapeHtml(item.detail)}</small></div>`).join("")}
+            </div>
+            <h4>\u7269\u6599\u660e\u7ec6</h4>
+            <div class="review-items">
+                ${itemRows.map(item => `<div class="${item.enough ? "pass" : "fail"}"><span>${escapeHtml(item.name)}</span><strong>\u9700\u6c42 ${escapeHtml(item.required)} / \u53ef\u7528 ${escapeHtml(item.available)}</strong><small>${escapeHtml(item.batch)}</small></div>`).join("") || `<p>\u6682\u65e0\u660e\u7ec6</p>`}
+            </div>
+            <label>\u9a73\u56de\u539f\u56e0<textarea id="requisitionRejectReason" rows="3" placeholder="\u586b\u5199\u539f\u56e0\uff0c\u4fbf\u4e8e\u7533\u8bf7\u4eba\u4fee\u6b63"></textarea></label>
+            <div class="modal-actions">
+                <button type="button" id="reviewCancel">\u53d6\u6d88</button>
+                <button type="button" id="reviewReject">\u9a73\u56de</button>
+                <button type="button" id="reviewApprove" ${canApprove ? "" : "disabled"}>\u5ba1\u6838\u901a\u8fc7</button>
+            </div>
+        </div>`;
+    document.body.appendChild(mask);
+    mask.querySelector("#reviewCancel").addEventListener("click", () => mask.remove());
+    mask.querySelector("#reviewReject").addEventListener("click", async () => {
+        await rejectRequisition(requisition.requisitionId, mask.querySelector("#requisitionRejectReason").value);
+        mask.remove();
+    });
+    mask.querySelector("#reviewApprove").addEventListener("click", async () => {
+        await approveRequisition(requisition.requisitionId);
+        mask.remove();
+    });
+}
+
+function buildRequisitionReviewChecks(requisition, itemRows) {
+    const workOrder = warehouseCache.workOrders.find(item => Number(item.workOrderId) === Number(requisition.workOrderId));
+    return [
+        {
+            pass: requisition.requestStatus === "CREATED",
+            blocking: true,
+            label: "\u5355\u636e\u72b6\u6001",
+            detail: requisition.requestStatus === "CREATED" ? "\u5f85\u5904\u7406\uff0c\u53ef\u5ba1\u6838" : `\u5f53\u524d\u72b6\u6001\uff1a${statusText(requisition.requestStatus || "")}`
+        },
+        {
+            pass: Boolean(requisition.warehouseId),
+            blocking: true,
+            label: "\u76ee\u6807\u4ed3\u5e93",
+            detail: requisition.warehouseId ? warehouseName(requisition.warehouseId) : "\u672a\u6307\u5b9a\u4ed3\u5e93"
+        },
+        {
+            pass: !workOrder || ["DISPATCHED", "RECEIVED", "RUNNING"].includes(workOrder.workOrderStatus),
+            blocking: false,
+            label: "\u5de5\u5355\u72b6\u6001",
+            detail: workOrder ? `${workOrder.workOrderNo || requisition.workOrderId} / ${statusText(workOrder.workOrderStatus || "")}` : "\u672a\u8bfb\u53d6\u5230\u5de5\u5355\u4fe1\u606f\uff0c\u4ec5\u4f9b\u53c2\u8003"
+        },
+        {
+            pass: itemRows.length > 0,
+            blocking: true,
+            label: "\u9886\u6599\u660e\u7ec6",
+            detail: itemRows.length ? `\u5171 ${itemRows.length} \u9879\u7269\u6599` : "\u6ca1\u6709\u7269\u6599\u660e\u7ec6"
+        },
+        {
+            pass: itemRows.length > 0 && itemRows.every(item => item.enough),
+            blocking: true,
+            label: "\u5e93\u5b58\u53ef\u7528\u91cf",
+            detail: itemRows.length && itemRows.every(item => item.enough) ? "\u6240\u6709\u7269\u6599\u53ef\u7528\u91cf\u6ee1\u8db3\u9700\u6c42" : "\u5b58\u5728\u53ef\u7528\u91cf\u4e0d\u8db3\u7684\u7269\u6599"
+        }
+    ];
+}
+
+function reviewItemRows(requisition) {
+    return (requisition.items || []).map(item => {
+        const required = Number(item.requiredQty) || 0;
+        const available = warehouseCache.inventory
+            .filter(inv => Number(inv.warehouseId) === Number(requisition.warehouseId))
+            .filter(inv => Number(inv.materialId) === Number(item.materialId))
+            .filter(inv => !item.batchNo || inv.batchNo === item.batchNo)
+            .reduce((sum, inv) => sum + (Number(inv.availableQty) || 0), 0);
+        return {
+            name: materialName(item.materialId),
+            required,
+            available,
+            enough: available >= required,
+            batch: item.batchNo ? `\u6279\u6b21\uff1a${item.batchNo}` : "\u4e0d\u9650\u6279\u6b21"
+        };
+    });
+}
+
+function materialName(id) {
+    const material = warehouseCache.materials.find(item => Number(item.materialId) === Number(id));
+    return material ? `${material.materialName || material.materialCode} / ID ${id}` : `\u7269\u6599 ID ${id}`;
+}
+
+function warehouseName(id) {
+    const warehouse = warehouseCache.warehouses.find(item => Number(item.warehouseId) === Number(id));
+    return warehouse ? `${warehouse.warehouseName || warehouse.warehouseCode} / ID ${id}` : `ID ${id}`;
+}
+
 async function seedWarehouse() {
     try {
         const suffix = Date.now();
@@ -277,6 +438,16 @@ async function approveRequisition(id) {
     try {
         await postJson(`/requisitions/${id}/approve`);
         showMessage("\u9886\u6599\u4efb\u52a1\u5df2\u5ba1\u6838", "ok");
+        await refreshWarehouse();
+    } catch (error) {
+        showMessage(toChineseError(error), "error");
+    }
+}
+
+async function rejectRequisition(id, reason) {
+    try {
+        await postJson(`/requisitions/${id}/reject`, { remark: reason || "\u5ba1\u6838\u9a73\u56de" });
+        showMessage("\u9886\u6599\u4efb\u52a1\u5df2\u9a73\u56de", "ok");
         await refreshWarehouse();
     } catch (error) {
         showMessage(toChineseError(error), "error");
@@ -348,7 +519,7 @@ function relabelWarehouseStaticText() {
     document.getElementById("seedWarehouse").textContent = "\u751f\u6210\u6f14\u793a\u6570\u636e";
     document.getElementById("refreshWarehouse").textContent = "\u5237\u65b0";
     const titles = panel.querySelectorAll(".tool > h3");
-    const names = ["\u57fa\u7840\u6570\u636e", "\u521b\u5efa\u9886\u6599\u4efb\u52a1", "\u9886\u6599\u4efb\u52a1", "\u62e3\u8d27\u4efb\u52a1", "\u914d\u9001\u4efb\u52a1", "\u5e93\u5b58\u6d41\u6c34", "\u4ed3\u50a8\u8be6\u60c5"];
+    const names = ["\u57fa\u7840\u6570\u636e", "\u521b\u5efa\u9886\u6599\u4efb\u52a1", "\u9886\u6599\u4efb\u52a1", "\u5df2\u9a73\u56de\u9886\u6599\u4efb\u52a1", "\u62e3\u8d27\u4efb\u52a1", "\u914d\u9001\u4efb\u52a1", "\u5e93\u5b58\u6d41\u6c34", "\u4ed3\u50a8\u8be6\u60c5"];
     titles.forEach((title, index) => {
         if (names[index]) title.textContent = names[index];
     });
