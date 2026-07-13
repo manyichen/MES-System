@@ -45,10 +45,12 @@ public class MaintenanceOrderResource {
 
     @POST
     @Path("/{id}/finish")
-    public ApiResponse<Boolean> finish(@PathParam("id") long id, @Context ContainerRequestContext context) {
+    public ApiResponse<Boolean> finish(@PathParam("id") long id, MesMaintenanceOrder order,
+            @Context ContainerRequestContext context) {
         try {
             return ApiResponse.ok(service.finishMaintenanceOrder(id,
-                    AuthFilter.currentUser(context).user.userId));
+                    AuthFilter.currentUser(context).user.userId,
+                    order == null ? "" : order.resultDesc()));
         } catch (SQLException e) {
             throw new BadRequestException(e.getMessage());
         }

@@ -41,6 +41,7 @@ public class ManagementFeedbackService {
                 workOrderId,
                 type,
                 content,
+                "",
                 "OPEN",
                 LocalDateTime.now(),
                 null

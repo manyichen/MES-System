@@ -294,3 +294,10 @@ button:disabled{cursor:not-allowed;opacity:.55;filter:none!important;transform:n
     border-left-color: #ef4444;
     background: #fff5f5;
 }
+
+.multiline-cell {
+    display: block;
+    max-width: 360px;
+    white-space: pre-wrap;
+    line-height: 1.55;
+}

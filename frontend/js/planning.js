@@ -97,7 +97,7 @@ function renderPlanningTables() {
         { title: "ID", key: "orderId" },
         { title: "\u7f16\u53f7", key: "orderNo" },
         { title: "\u5ba2\u6237", key: "customerName" },
-        { title: "\u4ea7\u54c1", key: "productId" },
+        { title: "\u4ea7\u54c1", key: "productCode", render: renderOrderProduct },
         { title: "\u6570\u91cf", key: "orderQty" },
         { title: "\u72b6\u6001", key: "orderStatus" }
     ]);
@@ -119,6 +119,14 @@ function renderPlanningTables() {
         { title: "\u72b6\u6001", key: "workOrderStatus" },
         { title: "\u64cd\u4f5c", render: renderWorkOrderActions }
     ]);
+}
+
+function renderOrderProduct(row) {
+    const product = planningCache.products.find(item => item.productId === row.productId);
+    const code = row.productCode || product?.productCode || "";
+    const model = row.productModel || product?.productModel || product?.productName || "";
+    const label = [code, model].filter(Boolean).join(" / ");
+    return escapeHtml(label || `ID ${row.productId ?? "-"}`);
 }
 
 function renderPlanningFocus() {
