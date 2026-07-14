@@ -12,10 +12,10 @@ const TXT = {
     dispatchDone: "\u751f\u4ea7\u5de5\u5355\u5df2\u6d3e\u53d1\u7ed9\u64cd\u4f5c\u5de5",
     dispatchCancel: "\u5df2\u53d6\u6d88\u6d3e\u53d1",
     receiveDone: "\u751f\u4ea7\u5de5\u5355\u5df2\u63a5\u6536\uff0c\u53ef\u4ee5\u8fdb\u5165\u751f\u4ea7\u62a5\u5de5",
-    logsLoaded: "\u5de5\u5355\u65e5\u5fd7\u5df2\u52a0\u8f7d",
     orderCreated: "\u5ba2\u6237\u8ba2\u5355\u5df2\u521b\u5efa",
     taskCreated: "\u751f\u4ea7\u4efb\u52a1\u5df2\u521b\u5efa",
     workOrderCreated: "\u751f\u4ea7\u5de5\u5355\u5df2\u521b\u5efa",
+    workOrderDetail: "\u5de5\u5355\u8be6\u60c5\u4e0e\u6d3e\u5de5",
     chooseOperator: "\u9009\u62e9\u63a5\u5355\u64cd\u4f5c\u5de5",
     cancel: "\u53d6\u6d88",
     confirmDispatch: "\u786e\u8ba4\u6d3e\u53d1",
@@ -26,6 +26,7 @@ async function refreshPlanning(options = {}) {
     try {
         const canReadPlanning = hasPermission("planning.read");
         const canReadUsers = hasPermission("user.read");
+        const canDispatchWorkOrder = hasPermission("planning.work_order.dispatch");
         const [orders, tasks, workOrders, products, lines, routes, users] = await Promise.all([
             canReadPlanning ? getJson("/orders") : Promise.resolve([]),
             canReadPlanning ? getJson("/production-tasks") : Promise.resolve([]),
@@ -33,7 +34,8 @@ async function refreshPlanning(options = {}) {
             canReadPlanning ? getJson("/products").catch(() => []) : Promise.resolve([]),
             canReadPlanning ? getJson("/production-lines").catch(() => []) : Promise.resolve([]),
             canReadPlanning ? getJson("/process-routes").catch(() => []) : Promise.resolve([]),
-            canReadUsers ? getJson("/users").catch(() => []) : Promise.resolve([])
+            canDispatchWorkOrder ? getJson("/work-orders/operators").catch(() => []) :
+                (canReadUsers ? getJson("/users").catch(() => []) : Promise.resolve([]))
         ]);
         planningCache = {
             orders,
@@ -46,10 +48,7 @@ async function refreshPlanning(options = {}) {
         };
         renderPlanningSelectors();
         renderPlanningTables();
-        if (workOrders.length) {
-            lastWorkOrderId = workOrders[0].workOrderId;
-            await loadWorkOrderLogs(lastWorkOrderId, false);
-        }
+        if (workOrders.length) lastWorkOrderId = workOrders[0].workOrderId;
         if (options.notify) showMessage(TXT.refreshPlanning, "ok");
     } catch (error) {
         showMessage(toChineseError(error), "error");
@@ -198,14 +197,7 @@ function renderTaskActions(row) {
 }
 
 function renderWorkOrderActions(row) {
-    const actions = [`<button onclick="loadWorkOrderLogs(${row.workOrderId})">\u65e5\u5fd7</button>`];
-    if (row.workOrderStatus === "CREATED" && hasPermission("planning.work_order.dispatch")) {
-        actions.unshift(`<button onclick="dispatchWorkOrder(${row.workOrderId})">\u6d3e\u53d1</button>`);
-    }
-    if (row.workOrderStatus === "DISPATCHED" && canReceiveWorkOrder(row)) {
-        actions.unshift(`<button onclick="receiveWorkOrder(${row.workOrderId})">\u63a5\u6536</button>`);
-    }
-    return actions.join("");
+    return `<button type="button" onclick="showWorkOrderDetail(${row.workOrderId})">\u8be6\u60c5/\u6d3e\u5de5</button>`;
 }
 
 function canReceiveWorkOrder(row) {
@@ -272,6 +264,101 @@ async function dispatchWorkOrder(id) {
     }
 }
 
+async function showWorkOrderDetail(id) {
+    try {
+        const workOrder = await getJson(`/work-orders/${id}`);
+        const mask = document.createElement("div");
+        mask.className = "modal-mask";
+        const canDispatch = workOrder.workOrderStatus === "CREATED" && hasPermission("planning.work_order.dispatch");
+        const canReceive = workOrder.workOrderStatus === "DISPATCHED" && canReceiveWorkOrder(workOrder);
+        mask.innerHTML = `
+            <div class="modal-card work-order-detail-modal">
+                <h3>${TXT.workOrderDetail}</h3>
+                <p class="modal-subtitle">${escapeHtml(workOrder.workOrderNo || `WO-${workOrder.workOrderId}`)} · ${escapeHtml(statusText(workOrder.workOrderStatus || ""))}</p>
+                <div class="work-order-detail-grid">
+                    ${workOrderDetailRow("\u5de5\u5355ID", workOrder.workOrderId)}
+                    ${workOrderDetailRow("\u751f\u4ea7\u4efb\u52a1", taskLabel(workOrder.taskId))}
+                    ${workOrderDetailRow("\u4ea7\u54c1", productLabel(workOrder.productId))}
+                    ${workOrderDetailRow("\u4ea7\u7ebf", lineLabel(workOrder.lineId))}
+                    ${workOrderDetailRow("\u5de5\u5e8f", processLabel(workOrder.processId))}
+                    ${workOrderDetailRow("\u8ba1\u5212\u6570\u91cf", workOrder.plannedQty)}
+                    ${workOrderDetailRow("\u5b9e\u9645\u6570\u91cf", workOrder.actualQty)}
+                    ${workOrderDetailRow("\u6279\u6b21", workOrder.batchNo)}
+                    ${workOrderDetailRow("\u4f18\u5148\u7ea7", workOrder.priorityLevel)}
+                    ${workOrderDetailRow("\u5df2\u6d3e\u7ed9", operatorLabel(workOrder.assignedTo))}
+                    ${workOrderDetailRow("\u63a5\u6536\u4eba", operatorLabel(workOrder.acceptedBy))}
+                    ${workOrderDetailRow("\u6d3e\u53d1\u65f6\u95f4", formatDateTime(workOrder.dispatchTime))}
+                </div>
+                ${canDispatch ? `<label class="work-order-dispatch-field">\u5206\u914d\u64cd\u4f5c\u5de5
+                    <select id="workOrderDetailOperator">${operatorOptions()}</select>
+                </label>` : ""}
+                <div class="modal-actions">
+                    <button type="button" id="workOrderDetailClose">\u53d6\u6d88</button>
+                    ${canReceive ? `<button type="button" id="workOrderDetailReceive">\u63a5\u6536\u5de5\u5355</button>` : ""}
+                    ${canDispatch ? `<button type="button" id="workOrderDetailDispatch">\u786e\u8ba4\u6d3e\u5de5</button>` : ""}
+                </div>
+            </div>`;
+        document.body.appendChild(mask);
+        mask.querySelector("#workOrderDetailClose").addEventListener("click", () => mask.remove());
+        mask.addEventListener("click", event => {
+            if (event.target === mask) mask.remove();
+        });
+        mask.querySelector("#workOrderDetailReceive")?.addEventListener("click", async () => {
+            mask.remove();
+            await receiveWorkOrder(id);
+        });
+        mask.querySelector("#workOrderDetailDispatch")?.addEventListener("click", async () => {
+            const operatorId = mask.querySelector("#workOrderDetailOperator")?.value;
+            if (!operatorId) {
+                showMessage("\u8bf7\u9009\u62e9\u64cd\u4f5c\u5de5", "error");
+                return;
+            }
+            await postJson(`/work-orders/${id}/dispatch?operatorId=${encodeURIComponent(operatorId)}`);
+            showMessage(TXT.dispatchDone, "ok");
+            mask.remove();
+            await refreshPlanning();
+        });
+    } catch (error) {
+        showMessage(toChineseError(error), "error");
+    }
+}
+
+function workOrderDetailRow(label, value) {
+    const display = value === null || value === undefined || value === "" ? "-" : value;
+    return `<div><span>${escapeHtml(label)}</span><strong>${escapeHtml(display)}</strong></div>`;
+}
+
+function taskLabel(taskId) {
+    const task = planningCache.tasks.find(item => Number(item.taskId) === Number(taskId));
+    return task ? `${task.taskNo || task.taskId} / ${statusText(task.taskStatus || "")}` : taskId;
+}
+
+function productLabel(productId) {
+    const product = planningCache.products.find(item => Number(item.productId) === Number(productId));
+    return product ? `${product.productCode || product.productId} / ${product.productName || product.productModel || ""}` : productId;
+}
+
+function lineLabel(lineId) {
+    const line = planningCache.lines.find(item => Number(item.lineId) === Number(lineId));
+    return line ? `${line.lineName || line.lineCode || "\u4ea7\u7ebf"} / ID ${line.lineId}` : lineId;
+}
+
+function processLabel(processId) {
+    const route = planningCache.routes.find(item => Number(item.processId) === Number(processId));
+    return route ? `${route.processName || route.routeName || "\u5de5\u5e8f"} / ID ${route.processId}` : processId;
+}
+
+function operatorLabel(userId) {
+    if (!userId) return "-";
+    const user = planningCache.operators.find(item => Number(item.userId) === Number(userId));
+    return user ? `${user.realName || user.username} / ${user.username}` : userId;
+}
+
+function operatorOptions() {
+    if (!planningCache.operators.length) return `<option value="">${TXT.noSelectData}</option>`;
+    return `<option value="">\u8bf7\u9009\u62e9</option>${planningCache.operators.map(user => `<option value="${escapeHtml(user.userId)}">${escapeHtml(user.realName || user.username)} / ${escapeHtml(user.username)} / ID ${escapeHtml(user.userId)}</option>`).join("")}`;
+}
+
 function chooseOperator() {
     return new Promise(resolve => {
         if (!planningCache.operators.length) {
@@ -299,23 +386,6 @@ async function receiveWorkOrder(id) {
         await postJson(`/work-orders/${id}/receive`);
         showMessage(TXT.receiveDone, "ok");
         await refreshPlanning();
-    } catch (error) {
-        showMessage(toChineseError(error), "error");
-    }
-}
-
-async function loadWorkOrderLogs(id, notify = true) {
-    try {
-        const logs = await getJson(`/work-orders/${id}/logs`);
-        renderTable("workOrderLogTable", logs, [
-            { title: "ID", key: "logId" },
-            { title: "\u5de5\u5355", key: "workOrderId" },
-            { title: "\u64cd\u4f5c", key: "operationType" },
-            { title: "\u539f\u72b6\u6001", key: "fromStatus" },
-            { title: "\u65b0\u72b6\u6001", key: "toStatus" },
-            { title: "\u8bf4\u660e", key: "remark" }
-        ]);
-        if (notify) showMessage(TXT.logsLoaded, "ok");
     } catch (error) {
         showMessage(toChineseError(error), "error");
     }

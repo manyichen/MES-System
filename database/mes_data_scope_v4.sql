@@ -78,7 +78,7 @@ INSERT INTO mes_role_permission (role_id, permission_id)
 SELECT r.role_id, p.permission_id
 FROM mes_role r
 CROSS JOIN mes_permission p
-WHERE r.role_code = 'SYSTEM_ADMIN'
+WHERE r.role_code IN ('SYSTEM_ADMIN', 'HR_MANAGER')
   AND p.permission_code = 'data_scope.manage'
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 

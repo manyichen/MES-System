@@ -18,6 +18,7 @@ import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import java.util.Map;
 
 @Path("/work-reports")
 @Produces(MediaType.APPLICATION_JSON)
@@ -104,6 +105,20 @@ public class WorkReportResource {
     public Response approve(@PathParam("id") long id) {
         try {
             return ResourceSupport.action("报工单已审核通过", service.approveWorkReport(id));
+        } catch (RuntimeException ex) {
+            return ResourceSupport.handle(ex);
+        }
+    }
+
+    @POST
+    @Path("/{id}/reject")
+    public Response reject(@PathParam("id") long id, Map<String, String> request) {
+        try {
+            String reason = request == null ? "" : request.getOrDefault("reason", "").trim();
+            if (reason.isEmpty()) {
+                throw new BadRequestException("驳回理由不能为空");
+            }
+            return ResourceSupport.action("报工单已驳回", service.rejectWorkReport(id));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }

@@ -15,17 +15,17 @@ import java.util.Set;
 
 public class AuthService {
     private static final int SESSION_HOURS = 8;
-    private static final Set<String> DEPRECATED_LOGIN_USERNAMES = Set.of("mes_sysmaint");
+    private static final Set<String> DEPRECATED_LOGIN_USERNAMES = Set.of("mes_sysmaint", "mes_viewer");
 
     public LoginSession login(LoginRequest request, String loginIp, String userAgent) {
         if (request == null || request.username == null || request.username.isBlank()
                 || request.password == null || request.password.isBlank()) {
-            throw new BadRequestException("用户名和密码不能为空");
+            throw new BadRequestException("账号和密码不能为空");
         }
 
         String username = request.username.trim();
         if (DEPRECATED_LOGIN_USERNAMES.contains(username)) {
-            throw new BadRequestException("用户名或密码错误");
+            throw new BadRequestException("账号或密码错误");
         }
 
         try (Connection connection = Db.getConnection()) {
@@ -101,7 +101,7 @@ public class AuthService {
             statement.setString(1, username);
             try (ResultSet rs = statement.executeQuery()) {
                 if (!rs.next()) {
-                    throw new BadRequestException("用户名或密码错误");
+                    throw new BadRequestException("账号或密码错误");
                 }
                 MesUser user = mapUser(rs);
                 user.password = rs.getString("password_hash");
@@ -133,7 +133,7 @@ public class AuthService {
         }
         writeAudit(connection, "LOGIN", user, "FAILED", "用户名或密码错误");
         connection.commit();
-        throw new BadRequestException("用户名或密码错误");
+        throw new BadRequestException("账号或密码错误");
     }
 
     private static void resetLoginState(Connection connection, long userId) throws SQLException {
@@ -191,6 +191,12 @@ public class AuthService {
             try (ResultSet rs = statement.executeQuery()) {
                 while (rs.next()) permissions.add(rs.getString(1));
             }
+        }
+        if (roles.contains("HR_MANAGER")) {
+            permissions.add("user.update_role");
+            permissions.add("data_scope.manage");
+            permissions.add("master.read");
+            permissions.add("warehouse.read");
         }
         Set<Long> lineIds = loadScopeIds(connection, "mes_user_line_scope", "line_id", user.userId);
         Set<Long> warehouseIds = loadScopeIds(connection, "mes_user_warehouse_scope", "warehouse_id", user.userId);

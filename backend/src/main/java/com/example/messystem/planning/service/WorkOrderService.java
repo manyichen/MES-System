@@ -8,6 +8,7 @@ import com.example.messystem.planning.dao.PlanningDao;
 import com.example.messystem.planning.entity.MesProductionTask;
 import com.example.messystem.planning.entity.MesWorkOrder;
 import com.example.messystem.planning.entity.MesWorkOrderOperationLog;
+import com.example.messystem.master.entity.MesUser;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -61,6 +62,41 @@ public class WorkOrderService {
                 while (rs.next()) rows.add(mapWorkOrder(rs));
                 return rows;
             }
+        } catch (SQLException e) {
+            throw new IllegalStateException("database operation failed: " + e.getMessage(), e);
+        }
+    }
+
+    public List<MesUser> listDispatchableOperators() {
+        String sql = """
+                select distinct u.user_id, u.username, u.real_name, u.role_code, u.department, u.phone,
+                       u.enabled, u.created_at, u.updated_at, u.last_login_at
+                from mes_user u
+                left join mes_user_role ur on ur.user_id = u.user_id
+                left join mes_role r on r.role_id = ur.role_id and r.enabled = 1
+                where u.enabled = 1
+                  and (u.role_code = 'PRODUCTION_OPERATOR' or r.role_code = 'PRODUCTION_OPERATOR')
+                order by u.user_id asc
+                """;
+        try (Connection connection = Db.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet rs = statement.executeQuery()) {
+            List<MesUser> rows = new ArrayList<>();
+            while (rs.next()) {
+                MesUser user = new MesUser();
+                user.userId = rs.getLong("user_id");
+                user.username = rs.getString("username");
+                user.realName = rs.getString("real_name");
+                user.roleCode = rs.getString("role_code");
+                user.department = rs.getString("department");
+                user.phone = rs.getString("phone");
+                user.enabled = rs.getInt("enabled");
+                user.createdAt = getLocalDateTime(rs, "created_at");
+                user.updatedAt = getLocalDateTime(rs, "updated_at");
+                user.lastLoginAt = getLocalDateTime(rs, "last_login_at");
+                rows.add(user);
+            }
+            return rows;
         } catch (SQLException e) {
             throw new IllegalStateException("database operation failed: " + e.getMessage(), e);
         }

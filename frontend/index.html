@@ -16,7 +16,22 @@
     </div>
     <form id="login-form" class="login-card">
         <span class="eyebrow">用户登录</span><h1>双星轮胎 MES</h1><p class="login-hint">请使用系统账号登录</p>
-        <label><span>用户名</span><input name="username" autocomplete="username" value="admin" placeholder="请输入账号" required></label>
+        <label><span>账号</span>
+            <select name="username" autocomplete="username" required>
+                <option value="admin" selected>系统管理员 admin</option>
+                <option value="mes_hr">人事经理 mes_hr</option>
+                <option value="mes_general">总经理 mes_general</option>
+                <option value="mes_pmc">PMC计划员 mes_pmc</option>
+                <option value="mes_workshop">车间管理员 mes_workshop</option>
+                <option value="mes_operator">生产操作工 mes_operator</option>
+                <option value="mes_warehouse">仓库管理员 mes_warehouse</option>
+                <option value="mes_quality_mgr">质量主管 mes_quality_mgr</option>
+                <option value="mes_inspector">质检员 mes_inspector</option>
+                <option value="mes_process">工艺工程师 mes_process</option>
+                <option value="mes_equipment_mgr">设备管理员 mes_equipment_mgr</option>
+                <option value="mes_maintainer">设备维护员 mes_maintainer</option>
+            </select>
+        </label>
         <label><span>密码</span><input name="password" type="password" autocomplete="current-password" placeholder="请输入密码" required></label>
         <button type="submit">登录 <span>→</span></button>
         <p id="login-error"></p>
@@ -134,7 +149,6 @@
             <div class="tool"><h3>客户订单</h3><div id="orderTable"></div></div>
             <div class="tool"><h3>生产任务</h3><div id="taskTable"></div></div>
             <div class="tool"><h3>生产工单</h3><div id="workOrderTable"></div></div>
-            <div class="tool wide"><h3>工单操作日志</h3><div id="workOrderLogTable"></div></div>
         </div>
     </section>
 
@@ -473,20 +487,13 @@
             <button id="refresh-access">刷新</button>
         </header>
         <div class="grid">
-            <form id="permission-apply-form" class="tool" data-permission="permission.apply">
-                <h3>发起角色变更申请</h3>
-                <label>目标用户ID <input name="targetUserId" type="number" min="1" required></label>
-                <label>申请角色 <select name="toRoleCode" id="permission-apply-role" required></select></label>
-                <label>申请原因 <input name="reason" required></label>
-                <button type="submit">提交申请</button>
-            </form>
-            <div class="tool wide" data-permission="permission.apply|permission.review|role.manage">
-                <h3>权限变更申请</h3>
-                <div id="permission-apply-table"></div>
-            </div>
             <div class="tool wide">
                 <h3>用户角色管理</h3>
                 <div id="user-table"></div>
+            </div>
+            <div class="tool wide" data-permission="permission.review|role.manage">
+                <h3>审批权限变更申请</h3>
+                <div id="permission-apply-table"></div>
             </div>
             <div class="tool wide">
                 <h3>角色权限清单</h3>

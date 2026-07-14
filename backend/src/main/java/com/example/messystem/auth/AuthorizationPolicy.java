@@ -34,7 +34,7 @@ final class AuthorizationPolicy {
             rule("POST", "work-reports", "production.report.create"),
             rule("PUT", "work-reports/\\d+", "production.report.update_own"),
             rule("DELETE", "work-reports/\\d+", "business.delete"),
-            rule("POST", "work-reports/\\d+/approve", "production.report.review"),
+            rule("POST", "work-reports/\\d+/(?:approve|reject)", "production.report.review"),
             any("GET", "piecework-wages(?:/.*)?", "production.wage.read_self", "production.wage.read_summary", "production.wage.read_all"),
 
             rule("GET", "quality-inspections(?:/.*)?", "quality.read"),
@@ -83,6 +83,7 @@ final class AuthorizationPolicy {
             rule("GET", "access/roles(?:/.*)?", "role.read"),
             rule("GET", "access/permissions(?:/.*)?", "role.read"),
             rule("GET", "access/system-maintenance", "system.health.read"),
+            rule("POST", "access/system-maintenance/.*", "system.health.read"),
             any("GET", "access/permission-applications", "permission.apply", "permission.review", "role.manage"),
             rule("POST", "access/permission-applications", "permission.apply"),
             rule("POST", "access/permission-applications/\\d+/review", "permission.review"),

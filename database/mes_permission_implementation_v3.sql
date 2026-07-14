@@ -85,11 +85,13 @@ WITH grants(role_code, permission_code) AS (
     VALUES
     ('SYSTEM_ADMIN','dashboard.read'), ('SYSTEM_ADMIN','dashboard.system.read'),
     ('SYSTEM_ADMIN','system.health.read'), ('SYSTEM_ADMIN','user.read'),
-    ('SYSTEM_ADMIN','user.create'), ('SYSTEM_ADMIN','user.update_role'),
+    ('SYSTEM_ADMIN','user.create'),
     ('SYSTEM_ADMIN','role.read'), ('SYSTEM_ADMIN','role.manage'),
     ('SYSTEM_ADMIN','permission.review'), ('SYSTEM_ADMIN','audit.read'),
 
-    ('HR_MANAGER','dashboard.read'), ('HR_MANAGER','user.read'), ('HR_MANAGER','role.read'),
+    ('HR_MANAGER','dashboard.read'), ('HR_MANAGER','user.read'), ('HR_MANAGER','user.update_role'),
+    ('HR_MANAGER','role.read'), ('HR_MANAGER','data_scope.manage'),
+    ('HR_MANAGER','master.read'), ('HR_MANAGER','warehouse.read'),
     ('HR_MANAGER','permission.apply'), ('HR_MANAGER','production.wage.read_all'),
 
     ('GENERAL_MANAGER','dashboard.read'), ('GENERAL_MANAGER','planning.read'),
@@ -111,7 +113,7 @@ WITH grants(role_code, permission_code) AS (
     ('WORKSHOP_MANAGER','planning.work_order.dispatch'), ('WORKSHOP_MANAGER','warehouse.read'),
     ('WORKSHOP_MANAGER','production.read'),
     ('WORKSHOP_MANAGER','production.report.review'), ('WORKSHOP_MANAGER','production.wage.read_summary'),
-    ('WORKSHOP_MANAGER','quality.read'), ('WORKSHOP_MANAGER','equipment.read'),
+    ('WORKSHOP_MANAGER','equipment.read'),
     ('WORKSHOP_MANAGER','equipment.fault.report'), ('WORKSHOP_MANAGER','trace.read'),
     ('WORKSHOP_MANAGER','feedback.read'), ('WORKSHOP_MANAGER','feedback.create'),
     ('WORKSHOP_MANAGER','master.read'), ('WORKSHOP_MANAGER','process.read'),
@@ -178,4 +180,12 @@ USING mes_role r, mes_permission p
 WHERE rp.role_id = r.role_id
   AND rp.permission_id = p.permission_id
   AND r.role_code = 'SYSTEM_ADMIN'
-  AND p.module_code NOT IN ('system', 'dashboard');
+  AND (p.module_code NOT IN ('system', 'dashboard') OR p.permission_code = 'user.update_role');
+
+-- Workshop managers should not enter the quality management module.
+DELETE FROM mes_role_permission rp
+USING mes_role r, mes_permission p
+WHERE rp.role_id = r.role_id
+  AND rp.permission_id = p.permission_id
+  AND r.role_code = 'WORKSHOP_MANAGER'
+  AND p.permission_code = 'quality.read';

@@ -5,6 +5,7 @@ import com.example.messystem.common.ResourceSupport;
 import com.example.messystem.planning.entity.MesProductionTask;
 import com.example.messystem.planning.service.KittingService;
 import com.example.messystem.planning.service.ProductionTaskService;
+import com.example.messystem.security.DataScopeService;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
@@ -22,10 +23,12 @@ import jakarta.ws.rs.core.Context;
 public class ProductionTaskResource {
     private final ProductionTaskService service = new ProductionTaskService();
     private final KittingService kittingService = new KittingService();
+    private final DataScopeService dataScopeService = new DataScopeService();
 
     @GET
-    public Response list() {
-        return ResourceSupport.ok(service.listTasks());
+    public Response list(@Context ContainerRequestContext context) {
+        var scope = dataScopeService.snapshot(AuthFilter.currentUser(context));
+        return ResourceSupport.ok(service.listTasks().stream().filter(scope::canView).toList());
     }
 
     @POST
@@ -40,8 +43,9 @@ public class ProductionTaskResource {
 
     @POST
     @Path("/{id}/kitting")
-    public Response analyzeKitting(@PathParam("id") long id) {
+    public Response analyzeKitting(@PathParam("id") long id, @Context ContainerRequestContext context) {
         try {
+            dataScopeService.snapshot(AuthFilter.currentUser(context)).requireTask(id);
             return ResourceSupport.action("齐套分析已完成", kittingService.analyze(id));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
@@ -50,8 +54,9 @@ public class ProductionTaskResource {
 
     @POST
     @Path("/{id}/release")
-    public Response release(@PathParam("id") long id) {
+    public Response release(@PathParam("id") long id, @Context ContainerRequestContext context) {
         try {
+            dataScopeService.snapshot(AuthFilter.currentUser(context)).requireTask(id);
             return ResourceSupport.action("生产任务已发布", service.releaseTask(id));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);

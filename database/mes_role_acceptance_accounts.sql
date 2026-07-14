@@ -14,8 +14,7 @@ WITH accounts(username, real_name, role_code, department, password_hash) AS (
     ('mes_inspector', '质检员验收员', 'QUALITY_INSPECTOR', '质量部', 'pbkdf2_sha256$120000$SJwp/esDPi+QeXO5mzSm8g==$4jC2gVqoKr905JSM9t4KRahNrTicPNMYRWHvZ6jTGR8='),
     ('mes_process', '工艺工程验收员', 'PROCESS_ENGINEER', '工艺技术部', 'pbkdf2_sha256$120000$SJwp/esDPi+QeXO5mzSm8g==$4jC2gVqoKr905JSM9t4KRahNrTicPNMYRWHvZ6jTGR8='),
     ('mes_equipment_mgr', '设备管理验收员', 'EQUIPMENT_ADMIN', '设备部', 'pbkdf2_sha256$120000$SJwp/esDPi+QeXO5mzSm8g==$4jC2gVqoKr905JSM9t4KRahNrTicPNMYRWHvZ6jTGR8='),
-    ('mes_maintainer', '设备维修验收员', 'EQUIPMENT_MAINTAINER', '设备部', 'pbkdf2_sha256$120000$SJwp/esDPi+QeXO5mzSm8g==$4jC2gVqoKr905JSM9t4KRahNrTicPNMYRWHvZ6jTGR8='),
-    ('mes_viewer', '只读访客验收员', 'VIEWER', '访客', 'pbkdf2_sha256$120000$SJwp/esDPi+QeXO5mzSm8g==$4jC2gVqoKr905JSM9t4KRahNrTicPNMYRWHvZ6jTGR8=')
+    ('mes_maintainer', '设备维修验收员', 'EQUIPMENT_MAINTAINER', '设备部', 'pbkdf2_sha256$120000$SJwp/esDPi+QeXO5mzSm8g==$4jC2gVqoKr905JSM9t4KRahNrTicPNMYRWHvZ6jTGR8=')
 )
 INSERT INTO mes_user
     (username, real_name, role_code, department, enabled, password_hash,
@@ -37,18 +36,18 @@ DELETE FROM mes_user_session
 WHERE user_id IN (
     SELECT user_id
     FROM mes_user
-    WHERE username = 'mes_sysmaint'
+    WHERE username IN ('mes_sysmaint', 'mes_viewer')
 );
 
 DELETE FROM mes_user_role
 WHERE user_id IN (
     SELECT user_id
     FROM mes_user
-    WHERE username = 'mes_sysmaint'
+    WHERE username IN ('mes_sysmaint', 'mes_viewer')
 );
 
 DELETE FROM mes_user
-WHERE username = 'mes_sysmaint';
+WHERE username IN ('mes_sysmaint', 'mes_viewer');
 
 DELETE FROM mes_user_role ur
 USING mes_user u
@@ -56,7 +55,7 @@ WHERE ur.user_id = u.user_id
   AND u.username IN (
       'admin', 'mes_hr', 'mes_general', 'mes_pmc', 'mes_workshop',
       'mes_operator', 'mes_warehouse', 'mes_quality_mgr', 'mes_inspector',
-      'mes_process', 'mes_equipment_mgr', 'mes_maintainer', 'mes_viewer'
+      'mes_process', 'mes_equipment_mgr', 'mes_maintainer'
   );
 
 INSERT INTO mes_user_role (user_id, role_id, assigned_at)
@@ -66,7 +65,7 @@ JOIN mes_role r ON r.role_code = u.role_code AND r.enabled = 1
 WHERE u.username IN (
     'admin', 'mes_hr', 'mes_general', 'mes_pmc', 'mes_workshop',
     'mes_operator', 'mes_warehouse', 'mes_quality_mgr', 'mes_inspector',
-    'mes_process', 'mes_equipment_mgr', 'mes_maintainer', 'mes_viewer'
+    'mes_process', 'mes_equipment_mgr', 'mes_maintainer'
 )
 ON CONFLICT (user_id, role_id) DO NOTHING;
 
@@ -78,6 +77,6 @@ WHERE revoked_at IS NULL
       WHERE username IN (
           'admin', 'mes_hr', 'mes_general', 'mes_pmc', 'mes_workshop',
           'mes_operator', 'mes_warehouse', 'mes_quality_mgr', 'mes_inspector',
-          'mes_process', 'mes_equipment_mgr', 'mes_maintainer', 'mes_viewer'
+          'mes_process', 'mes_equipment_mgr', 'mes_maintainer'
       )
   );

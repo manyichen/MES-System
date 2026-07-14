@@ -402,7 +402,7 @@ INSERT INTO mes_role_permission (role_id, permission_id)
 SELECT r.role_id, p.permission_id
 FROM mes_role r
 JOIN mes_permission p ON p.permission_code IN (
-    'dashboard.read', 'user.read', 'user.create', 'user.update_role',
+    'dashboard.read', 'user.read', 'user.create',
     'permission.review', 'audit.read'
 )
 WHERE r.role_code = 'SYSTEM_ADMIN'
