@@ -70,6 +70,18 @@ public class KittingService {
         return database(dao::listAlerts);
     }
 
+    public List<MesShortageAlert> publishShortageAlerts(long taskId) {
+        MesProductionTask task = taskService.getTask(taskId);
+        if (!"SHORTAGE".equals(task.kittingStatus)) {
+            throw new BadRequestException("当前任务不存在待发布的物料缺口");
+        }
+        return database(() -> dao.publishShortageAlerts(taskId));
+    }
+
+    public MesShortageAlert acceptShortageAlert(long alertId, long userId) {
+        return database(() -> dao.acceptShortageAlert(alertId, userId));
+    }
+
     private static BigDecimal nvl(BigDecimal value) {
         return value == null ? BigDecimal.ZERO : value;
     }

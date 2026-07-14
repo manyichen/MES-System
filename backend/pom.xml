@@ -90,6 +90,21 @@
             <artifactId>jackson-datatype-jsr310</artifactId>
             <version>2.17.2</version>
         </dependency>
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>core</artifactId>
+            <version>3.5.3</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>javase</artifactId>
+            <version>3.5.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>3.0.3</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -138,6 +153,15 @@
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.5.0</version>
+                <executions>
+                    <execution>
+                        <id>database-migration</id>
+                        <goals><goal>java</goal></goals>
+                        <configuration>
+                            <mainClass>com.example.messystem.common.DatabaseMigrationRunner</mainClass>
+                        </configuration>
+                    </execution>
+                </executions>
                 <configuration>
                     <mainClass>com.example.messystem.MesBackendApplication</mainClass>
                     <arguments>

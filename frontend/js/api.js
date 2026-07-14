@@ -5,7 +5,7 @@ const DISPLAY_TEXT = {
     GENERAL_MANAGER: "总经理", PMC_PLANNER: "PMC计划员", WORKSHOP_MANAGER: "车间管理员",
     PRODUCTION_OPERATOR: "生产操作工", WORKSHOP_OPERATOR: "生产操作工", WAREHOUSE_ADMIN: "仓库管理员",
     WAREHOUSE_KEEPER: "仓储人员", QUALITY_MANAGER: "质量主管", QUALITY_INSPECTOR: "质检员",
-    PROCESS_ENGINEER: "工艺工程师", EQUIPMENT_ADMIN: "设备管理员", EQUIPMENT_MAINTAINER: "设备维护员", VIEWER: "只读访客",
+    PROCESS_ENGINEER: "工艺工程师", EQUIPMENT_ADMIN: "设备管理员", EQUIPMENT_MAINTAINER: "设备维护员",
     CREATED: "待处理", DRAFT: "草稿", PENDING: "待处理", PENDING_PLAN: "待排产", PLANNED: "已排产",
     RELEASED: "已发布", READY: "齐套", NOT_READY: "未齐套", SHORTAGE: "缺料", ANALYZED: "已分析", PROCESSING: "处理中", IN_PROGRESS: "处理中", RESOLVED: "已解决",
     DISPATCHED: "已派发", RECEIVED: "已接收", RUNNING: "进行中", FINISHED: "已完成", COMPLETED: "已完成",
@@ -14,7 +14,7 @@ const DISPLAY_TEXT = {
     PICKING: "拣货中", DELIVERING: "配送中", CONVERTED: "已转维修", REPORTED: "已上报", VERIFIED: "已核验",
     WORKING: "作业中", CHARGING: "充电中", FAILED: "失败", PAUSED: "已暂停", WAITING: "等待中",
     UNSETTLED: "未结算", SETTLED: "已结算", PAID: "已支付", UNPAID: "未支付",
-    OPEN: "待处理", PASS: "合格", FAIL: "不合格", REWORK: "返工", NORMAL: "正常", QUALITY_RISK: "质量风险",
+    OPEN: "待处理", PASS: "合格", FAIL: "不合格", REWORK: "返工", NORMAL: "正常", QUALITY_RISK: "质量风险", IN_STOCK: "已入库", VOID: "已作废",
     REWORKED: "已返工", SCRAPPED: "已报废", IDLE: "空闲", FAULT: "故障", MAINTENANCE: "维护中", DISABLED: "已停用",
     ENABLED: "已启用", HIGH: "高", MEDIUM: "中", LOW: "低", URGENT: "紧急", CRITICAL: "严重",
     MIXER: "密炼设备", MIXING: "炼胶", BUILDING: "成型", BUILDING_MACHINE: "成型机", CURING: "硫化", CURING_PRESS: "硫化机", INSPECTION: "检测设备", QUALITY: "质量",
@@ -62,6 +62,8 @@ const FIELD_TEXT = {
     kittingStatus: "齐套状态", operationType: "操作类型", operationReason: "操作原因", operationTime: "操作时间",
     itemId: "项目ID", itemCode: "项目编码", itemName: "项目名称", standardValue: "标准值", actualValue: "实际值",
     maintenancePlanId: "维护计划ID", planName: "计划名称", cycleDays: "周期天数", nextMaintenanceDate: "下次维护日期",
+    tireId: "轮胎实例ID", serialNo: "轮胎序列号", tireStatus: "轮胎状态", accessToken: "访问令牌", targetUrl: "扫码地址",
+    qualifiedAt: "质检合格时间", inboundAt: "入库时间", printCount: "打印次数",
     recordCount: "记录数", operatorCount: "员工数", settlementStatus: "结算状态", pieceRate: "计件单价",
     createdAt: "创建时间", updatedAt: "更新时间", lastLoginAt: "最近登录时间", dispatchTime: "派发时间", receiveTime: "接收时间",
     completedTime: "完成时间", finishTime: "完成时间", remark: "备注", message: "说明"
@@ -167,6 +169,12 @@ function toChineseError(error) {
     if (message.includes("Metric body is required")) return "请先填写看板指标信息";
     if (message.includes("Metric key and name are required")) return "看板指标编码和名称不能为空";
     if (message.includes("database operation failed")) return "数据库操作失败，请检查数据是否完整";
+    if (message.includes("AI 排产建议未开启")) return "AI 排产建议未开启，请确认 .env 中 AI_PLANNING_ENABLED=true 并重启后端";
+    if (message.includes("未配置百炼 API Key")) return "未配置百炼 API Key，请确认 .env 中 DASHSCOPE_API_KEY 已填写并重启后端";
+    if (message.includes("百炼 API 调用失败")) return message;
+    if (message.includes("AI 排产建议生成失败")) return message;
+    if (message.includes("没有可用于 AI 排产建议的生产任务")) return "当前没有可分析的生产任务，请先创建生产任务";
+    if (message.includes("AI 排产建议一次最多分析 20 个生产任务")) return "一次最多选择 20 个生产任务";
     const exactMessages = {
         "work order not found": "生产工单不存在", "production task not found": "生产任务不存在",
         "order not found": "客户订单不存在", "product not found": "产品不存在", "material not found": "物料不存在",
@@ -353,6 +361,20 @@ function renderStructuredDetail(value) {
         }).join("")}</div>`;
     }
     return `<div class="detail-object">${Object.entries(value).map(([key, itemValue]) => `<div><span>${escapeHtml(fieldText(key))}</span><strong>${formatSmartCell(itemValue, key, fieldText(key))}</strong></div>`).join("")}</div>`;
+}
+
+async function getBlob(path) {
+    const session = typeof getCurrentSession === "function" ? getCurrentSession() : null;
+    const response = await fetch(`${API_BASE}${path}`, {
+        headers: session?.token ? { Authorization: `Bearer ${session.token}` } : {}
+    });
+    if (!response.ok) {
+        const text = await response.text();
+        let message = text;
+        try { message = JSON.parse(text)?.message || text; } catch { }
+        throw new Error(toChineseError(message || `HTTP ${response.status}`));
+    }
+    return response.blob();
 }
 
 function toDisplayText(value, field = "") {

@@ -63,6 +63,16 @@ public class ProductionTaskResource {
         }
     }
 
+    @POST
+    @Path("/{id}/shortage-alerts")
+    public Response publishShortageAlerts(@PathParam("id") long id) {
+        try {
+            return ResourceSupport.action("缺料预警已发布给仓储人员", kittingService.publishShortageAlerts(id));
+        } catch (RuntimeException ex) {
+            return ResourceSupport.handle(ex);
+        }
+    }
+
     @GET
     @Path("/kitting-analyses")
     public Response listAnalyses() {

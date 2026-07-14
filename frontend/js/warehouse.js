@@ -1,8 +1,8 @@
-﻿let warehouseCache = { materials: [], warehouses: [], inventory: [], workOrders: [] };
+let warehouseCache = { materials: [], warehouses: [], inventory: [], workOrders: [], shortageAlerts: [] };
 
 async function refreshWarehouse(options = {}) {
     try {
-        const [materials, warehouses, locations, inventory, robots, requisitions, pickingTasks, deliveryTasks, transactions, workOrders] = await Promise.all([
+        const [materials, warehouses, locations, inventory, robots, requisitions, pickingTasks, deliveryTasks, transactions, workOrders, shortageAlerts] = await Promise.all([
             getJson("/materials"),
             getJson("/warehouses"),
             getJson("/warehouses/locations"),
@@ -12,11 +12,12 @@ async function refreshWarehouse(options = {}) {
             getJson("/picking-tasks"),
             getJson("/robot-delivery-tasks"),
             getJson("/inventory/transactions"),
-            getJson("/work-orders").catch(() => [])
+            getJson("/work-orders").catch(() => []),
+            getJson("/shortage-alerts").catch(() => [])
         ]);
-        warehouseCache = { materials, warehouses, inventory, workOrders };
+        warehouseCache = { materials, warehouses, inventory, workOrders, shortageAlerts };
         renderRequisitionSelectors();
-        renderWarehouseTables({ materials, warehouses, locations, inventory, robots, requisitions, pickingTasks, deliveryTasks, transactions });
+        renderWarehouseTables({ materials, warehouses, locations, inventory, robots, requisitions, pickingTasks, deliveryTasks, transactions, shortageAlerts });
         if (options.notify) showMessage("\u4ed3\u50a8\u7269\u6d41\u6570\u636e\u5df2\u5237\u65b0", "ok");
     } catch (error) {
         showMessage(toChineseError(error), "error");
@@ -143,8 +144,25 @@ function renderWarehouseTables(data) {
         { title: "\u6570\u91cf", key: "qty" },
         { title: "\u6765\u6e90", key: "sourceDocType" },
         { title: "\u64cd\u4f5c", render: row => `<button onclick="showTransactionDetail(${row.transactionId})">\u8be6\u60c5</button>` }
+    ]);    renderTable("warehouseShortageAlertTable", data.shortageAlerts, [
+        { title: "预警编号", key: "alertNo" },
+        { title: "生产任务", key: "taskId" },
+        { title: "缺料物料", key: "materialName" },
+        { title: "需求 / 可用 / 缺口", render: row => `${row.requiredQty ?? 0} / ${row.availableQty ?? 0} / ${row.shortageQty ?? 0}` },
+        { title: "状态", key: "alertStatus" },
+        { title: "操作", render: row => row.alertStatus === "OPEN" && hasPermission("warehouse.inventory.adjust") ? `<button onclick="acceptShortageAlert(${row.alertId})">接收并备料</button>` : (row.alertStatus === "ACCEPTED" ? "已接收，待补充库存" : "-") }
     ]);
     updateWarehouseSectionCounts(data, { rejectedRequisitions });
+}
+
+async function acceptShortageAlert(alertId) {
+    try {
+        await postJson(`/shortage-alerts/${alertId}/accept`);
+        showMessage("缺料预警已接收。请录入实际到货或备料库存，随后通知 PMC 重新执行齐套分析。", "ok");
+        await refreshWarehouse();
+    } catch (error) {
+        showMessage(toChineseError(error), "error");
+    }
 }
 
 function prioritizeRows(rows, predicate, limit) {

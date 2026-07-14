@@ -639,8 +639,7 @@ function roleText(roleCode, fallbackName = "") {
         WAREHOUSE_ADMIN: "仓库管理员",
         WAREHOUSE_KEEPER: "仓储人员",
         EQUIPMENT_ADMIN: "设备管理员",
-        EQUIPMENT_MAINTAINER: "设备维护员",
-        VIEWER: "只读访客"
+        EQUIPMENT_MAINTAINER: "设备维护员"
     }[roleCode] || fallbackName || roleCode || "";
 }
 

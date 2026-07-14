@@ -328,6 +328,8 @@ ALTER TABLE mes_work_report ADD COLUMN IF NOT EXISTS approved_at TIMESTAMP;
 ALTER TABLE mes_quality_inspection ADD COLUMN IF NOT EXISTS assigned_to BIGINT;
 ALTER TABLE mes_quality_inspection ADD COLUMN IF NOT EXISTS reviewed_by BIGINT;
 ALTER TABLE mes_quality_inspection ADD COLUMN IF NOT EXISTS reviewed_at TIMESTAMP;
+ALTER TABLE mes_quality_inspection ADD COLUMN IF NOT EXISTS submitted_result VARCHAR(30);
+ALTER TABLE mes_quality_inspection ADD COLUMN IF NOT EXISTS result_note TEXT;
 ALTER TABLE mes_rework_order ADD COLUMN IF NOT EXISTS approved_by BIGINT;
 ALTER TABLE mes_rework_order ADD COLUMN IF NOT EXISTS approved_at TIMESTAMP;
 ALTER TABLE mes_equipment_repair_report ADD COLUMN IF NOT EXISTS reviewed_by BIGINT;
@@ -373,8 +375,7 @@ VALUES
     ('QUALITY_INSPECTOR', '质检员', 'BUSINESS', 70, 'OWN', 1, '质检执行和结果录入'),
     ('PROCESS_ENGINEER', '工艺工程师', 'BUSINESS', 60, 'DEPT', 1, 'SOP、工艺参数、不良原因'),
     ('EQUIPMENT_ADMIN', '设备管理员', 'BUSINESS', 50, 'DEPT', 1, '设备台账、状态、维修派工'),
-    ('EQUIPMENT_MAINTAINER', '设备维护员', 'BUSINESS', 70, 'OWN', 1, '维修执行和维护记录'),
-    ('VIEWER', '只读访客', 'VIEWER', 100, 'CUSTOM', 1, '演示和审计只读')
+    ('EQUIPMENT_MAINTAINER', '设备维护员', 'BUSINESS', 70, 'OWN', 1, '维修执行和维护记录')
 ON CONFLICT (role_code) DO NOTHING;
 
 INSERT INTO mes_permission (permission_code, permission_name, module_code, resource_type, action_code, risk_level)
@@ -419,7 +420,7 @@ INSERT INTO mes_role_permission (role_id, permission_id)
 SELECT r.role_id, p.permission_id
 FROM mes_role r
 JOIN mes_permission p ON p.permission_code IN ('dashboard.read', 'trace.read')
-WHERE r.role_code IN ('GENERAL_MANAGER', 'VIEWER')
+WHERE r.role_code IN ('GENERAL_MANAGER')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 INSERT INTO mes_role_permission (role_id, permission_id)

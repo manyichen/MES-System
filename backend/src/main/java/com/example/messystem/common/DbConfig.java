@@ -54,6 +54,10 @@ public final class DbConfig {
         return PASSWORD;
     }
 
+    public static String getValue(String name, String fallback) {
+        return value(name, fallback);
+    }
+
     private static String value(String name, String fallback) {
         String value = System.getProperty(name);
         if (value == null || value.isBlank()) {

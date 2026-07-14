@@ -57,9 +57,13 @@ public class QualityInspectionService {
         return true;
     }
 
-    public boolean submitInspection(long inspectionId, long inspectorId) throws SQLException {
-        if (!inspectionDao.submit(inspectionId, inspectorId)) {
-            throw new BadRequestException("只能提交分配给本人的未完成质检单，并且至少需要一条检验项目");
+    public boolean submitInspection(long inspectionId, long inspectorId, String result, String note) throws SQLException {
+        String submittedResult = normalizeSubmittedResult(result);
+        if (!"PASS".equals(submittedResult) && (note == null || note.isBlank())) {
+            throw new BadRequestException("不合格或需返工时必须说明异常项目和原因");
+        }
+        if (!inspectionDao.submit(inspectionId, inspectorId, submittedResult, note)) {
+            throw new BadRequestException("只能提交分配给本人的未完成质检单");
         }
         return true;
     }
@@ -100,11 +104,8 @@ public class QualityInspectionService {
         MesQualityInspection inspection = inspectionDao.findById(inspectionId)
                 .orElseThrow(() -> new BadRequestException("质检单不存在"));
         List<MesQualityInspectionItem> items = itemDao.findByInspectionId(inspectionId);
-        if (items.isEmpty()) {
-            throw new BadRequestException("质检单至少需要一条检验项目才能判定");
-        }
 
-        String finalResult = resolveJudgementResult(result, items);
+        String finalResult = resolveJudgementResult(result, inspection.submittedResult(), items);
         String finalStatus = "PASS".equals(finalResult) ? "APPROVED"
                 : "REWORK".equals(finalResult) ? "REWORK_REQUIRED" : "REJECTED";
         if (!inspectionDao.updateStatus(inspectionId, finalStatus, finalResult, reviewedBy)) {
@@ -146,7 +147,12 @@ public class QualityInspectionService {
         return true;
     }
 
-    private String resolveJudgementResult(String requestedResult, List<MesQualityInspectionItem> items) {
+    private String resolveJudgementResult(String requestedResult, String submittedResult, List<MesQualityInspectionItem> items) {
+        if (items.isEmpty()) {
+            return normalizeSubmittedResult(requestedResult == null || requestedResult.isBlank()
+                    ? submittedResult
+                    : requestedResult);
+        }
         boolean hasRework = items.stream().anyMatch(item -> "REWORK".equalsIgnoreCase(item.itemResult()));
         boolean hasFail = items.stream().anyMatch(item -> isFail(item.itemResult()));
         if (hasRework || (hasFail && "REWORK".equalsIgnoreCase(requestedResult))) {
@@ -156,6 +162,16 @@ public class QualityInspectionService {
             return "FAIL";
         }
         return "PASS";
+    }
+
+    private String normalizeSubmittedResult(String result) {
+        String value = result == null ? "" : result.trim().toUpperCase();
+        return switch (value) {
+            case "PASS", "OK", "合格" -> "PASS";
+            case "REWORK", "返工", "需返工" -> "REWORK";
+            case "FAIL", "FAILED", "NG", "不合格" -> "FAIL";
+            default -> throw new BadRequestException("质检结果只能是合格、不合格或需返工");
+        };
     }
 
     private boolean isFail(String result) {

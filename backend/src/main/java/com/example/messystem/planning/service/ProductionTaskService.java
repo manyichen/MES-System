@@ -30,7 +30,6 @@ public class ProductionTaskService {
         task.taskNo = task.taskNo == null || task.taskNo.isBlank() ? IdGenerator.nextCode("TASK") : task.taskNo;
         task.productId = task.productId == null ? order.productId : task.productId;
         task.planQty = task.planQty == null || task.planQty <= 0 ? order.orderQty : task.planQty;
-        requireId(task.targetLineId, "targetLineId is required");
         if (task.planQty == null || task.planQty <= 0) throw new BadRequestException("planQty must be greater than 0");
         task.plannedStartTime = task.plannedStartTime == null ? LocalDateTime.now() : task.plannedStartTime;
         task.plannedEndTime = task.plannedEndTime == null ? task.plannedStartTime.plusDays(3) : task.plannedEndTime;
@@ -48,15 +47,7 @@ public class ProductionTaskService {
     }
 
     public MesProductionTask releaseTask(long taskId) {
-        MesProductionTask task = getTask(taskId);
-        if (!"READY".equals(task.kittingStatus)) {
-            throw new BadRequestException("kitting analysis must be READY before release");
-        }
-        if (!"CREATED".equals(task.taskStatus) && !"READY".equals(task.taskStatus)) {
-            throw new BadRequestException("only CREATED or READY tasks can be released");
-        }
-        return database(() -> dao.releaseTask(taskId))
-                .orElseThrow(() -> new NotFoundException("production task not found"));
+        throw new BadRequestException("请在制定生产工单时完成产线、工序的人工确认后发布生产任务");
     }
 
     private static void requireId(Long id, String message) {

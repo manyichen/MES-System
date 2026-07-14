@@ -42,7 +42,7 @@
     <nav>
         <span class="nav-group">首页</span><button data-tab="dashboard" class="active"><i>⌂</i><span>工作台</span></button><button data-tab="profile"><i>◎</i><span>个人主页</span></button>
         <span class="nav-group">生产业务</span><button data-tab="planning" data-permission="planning.read|planning.work_order.read"><i>▤</i><span>计划与工单</span></button><button data-tab="warehouse" data-permission="warehouse.read|warehouse.requisition.create"><i>▦</i><span>仓储物流</span></button><button data-tab="production" data-permission="production.read"><i>◉</i><span>生产报工</span></button><button data-tab="quality" data-permission="quality.read"><i>◇</i><span>质量管理</span></button><button data-tab="equipment" data-permission="equipment.read|equipment.fault.report"><i>⚙</i><span>设备维护</span></button>
-        <span class="nav-group">综合管理</span><button data-tab="trace" data-permission="trace.read"><i>⌁</i><span>产品追溯</span></button><button data-tab="feedback" data-permission="feedback.read|feedback.create"><i>✦</i><span>管理反馈</span></button>
+        <span class="nav-group">综合管理</span><button data-tab="process" data-permission="process.read"><i>⌘</i><span>工艺管理</span></button><button data-tab="trace" data-permission="trace.read"><i>⌁</i><span>产品追溯</span></button><button data-tab="feedback" data-permission="feedback.read|feedback.create"><i>✦</i><span>管理反馈</span></button>
         <span class="nav-group">系统管理</span><button data-tab="systemOps" data-permission="system.health.read"><i>⚙</i><span>系统运维</span></button><button data-tab="audit" data-permission="audit.read"><i>◎</i><span>审计日志</span></button><button data-tab="system" data-permission="user.read|role.read"><i>♙</i><span>用户与权限</span></button>
     </nav>
     <div class="sidebar-account"><div id="current-user" class="current-user"></div><button id="logout-button" type="button" class="secondary">退出</button></div>
@@ -127,27 +127,40 @@
         </header>
         <div class="grid">
             <form id="orderForm" class="tool" data-permission="planning.order.create">
-                <h3>创建客户订单</h3>
+                <h3>接收并创建生产订单</h3>
+                <p class="form-help">录入业务员通过外部接口同步的客户需求，作为 PMC 排产的唯一订单来源。</p>
                 <label>客户名称 <input name="customerName" value="双星演示客户" required></label>
-                <label>产品ID <input name="productId" type="number" value="1" min="1" required></label>
+                <label>产品 <input name="productId" type="number" value="1" min="1" required></label>
                 <label>订单数量 <input name="orderQty" type="number" value="100" min="1" required></label>
-                <button type="submit">创建订单</button>
+                <label>交付日期 <input name="deliveryDate" type="date" required></label>
+                <label>优先级 <select name="priorityLevel"><option value="1">一级（最高）</option><option value="2">二级</option><option value="3" selected>三级（常规）</option><option value="4">四级</option><option value="5">五级</option></select></label>
+                <button type="submit">确认创建生产订单</button>
             </form>
             <form id="taskForm" class="tool" data-permission="planning.task.create">
-                <h3>创建生产任务</h3>
-                <label>订单ID <input name="orderId" type="number" value="1" min="1" required></label>
+                <h3>制定生产任务</h3>
+                <p class="form-help">从生产订单拆分任务并明确计划数量与完成期限；产线与工序在下一步制定工单时由 PMC 确认。</p>
+                <label>生产订单 <input name="orderId" type="number" value="1" min="1" required></label>
                 <label>计划数量 <input name="planQty" type="number" value="100" min="1"></label>
-                <button type="submit">创建任务</button>
+                <label>计划开始 <input name="plannedStartTime" type="datetime-local" required></label>
+                <label>计划完成期限 <input name="plannedEndTime" type="datetime-local" required></label>
+                <button type="submit">确认制定生产任务</button>
             </form>
             <form id="workOrderForm" class="tool" data-permission="planning.work_order.create">
-                <h3>创建生产工单</h3>
-                <label>任务ID <input name="taskId" type="number" value="1" min="1" required></label>
-                <label>产线ID <input name="lineId" type="number" value="1" min="1"></label>
-                <label>工序ID <input name="processId" type="number" value="1" min="1"></label>
-                <button type="submit">创建工单</button>
+                <h3>制定生产工单</h3>
+                <p class="form-help">仅齐套通过的任务可进入此步骤。先获取 AI 总体建议与排产方式，再由 PMC 人工确认产线和工序。</p>
+                <div id="workOrderWorkflow" class="planning-workflow" aria-label="生产工单制定流程"></div>
+                <label>生产任务 <input name="taskId" type="number" value="1" min="1" required></label>
+                <div id="workOrderKittingHint" class="work-order-readiness">请选择已齐套的生产任务</div>
+                <section id="lineCapacityBoard" class="line-capacity-board" aria-live="polite"></section>
+                <section id="workOrderAiPanel" class="work-order-ai" aria-live="polite"></section>
+                <label>确认产线 <input name="lineId" type="number" min="1" required></label>
+                <label>确认工艺路线 <input name="processId" type="number" min="1" required></label>
+                <p class="form-help">点击确认后，系统将以当前选定的产线和完整工艺路线生成工单并发布生产任务。</p>
+                <button type="submit">确认排产并生成生产工单</button>
             </form>
             <div class="tool"><h3>客户订单</h3><div id="orderTable"></div></div>
             <div class="tool"><h3>生产任务</h3><div id="taskTable"></div></div>
+            <div class="tool wide"><h3>缺料协同预警</h3><div id="planningShortageAlertTable"></div></div>
             <div class="tool"><h3>生产工单</h3><div id="workOrderTable"></div></div>
         </div>
     </section>
@@ -215,6 +228,11 @@
                 <h3>库存流水</h3>
                 <div id="transactionTable"></div>
             </div>
+            <div class="tool wide">
+                <h3>PMC 缺料预警</h3>
+                <p class="form-help">接收预警后完成实际备料或库存补充；PMC 会重新执行齐套分析确认结果。</p>
+                <div id="warehouseShortageAlertTable"></div>
+            </div>
             <div id="warehouseDetail" class="tool wide detail-panel">
                 <h3>仓储详情</h3>
                 <p>请选择一条记录查看详情。</p>
@@ -269,7 +287,7 @@
                 <button type="submit">创建</button>
                 <p id="inspection-form-status" class="form-status"></p>
             </form>
-            <form id="inspection-item-form" class="tool" data-permission="quality.inspect">
+            <form id="inspection-item-form" class="tool permission-hidden" hidden>
                 <h3>添加质检项目</h3>
                 <label>质检单ID <input name="inspectionId" type="number" value="1" min="1" required></label>
                 <label>项目编码 <input name="itemCode" value="ITEM-001" required></label>
@@ -297,7 +315,6 @@
                 <p id="rework-form-status" class="form-status"></p>
             </form>
             <div class="tool wide"><h3>质检单</h3><div id="quality-table"></div></div>
-            <div class="tool wide"><h3 id="quality-item-title">质检项目</h3><div id="quality-item-table"><p>点击质检单右侧“项目”查看明细</p></div></div>
             <div class="tool wide"><h3>返工单</h3><div id="rework-table"></div></div>
         </div>
     </section>
@@ -371,6 +388,22 @@
                 </label>
                 <button type="submit">创建</button>
             </form>
+            <form id="maintenance-result-form" class="tool" data-permission="equipment.maintenance.execute">
+                <h3>上传维修结果</h3>
+                <label>维修工单ID <input name="maintenanceOrderId" type="number" value="1" min="1" required></label>
+                <label>故障原因 <textarea name="faultCause" rows="3" required placeholder="例：硫化机液压管路接头松动，导致压力波动"></textarea></label>
+                <label>处理措施 <textarea name="repairAction" rows="3" required placeholder="例：更换密封圈，重新紧固接头并完成压力测试"></textarea></label>
+                <label>更换备件 <input name="replacedParts" placeholder="例：密封圈 2 个；液压油 1 L"></label>
+                <label>维修结论
+                    <select name="repairConclusion" required>
+                        <option value="故障已排除，设备可恢复运行">故障已排除，设备可恢复运行</option>
+                        <option value="需设备管理员复核后恢复运行">需设备管理员复核后恢复运行</option>
+                        <option value="需追加备件后继续维修">需追加备件后继续维修</option>
+                    </select>
+                </label>
+                <button type="submit">上传结果并提交验收</button>
+                <p id="maintenance-result-status" class="form-status"></p>
+            </form>
             <div class="tool wide"><h3>设备列表</h3><div id="equipment-table"></div></div>
             <div class="tool wide"><h3>报修单</h3><div id="repair-table"></div></div>
             <div class="tool wide"><h3>维修工单</h3><div id="maintenance-table"></div></div>
@@ -384,6 +417,17 @@
             <button id="refresh-trace">刷新</button>
         </header>
         <div class="grid">
+            <form id="tire-label-form" class="tool" data-permission="trace.tire.generate">
+                <h3>生成单条轮胎二维码</h3>
+                <p class="form-help">质检合格入库后按实际数量生成，每条轮胎对应唯一二维码。</p>
+                <label>生产工单ID <input name="workOrderId" type="number" min="1" required></label>
+                <label>已通过质检单ID <input name="inspectionId" type="number" min="1" required></label>
+                <label>入库仓库ID <input name="warehouseId" type="number" min="1" required></label>
+                <label>入库库位ID（可选） <input name="locationId" type="number" min="1"></label>
+                <label>轮胎数量 <input name="quantity" type="number" value="1" min="1" max="1000" required></label>
+                <button type="submit">批量生成轮胎二维码</button>
+                <p id="tire-label-form-status" class="form-status"></p>
+            </form>
             <form id="trace-form" class="tool" data-permission="trace.create">
                 <h3>创建追溯记录</h3>
                 <label>追溯码 <input name="traceCode" value="TRACE-DEMO-001" required></label>
@@ -402,6 +446,10 @@
                 </label>
                 <button type="submit">创建</button>
             </form>
+            <div class="tool wide"><h3>单条轮胎二维码标签</h3><div id="tire-label-table"></div></div>
+            <div id="tire-label-preview" class="tool wide tire-label-preview">
+                <h3>二维码与标签预览</h3><p>点击轮胎记录右侧“预览”查看二维码和打印标签。</p>
+            </div>
             <div class="tool wide"><h3>追溯记录</h3><div id="trace-table"></div></div>
             <form id="trace-search-form" class="tool">
                 <h3>追溯查询</h3>
@@ -409,6 +457,36 @@
                 <button type="submit">查询</button>
             </form>
             <div class="tool wide"><h3>查询结果</h3><div id="trace-detail"><p>请输入追溯码或ID后点击查询</p></div></div>
+        </div>
+    </section>
+
+    <section id="process" class="panel">
+        <header>
+            <h2>工艺管理</h2>
+            <button id="refresh-process">刷新</button>
+        </header>
+        <div class="grid">
+            <form id="process-route-form" class="tool" data-permission="process.manage">
+                <h3>维护轮胎制造方法</h3>
+                <input name="processId" type="hidden">
+                <label>产品ID <input name="productId" type="number" value="1" min="1"></label>
+                <label>工序编码 <input name="processCode" value="PROC-MIXING"></label>
+                <label>制造方法/工序名称 <input name="processName" value="密炼混炼" required></label>
+                <label>工序顺序 <input name="processSeq" type="number" value="1" min="1" required></label>
+                <label>设备/工作中心 <input name="workCenter" value="密炼机 GK400"></label>
+                <label>状态
+                    <select name="enabled">
+                        <option value="1">启用</option>
+                        <option value="0">停用</option>
+                    </select>
+                </label>
+                <button type="submit">保存制造方法</button>
+                <button type="button" id="process-route-reset" class="secondary">新建</button>
+                <p id="process-route-status" class="form-status"></p>
+            </form>
+            <div class="tool wide"><h3>原料主数据</h3><div id="process-material-table"></div></div>
+            <div class="tool wide"><h3>轮胎产品</h3><div id="process-product-table"></div></div>
+            <div class="tool wide"><h3>制造方法/工艺路线</h3><div id="process-route-table"></div></div>
         </div>
     </section>
 
@@ -510,6 +588,7 @@
 <script src="js/production.js"></script>
 <script src="js/dashboard.js"></script>
 <script src="js/process-feedback.js"></script>
+<script src="js/process.js"></script>
 <script src="js/quality.js"></script>
 <script src="js/equipment.js"></script>
 <script src="js/access.js"></script>

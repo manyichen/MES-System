@@ -7,8 +7,10 @@ import com.example.messystem.master.entity.MesProductBom;
 import com.example.messystem.master.entity.MesProductionLine;
 import com.example.messystem.master.service.MasterDataService;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
@@ -68,6 +70,27 @@ public class MasterDataResource {
     public Response createProcessRoute(MesProcessRoute route) {
         try {
             return ResourceSupport.created("process route created", service.createProcessRoute(route));
+        } catch (RuntimeException ex) {
+            return ResourceSupport.handle(ex);
+        }
+    }
+
+    @PUT
+    @Path("/process-routes/{id}")
+    public Response updateProcessRoute(@PathParam("id") long id, MesProcessRoute route) {
+        try {
+            return ResourceSupport.action("process route updated", service.updateProcessRoute(id, route));
+        } catch (RuntimeException ex) {
+            return ResourceSupport.handle(ex);
+        }
+    }
+
+    @DELETE
+    @Path("/process-routes/{id}")
+    public Response deleteProcessRoute(@PathParam("id") long id) {
+        try {
+            service.deleteProcessRoute(id);
+            return ResourceSupport.action("process route deleted", null);
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }

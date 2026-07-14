@@ -9,6 +9,7 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import com.example.messystem.common.DbConfig;
 import org.apache.catalina.Context;
 import org.apache.catalina.Wrapper;
 import org.apache.catalina.startup.Tomcat;
@@ -29,6 +30,11 @@ public class MesBackendApplication {
         tomcat.setPort(port);
         tomcat.getConnector();
 
+        String localUrl = "http://" + displayHost(host) + ":" + port;
+        String configuredPublicUrl = DbConfig.getValue("MES_PUBLIC_URL", "");
+        System.setProperty("MES_RUNTIME_PUBLIC_URL",
+                configuredPublicUrl == null || configuredPublicUrl.isBlank() ? localUrl : configuredPublicUrl);
+
         Context context = tomcat.addContext("", webRoot.toString());
         context.addMimeMapping("html", "text/html;charset=UTF-8");
         context.addMimeMapping("css", "text/css;charset=UTF-8");
@@ -44,18 +50,17 @@ public class MesBackendApplication {
 
         tomcat.start();
 
-        String localUrl = "http://" + displayHost(host) + ":" + port + "/";
-        System.out.println("MES backend started: " + localUrl);
+        System.out.println("MES backend started: " + localUrl + "/");
         System.out.println("Web root: " + webRoot);
         System.out.println("Listening on " + host + ":" + port);
-        String publicUrl = configValue("MES_PUBLIC_URL");
+        String publicUrl = DbConfig.getValue("MES_PUBLIC_URL", "");
         if (publicUrl != null && !publicUrl.isBlank()) {
             System.out.println("Public URL: " + publicUrl);
         }
         System.out.println("Press Ctrl+C to stop.");
 
         if (isLoopback(host) && !"false".equalsIgnoreCase(configValue("MES_OPEN_BROWSER"))) {
-            openBrowser(localUrl);
+            openBrowser(localUrl + "/");
         }
 
         tomcat.getServer().await();
