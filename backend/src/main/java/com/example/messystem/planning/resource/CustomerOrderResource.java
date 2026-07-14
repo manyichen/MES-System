@@ -1,14 +1,18 @@
 package com.example.messystem.planning.resource;
 
+import com.example.messystem.auth.AuthFilter;
 import com.example.messystem.common.ResourceSupport;
 import com.example.messystem.planning.entity.MesCustomerOrder;
 import com.example.messystem.planning.service.CustomerOrderService;
+import com.example.messystem.security.DataScopeService;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
@@ -17,10 +21,12 @@ import jakarta.ws.rs.core.Response;
 @Consumes(MediaType.APPLICATION_JSON)
 public class CustomerOrderResource {
     private final CustomerOrderService service = new CustomerOrderService();
+    private final DataScopeService dataScopeService = new DataScopeService();
 
     @GET
-    public Response list() {
-        return ResourceSupport.ok(service.listOrders());
+    public Response list(@Context ContainerRequestContext context) {
+        var scope = dataScopeService.snapshot(AuthFilter.currentUser(context));
+        return ResourceSupport.ok(service.listOrders().stream().filter(scope::canView).toList());
     }
 
     @POST
@@ -34,8 +40,10 @@ public class CustomerOrderResource {
 
     @GET
     @Path("/{id}")
-    public Response get(@PathParam("id") long id) {
+    public Response get(@PathParam("id") long id, @Context ContainerRequestContext context) {
         try {
+            var scope = dataScopeService.snapshot(AuthFilter.currentUser(context));
+            scope.requireOrder(id);
             return ResourceSupport.ok(service.getOrder(id));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);

@@ -65,6 +65,10 @@ public class ProductionService {
         return database(() -> dao.approveWorkReport(reportId));
     }
 
+    public MesWorkReport rejectWorkReport(long reportId) {
+        return database(() -> dao.rejectWorkReport(reportId));
+    }
+
     public List<MesPieceworkWage> listWages() {
         return database(dao::listWages);
     }

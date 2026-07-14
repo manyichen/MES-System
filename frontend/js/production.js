@@ -4,9 +4,10 @@ async function refreshProduction(options = {}) {
     try {
         const workOrders = await getJson("/work-orders");
         const [reports, wages] = await Promise.all([getJson("/work-reports"), getJson("/piecework-wages")]);
+        const sortedReports = sortReportsForReview(reports);
         refreshReportableWorkOrdersFrom(workOrders);
-        renderProductionFocus(workOrders, reports, wages);
-        renderTable("reportTable", reports, [
+        renderProductionFocus(workOrders, sortedReports, wages);
+        renderTable("reportTable", sortedReports, [
             { title: "ID", key: "reportId" },
             { title: "\u7f16\u53f7", key: "reportNo" },
             { title: "\u5de5\u5355", key: "workOrderId" },
@@ -36,6 +37,16 @@ async function refreshProduction(options = {}) {
     } catch (error) {
         showMessage(toChineseError(error), "error");
     }
+}
+
+function sortReportsForReview(reports) {
+    return [...reports].sort((left, right) => {
+        const leftRank = left.reportStatus === "SUBMITTED" ? 0 : 1;
+        const rightRank = right.reportStatus === "SUBMITTED" ? 0 : 1;
+        const rankDiff = leftRank - rightRank;
+        if (rankDiff !== 0) return rankDiff;
+        return Number(left.reportId || 0) - Number(right.reportId || 0);
+    });
 }
 
 async function refreshReportableWorkOrders() {
@@ -100,20 +111,61 @@ function syncReportBatchNo() {
 }
 
 function renderReportActions(row) {
-    const actions = [`<button onclick="showReportDetail(${row.reportId})">\u8be6\u60c5</button>`];
-    if (row.reportStatus === "SUBMITTED" && hasPermission("production.report.review")) {
-        actions.push(`<button onclick="approveReport(${row.reportId})">\u5ba1\u6838</button>`);
+    if (isPendingReport(row) && canReviewReport()) {
+        return `<button onclick="openReportReview(${row.reportId})">\u5ba1\u6838</button>`;
     }
-    return actions.join("");
+    return `<button onclick="showReportDetail(${row.reportId})">\u8be6\u60c5</button>`;
+}
+
+function isPendingReport(row) {
+    const status = String(row.reportStatus || "").trim();
+    return status === "SUBMITTED" || status === "\u5df2\u63d0\u4ea4" || status === "\u5f85\u5ba1\u6838"
+        || statusText(status) === "\u5df2\u63d0\u4ea4" || statusText(status) === "\u5f85\u5ba1\u6838";
+}
+
+function canReviewReport() {
+    return hasPermission("production.report.review") || hasRole("WORKSHOP_MANAGER");
 }
 
 async function showReportDetail(id) {
     try {
-        renderDetail("productionDetail", await getJson(`/work-reports/${id}`), "\u62a5\u5de5\u5355\u8be6\u60c5");
+        showProductionDetailDialog(await getJson(`/work-reports/${id}`), "\u62a5\u5de5\u5355\u8be6\u60c5");
         showMessage("\u62a5\u5de5\u8be6\u60c5\u5df2\u52a0\u8f7d", "ok");
     } catch (error) {
         showMessage(toChineseError(error), "error");
     }
+}
+
+function showProductionDetailDialog(data, title) {
+    const rows = Object.entries(data ?? {}).map(([key, value]) => {
+        const display = Array.isArray(value) || (value && typeof value === "object")
+            ? renderStructuredDetail(value)
+            : formatSmartCell(value, key, fieldText(key));
+        return `<div class="detail-row"><span>${escapeHtml(fieldText(key))}</span><strong>${display}</strong></div>`;
+    }).join("");
+    const mask = document.createElement("div");
+    mask.className = "modal-mask";
+    mask.innerHTML = `
+        <div class="modal-card production-detail-modal">
+            <div class="production-detail-head">
+                <div>
+                    <span>\u8bb0\u5f55\u8be6\u60c5</span>
+                    <h3>${escapeHtml(title)}</h3>
+                </div>
+                <button type="button" class="detail-close" aria-label="\u5173\u95ed">\u00d7</button>
+            </div>
+            <div class="production-detail-body">${rows || "<p>\u6682\u65e0\u8be6\u60c5</p>"}</div>
+            <div class="modal-actions">
+                <button type="button" id="productionDetailClose">\u5173\u95ed</button>
+            </div>
+        </div>`;
+    document.body.appendChild(mask);
+    const close = () => mask.remove();
+    mask.querySelector(".detail-close")?.addEventListener("click", close);
+    mask.querySelector("#productionDetailClose")?.addEventListener("click", close);
+    mask.addEventListener("click", event => {
+        if (event.target === mask) close();
+    });
 }
 
 async function showWageDetail(id) {
@@ -125,10 +177,80 @@ async function showWageDetail(id) {
     }
 }
 
+async function openReportReview(id) {
+    try {
+        const report = await getJson(`/work-reports/${id}`);
+        showReportReviewDialog(report);
+    } catch (error) {
+        showMessage(toChineseError(error), "error");
+    }
+}
+
+function showReportReviewDialog(report) {
+    const mask = document.createElement("div");
+    mask.className = "modal-mask";
+    mask.innerHTML = `
+        <div class="modal-card report-review-modal">
+            <h3>\u62a5\u5de5\u5ba1\u6838</h3>
+            <div class="review-summary">
+                ${reportReviewField("\u62a5\u5de5\u5355", report.reportNo || report.reportId)}
+                ${reportReviewField("\u5de5\u5355", report.workOrderId)}
+                ${reportReviewField("\u64cd\u4f5c\u5de5", report.operatorId)}
+                ${reportReviewField("\u6279\u6b21", report.batchNo || "-")}
+                ${reportReviewField("\u62a5\u5de5\u6570\u91cf", report.reportQty)}
+                ${reportReviewField("\u5408\u683c\u6570", report.qualifiedQty)}
+                ${reportReviewField("\u4e0d\u5408\u683c\u6570", report.defectQty)}
+                ${reportReviewField("\u5de5\u65f6", report.workHours)}
+                ${reportReviewField("\u72b6\u6001", statusText(report.reportStatus || ""))}
+                ${reportReviewField("\u62a5\u5de5\u65f6\u95f4", formatProductionDateTime(report.reportTime))}
+            </div>
+            <label>\u9a73\u56de\u7406\u7531<textarea id="reportRejectReason" rows="3" placeholder="\u9a73\u56de\u65f6\u5fc5\u987b\u586b\u5199\u539f\u56e0\uff0c\u4fbf\u4e8e\u64cd\u4f5c\u5de5\u4fee\u6b63"></textarea></label>
+            <div class="modal-actions">
+                <button type="button" id="reportReviewCancel">\u53d6\u6d88</button>
+                <button type="button" id="reportReviewReject">\u9a73\u56de</button>
+                <button type="button" id="reportReviewApprove">\u901a\u8fc7</button>
+            </div>
+        </div>`;
+    document.body.appendChild(mask);
+    mask.querySelector("#reportReviewCancel").addEventListener("click", () => mask.remove());
+    mask.querySelector("#reportReviewApprove").addEventListener("click", async () => {
+        await approveReport(report.reportId);
+        mask.remove();
+    });
+    mask.querySelector("#reportReviewReject").addEventListener("click", async () => {
+        const reason = mask.querySelector("#reportRejectReason").value.trim();
+        if (!reason) {
+            showMessage("\u8bf7\u586b\u5199\u9a73\u56de\u7406\u7531", "error");
+            return;
+        }
+        await rejectReport(report.reportId, reason);
+        mask.remove();
+    });
+}
+
+function reportReviewField(label, value) {
+    return `<div><span>${escapeHtml(label)}</span><strong>${escapeHtml(value ?? "-")}</strong></div>`;
+}
+
+function formatProductionDateTime(value) {
+    if (!value) return "-";
+    return String(value).replace("T", " ").slice(0, 19);
+}
+
 async function approveReport(id) {
     try {
         await postJson(`/work-reports/${id}/approve`);
         showMessage("\u62a5\u5de5\u5df2\u5ba1\u6838\uff0c\u8ba1\u4ef6\u5de5\u8d44\u5df2\u751f\u6210", "ok");
+        await refreshProduction();
+    } catch (error) {
+        showMessage(toChineseError(error), "error");
+    }
+}
+
+async function rejectReport(id, reason) {
+    try {
+        await postJson(`/work-reports/${id}/reject`, { reason });
+        showMessage("\u62a5\u5de5\u5355\u5df2\u9a73\u56de", "ok");
         await refreshProduction();
     } catch (error) {
         showMessage(toChineseError(error), "error");

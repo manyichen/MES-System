@@ -11,7 +11,7 @@ const MODULE_PRESENTATION = {
     feedback: { icon: "✦", eyebrow: "经营管理", title: "管理反馈", description: "记录并跟踪生产经营过程中的管理意见。" },
     systemOps: { icon: "⚙", eyebrow: "系统运行", title: "系统运维", description: "巡检会话、锁定账号、系统健康和数据同步状态。" },
     audit: { icon: "◎", eyebrow: "安全审计", title: "审计日志", description: "查看登录、授权和关键操作留下的审计记录。" },
-    system: { icon: "♙", eyebrow: "系统管理", title: "用户与权限", description: "管理用户角色、数据范围和权限变更申请。" }
+    system: { icon: "♙", eyebrow: "系统管理", title: "用户与权限", description: "管理用户角色、数据范围和角色权限清单。" }
 };
 
 function bindNavigation() {
@@ -44,13 +44,14 @@ function setupModuleWorkspaces() {
 
         const forms = [...grid.querySelectorAll(":scope > form.tool")];
         const utilityForms = forms.filter(form => /(?:search|filter)/i.test(form.id));
-        const actionForms = forms.filter(form => !utilityForms.includes(form));
+        const actionForms = panelId === "system" ? [] : forms.filter(form => !utilityForms.includes(form));
+        const visibleActionForms = actionForms.filter(form => !form.classList.contains("permission-hidden"));
         const detailPanels = [...grid.querySelectorAll(":scope > .detail-panel")];
-        const views = [...grid.children].filter(item => !actionForms.includes(item) && !detailPanels.includes(item));
+        const views = [...grid.children].filter(item => !actionForms.includes(item) && !detailPanels.includes(item) && !item.classList.contains("permission-hidden"));
 
         const banner = document.createElement("section");
         banner.className = "module-overview";
-        banner.innerHTML = `<div class="module-overview-icon">${config.icon}</div><div class="module-overview-copy"><span>${config.eyebrow}</span><h3>${config.title}</h3><p>${config.description}</p></div><div class="module-overview-stats"><div><strong data-module-records>0</strong><span>当前记录</span></div><div><strong>${views.length}</strong><span>数据视图</span></div><div><strong>${actionForms.filter(form => !form.classList.contains("permission-hidden")).length}</strong><span>可用操作</span></div></div>`;
+        banner.innerHTML = `<div class="module-overview-icon">${config.icon}</div><div class="module-overview-copy"><span>${config.eyebrow}</span><h3>${config.title}</h3><p>${config.description}</p></div><div class="module-overview-stats"><div><strong data-module-records>0</strong><span>当前记录</span></div><div><strong>${views.length}</strong><span>数据视图</span></div><div><strong>${visibleActionForms.length}</strong><span>可用操作</span></div></div>`;
         header.after(banner);
 
         const tabs = document.createElement("nav");
@@ -69,7 +70,7 @@ function setupModuleWorkspaces() {
         });
         banner.after(tabs);
 
-        if (actionForms.length) {
+        if (visibleActionForms.length) {
             const actions = header.querySelector(".actions") || header.appendChild(Object.assign(document.createElement("div"), { className: "actions" }));
             const trigger = document.createElement("button");
             trigger.type = "button";
@@ -80,7 +81,7 @@ function setupModuleWorkspaces() {
             drawer.className = "module-drawer";
             drawer.innerHTML = `<div class="module-drawer-head"><div><span>${config.eyebrow}</span><h3>${config.title} · 业务操作</h3></div><button type="button" class="drawer-close" aria-label="关闭">×</button></div><div class="module-action-tabs"></div><div class="module-drawer-body"></div>`;
             document.body.appendChild(drawer);
-            actionForms.forEach((form, index) => {
+            visibleActionForms.forEach((form, index) => {
                 const title = form.querySelector("h3")?.textContent?.trim() || `操作 ${index + 1}`;
                 form.dataset.actionView = String(index);
                 form.classList.toggle("action-view-active", index === 0);
@@ -171,6 +172,7 @@ function initializeApp() {
         return;
     }
     appInitialized = true;
+    if (typeof prepareWarehouseForSession === "function") prepareWarehouseForSession();
     setupModuleWorkspaces();
     bindNavigation();
     if (typeof bindDashboardEvents === "function") bindDashboardEvents();

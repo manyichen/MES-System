@@ -16,7 +16,22 @@
     </div>
     <form id="login-form" class="login-card">
         <span class="eyebrow">用户登录</span><h1>双星轮胎 MES</h1><p class="login-hint">请使用系统账号登录</p>
-        <label><span>用户名</span><input name="username" autocomplete="username" value="admin" placeholder="请输入账号" required></label>
+        <label><span>账号</span>
+            <select name="username" autocomplete="username" required>
+                <option value="admin" selected>系统管理员 admin</option>
+                <option value="mes_hr">人事经理 mes_hr</option>
+                <option value="mes_general">总经理 mes_general</option>
+                <option value="mes_pmc">PMC计划员 mes_pmc</option>
+                <option value="mes_workshop">车间管理员 mes_workshop</option>
+                <option value="mes_operator">生产操作工 mes_operator</option>
+                <option value="mes_warehouse">仓库管理员 mes_warehouse</option>
+                <option value="mes_quality_mgr">质量主管 mes_quality_mgr</option>
+                <option value="mes_inspector">质检员 mes_inspector</option>
+                <option value="mes_process">工艺工程师 mes_process</option>
+                <option value="mes_equipment_mgr">设备管理员 mes_equipment_mgr</option>
+                <option value="mes_maintainer">设备维护员 mes_maintainer</option>
+            </select>
+        </label>
         <label><span>密码</span><input name="password" type="password" autocomplete="current-password" placeholder="请输入密码" required></label>
         <button type="submit">登录 <span>→</span></button>
         <p id="login-error"></p>
@@ -112,29 +127,41 @@
         </header>
         <div class="grid">
             <form id="orderForm" class="tool" data-permission="planning.order.create">
-                <h3>创建客户订单</h3>
+                <h3>接收并创建生产订单</h3>
+                <p class="form-help">录入业务员通过外部接口同步的客户需求，作为 PMC 排产的唯一订单来源。</p>
                 <label>客户名称 <input name="customerName" value="双星演示客户" required></label>
-                <label>产品ID <input name="productId" type="number" value="1" min="1" required></label>
+                <label>产品 <input name="productId" type="number" value="1" min="1" required></label>
                 <label>订单数量 <input name="orderQty" type="number" value="100" min="1" required></label>
-                <button type="submit">创建订单</button>
+                <label>交付日期 <input name="deliveryDate" type="date" required></label>
+                <label>优先级 <select name="priorityLevel"><option value="1">一级（最高）</option><option value="2">二级</option><option value="3" selected>三级（常规）</option><option value="4">四级</option><option value="5">五级</option></select></label>
+                <button type="submit">确认创建生产订单</button>
             </form>
             <form id="taskForm" class="tool" data-permission="planning.task.create">
-                <h3>创建生产任务</h3>
-                <label>订单ID <input name="orderId" type="number" value="1" min="1" required></label>
+                <h3>制定生产任务</h3>
+                <p class="form-help">从生产订单拆分任务并明确计划数量与完成期限；产线与工序在下一步制定工单时由 PMC 确认。</p>
+                <label>生产订单 <input name="orderId" type="number" value="1" min="1" required></label>
                 <label>计划数量 <input name="planQty" type="number" value="100" min="1"></label>
-                <button type="submit">创建任务</button>
+                <label>计划开始 <input name="plannedStartTime" type="datetime-local" required></label>
+                <label>计划完成期限 <input name="plannedEndTime" type="datetime-local" required></label>
+                <button type="submit">确认制定生产任务</button>
             </form>
             <form id="workOrderForm" class="tool" data-permission="planning.work_order.create">
-                <h3>创建生产工单</h3>
-                <label>任务ID <input name="taskId" type="number" value="1" min="1" required></label>
-                <label>产线ID <input name="lineId" type="number" value="1" min="1"></label>
-                <label>工序ID <input name="processId" type="number" value="1" min="1"></label>
-                <button type="submit">创建工单</button>
+                <h3>制定生产工单</h3>
+                <p class="form-help">仅齐套通过的任务可进入此步骤。先获取 AI 总体建议与排产方式，再由 PMC 人工确认产线和工序。</p>
+                <div id="workOrderWorkflow" class="planning-workflow" aria-label="生产工单制定流程"></div>
+                <label>生产任务 <input name="taskId" type="number" value="1" min="1" required></label>
+                <div id="workOrderKittingHint" class="work-order-readiness">请选择已齐套的生产任务</div>
+                <section id="lineCapacityBoard" class="line-capacity-board" aria-live="polite"></section>
+                <section id="workOrderAiPanel" class="work-order-ai" aria-live="polite"></section>
+                <label>确认产线 <input name="lineId" type="number" min="1" required></label>
+                <label>确认工艺路线 <input name="processId" type="number" min="1" required></label>
+                <p class="form-help">点击确认后，系统将以当前选定的产线和完整工艺路线生成工单并发布生产任务。</p>
+                <button type="submit">确认排产并生成生产工单</button>
             </form>
             <div class="tool"><h3>客户订单</h3><div id="orderTable"></div></div>
             <div class="tool"><h3>生产任务</h3><div id="taskTable"></div></div>
+            <div class="tool wide"><h3>缺料协同预警</h3><div id="planningShortageAlertTable"></div></div>
             <div class="tool"><h3>生产工单</h3><div id="workOrderTable"></div></div>
-            <div class="tool wide"><h3>工单操作日志</h3><div id="workOrderLogTable"></div></div>
         </div>
     </section>
 
@@ -200,6 +227,11 @@
             <div class="tool wide">
                 <h3>库存流水</h3>
                 <div id="transactionTable"></div>
+            </div>
+            <div class="tool wide">
+                <h3>PMC 缺料预警</h3>
+                <p class="form-help">接收预警后完成实际备料或库存补充；PMC 会重新执行齐套分析确认结果。</p>
+                <div id="warehouseShortageAlertTable"></div>
             </div>
             <div id="warehouseDetail" class="tool wide detail-panel">
                 <h3>仓储详情</h3>
@@ -533,20 +565,13 @@
             <button id="refresh-access">刷新</button>
         </header>
         <div class="grid">
-            <form id="permission-apply-form" class="tool" data-permission="permission.apply">
-                <h3>发起角色变更申请</h3>
-                <label>目标用户ID <input name="targetUserId" type="number" min="1" required></label>
-                <label>申请角色 <select name="toRoleCode" id="permission-apply-role" required></select></label>
-                <label>申请原因 <input name="reason" required></label>
-                <button type="submit">提交申请</button>
-            </form>
-            <div class="tool wide" data-permission="permission.apply|permission.review|role.manage">
-                <h3>权限变更申请</h3>
-                <div id="permission-apply-table"></div>
-            </div>
             <div class="tool wide">
                 <h3>用户角色管理</h3>
                 <div id="user-table"></div>
+            </div>
+            <div class="tool wide" data-permission="permission.review|role.manage">
+                <h3>审批权限变更申请</h3>
+                <div id="permission-apply-table"></div>
             </div>
             <div class="tool wide">
                 <h3>角色权限清单</h3>

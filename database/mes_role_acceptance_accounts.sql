@@ -33,6 +33,23 @@ ON CONFLICT (username) DO UPDATE SET
     locked_until = NULL,
     updated_at = CURRENT_TIMESTAMP;
 
+DELETE FROM mes_user_session
+WHERE user_id IN (
+    SELECT user_id
+    FROM mes_user
+    WHERE username IN ('mes_sysmaint', 'mes_viewer')
+);
+
+DELETE FROM mes_user_role
+WHERE user_id IN (
+    SELECT user_id
+    FROM mes_user
+    WHERE username IN ('mes_sysmaint', 'mes_viewer')
+);
+
+DELETE FROM mes_user
+WHERE username IN ('mes_sysmaint', 'mes_viewer');
+
 DELETE FROM mes_user_role ur
 USING mes_user u
 WHERE ur.user_id = u.user_id

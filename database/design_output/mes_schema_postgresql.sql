@@ -144,11 +144,19 @@ CREATE TABLE IF NOT EXISTS mes_shortage_alert (
     alert_no VARCHAR(40) NOT NULL,
     task_id BIGINT NOT NULL,
     analysis_id BIGINT,
+    material_id BIGINT,
+    material_code VARCHAR(60),
+    material_name VARCHAR(100),
+    required_qty NUMERIC(18,4) DEFAULT 0,
+    available_qty NUMERIC(18,4) DEFAULT 0,
+    shortage_qty NUMERIC(18,4) DEFAULT 0,
     alert_type VARCHAR(30) NOT NULL,
     severity VARCHAR(20) NOT NULL DEFAULT 'MEDIUM',
     alert_status VARCHAR(30) NOT NULL DEFAULT 'OPEN',
     receiver_role VARCHAR(50),
     alert_content VARCHAR(1000) NOT NULL,
+    accepted_by BIGINT,
+    accepted_at TIMESTAMP,
     resolved_at TIMESTAMP,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (alert_id)
@@ -158,11 +166,19 @@ COMMENT ON COLUMN mes_shortage_alert.alert_id IS '预警主键';
 COMMENT ON COLUMN mes_shortage_alert.alert_no IS '预警编号';
 COMMENT ON COLUMN mes_shortage_alert.task_id IS '生产任务';
 COMMENT ON COLUMN mes_shortage_alert.analysis_id IS '齐套分析';
+COMMENT ON COLUMN mes_shortage_alert.material_id IS '缺料物料';
+COMMENT ON COLUMN mes_shortage_alert.material_code IS '缺料物料编码';
+COMMENT ON COLUMN mes_shortage_alert.material_name IS '缺料物料名称';
+COMMENT ON COLUMN mes_shortage_alert.required_qty IS '需求数量';
+COMMENT ON COLUMN mes_shortage_alert.available_qty IS '分析时可用数量';
+COMMENT ON COLUMN mes_shortage_alert.shortage_qty IS '缺料数量';
 COMMENT ON COLUMN mes_shortage_alert.alert_type IS '预警类型';
 COMMENT ON COLUMN mes_shortage_alert.severity IS '严重级别';
 COMMENT ON COLUMN mes_shortage_alert.alert_status IS '处理状态';
 COMMENT ON COLUMN mes_shortage_alert.receiver_role IS '接收角色';
 COMMENT ON COLUMN mes_shortage_alert.alert_content IS '预警内容';
+COMMENT ON COLUMN mes_shortage_alert.accepted_by IS '仓储接收人';
+COMMENT ON COLUMN mes_shortage_alert.accepted_at IS '仓储接收时间';
 COMMENT ON COLUMN mes_shortage_alert.resolved_at IS '解决时间';
 COMMENT ON COLUMN mes_shortage_alert.created_at IS '创建时间';
 CREATE UNIQUE INDEX IF NOT EXISTS uk_mes_shortage_alert_alert_no ON mes_shortage_alert (alert_no);

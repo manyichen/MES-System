@@ -233,8 +233,8 @@ public class RoleDashboardService {
             case "PMC_PLANNER" -> profile(role, "PMC 计划员", "全厂订单、计划、齐套和相关工单范围",
                     modules("dashboard", "planning", "warehouse", "quality", "equipment", "trace", "feedback"),
                     "不能提交或审核生产报工", "不能修改库存", "不能审核质检结论或维修结果", "不能管理用户");
-            case "WORKSHOP_MANAGER" -> profile(role, "车间管理员", "仅明确分配的产线，以及这些产线关联的工单、报工、质量和设备数据",
-                    modules("dashboard", "planning", "warehouse", "production", "quality", "equipment", "trace", "feedback"),
+            case "WORKSHOP_MANAGER" -> profile(role, "车间管理员", "仅明确分配的产线，以及这些产线关联的工单、报工和设备数据",
+                    modules("dashboard", "planning", "warehouse", "production", "equipment", "trace", "feedback"),
                     "不能创建客户订单或最终排产", "不能修改库存", "不能审核质检结果", "不能管理用户");
             case "PRODUCTION_OPERATOR" -> profile(role, "生产操作工", "本人、本人被派工单和本人报工/计件记录",
                     modules("dashboard", "planning", "production", "equipment", "feedback"),

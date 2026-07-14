@@ -6,6 +6,7 @@ import com.example.messystem.common.BadRequestException;
 import com.example.messystem.common.ResourceSupport;
 import com.example.messystem.planning.entity.MesWorkOrder;
 import com.example.messystem.planning.service.WorkOrderService;
+import com.example.messystem.security.DataScopeService;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
@@ -23,13 +24,22 @@ import jakarta.ws.rs.core.Response;
 @Consumes(MediaType.APPLICATION_JSON)
 public class WorkOrderResource {
     private final WorkOrderService service = new WorkOrderService();
+    private final DataScopeService dataScopeService = new DataScopeService();
 
     @GET
     public Response list(@Context ContainerRequestContext context) {
         AuthenticatedUser user = AuthFilter.currentUser(context);
         return ResourceSupport.ok(user.hasRole("PRODUCTION_OPERATOR")
                 ? service.listWorkOrdersForOperator(user.user.userId)
-                : service.listWorkOrders());
+                : service.listWorkOrders().stream()
+                        .filter(dataScopeService.snapshot(user)::canView)
+                        .toList());
+    }
+
+    @GET
+    @Path("/operators")
+    public Response operators() {
+        return ResourceSupport.ok(service.listDispatchableOperators());
     }
 
     @POST
@@ -47,9 +57,11 @@ public class WorkOrderResource {
     public Response get(@PathParam("id") long id, @Context ContainerRequestContext context) {
         try {
             AuthenticatedUser user = AuthFilter.currentUser(context);
-            return ResourceSupport.ok(user.hasRole("PRODUCTION_OPERATOR")
-                    ? service.getWorkOrderForOperator(id, user.user.userId)
-                    : service.getWorkOrder(id));
+            if (user.hasRole("PRODUCTION_OPERATOR")) {
+                return ResourceSupport.ok(service.getWorkOrderForOperator(id, user.user.userId));
+            }
+            dataScopeService.snapshot(user).requireWorkOrder(id);
+            return ResourceSupport.ok(service.getWorkOrder(id));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }
@@ -60,7 +72,9 @@ public class WorkOrderResource {
     public Response dispatch(@PathParam("id") long id, @QueryParam("operatorId") Long operatorId,
             @Context ContainerRequestContext context) {
         try {
-            Long actorId = AuthFilter.currentUser(context).user.userId;
+            AuthenticatedUser user = AuthFilter.currentUser(context);
+            dataScopeService.snapshot(user).requireWorkOrder(id);
+            Long actorId = user.user.userId;
             return ResourceSupport.action("生产工单已派发", service.dispatch(id, operatorId, actorId));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
@@ -88,6 +102,7 @@ public class WorkOrderResource {
         try {
             AuthenticatedUser user = AuthFilter.currentUser(context);
             if (user.hasRole("PRODUCTION_OPERATOR")) service.getWorkOrderForOperator(id, user.user.userId);
+            else dataScopeService.snapshot(user).requireWorkOrder(id);
             return ResourceSupport.ok(service.listLogs(id));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);

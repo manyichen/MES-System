@@ -528,7 +528,6 @@ public class PlanningDao {
                 }
                 for (MesKittingShortageItem item : shortages) {
                     insertShortage(connection, analysis.analysisId, item);
-                    insertAlert(connection, analysis.analysisId, item);
                 }
                 connection.commit();
                 analysis.shortageItems = shortages;
@@ -561,7 +560,8 @@ public class PlanningDao {
 
     public List<MesShortageAlert> listAlerts() throws SQLException {
         String sql = """
-                select alert_id, alert_no, task_id, severity, alert_status, created_at
+                select alert_id, alert_no, task_id, analysis_id, material_id, material_code, material_name,
+                       required_qty, available_qty, shortage_qty, severity, alert_status, accepted_by, accepted_at, created_at
                 from mes_shortage_alert
                 order by created_at asc, alert_id asc
                 """;
@@ -574,12 +574,66 @@ public class PlanningDao {
                 alert.alertId = rs.getLong("alert_id");
                 alert.alertNo = rs.getString("alert_no");
                 alert.taskId = rs.getLong("task_id");
+                alert.analysisId = getLong(rs, "analysis_id");
+                alert.materialId = getLong(rs, "material_id");
+                alert.materialCode = rs.getString("material_code");
+                alert.materialName = rs.getString("material_name");
+                alert.requiredQty = rs.getBigDecimal("required_qty");
+                alert.availableQty = rs.getBigDecimal("available_qty");
+                alert.shortageQty = rs.getBigDecimal("shortage_qty");
                 alert.alertLevel = rs.getString("severity");
                 alert.alertStatus = rs.getString("alert_status");
+                alert.acceptedBy = getLong(rs, "accepted_by");
+                alert.acceptedAt = getLocalDateTime(rs, "accepted_at");
                 alert.createdAt = getLocalDateTime(rs, "created_at");
                 rows.add(alert);
             }
             return rows;
+        }
+    }
+
+    public List<MesShortageAlert> publishShortageAlerts(long taskId) throws SQLException {
+        String query = """
+                select s.analysis_id, s.material_id, s.material_code, s.material_name, s.required_qty, s.available_qty, s.shortage_qty
+                from mes_kitting_shortage_item s
+                where s.task_id = ? and s.analysis_id = (select max(analysis_id) from mes_kitting_shortage_item where task_id = ?)
+                order by s.shortage_item_id
+                """;
+        try (Connection connection = Db.getConnection()) {
+            connection.setAutoCommit(false);
+            try (PreparedStatement statement = connection.prepareStatement(query)) {
+                statement.setLong(1, taskId); statement.setLong(2, taskId);
+                try (ResultSet rs = statement.executeQuery()) {
+                    while (rs.next()) {
+                        insertAlert(connection, taskId, rs.getLong("analysis_id"), rs.getLong("material_id"),
+                                rs.getString("material_code"), rs.getString("material_name"), rs.getBigDecimal("required_qty"),
+                                rs.getBigDecimal("available_qty"), rs.getBigDecimal("shortage_qty"));
+                    }
+                }
+                connection.commit();
+            } catch (SQLException | RuntimeException ex) { connection.rollback(); throw ex; } finally { connection.setAutoCommit(true); }
+        }
+        return listAlerts();
+    }
+
+    public MesShortageAlert acceptShortageAlert(long alertId, long userId) throws SQLException {
+        String sql = """
+                update mes_shortage_alert set alert_status = 'ACCEPTED', accepted_by = ?, accepted_at = current_timestamp
+                where alert_id = ? and alert_status = 'OPEN'
+                returning alert_id, alert_no, task_id, analysis_id, material_id, material_code, material_name,
+                          required_qty, available_qty, shortage_qty, severity, alert_status, accepted_by, accepted_at, created_at
+                """;
+        try (Connection connection = Db.getConnection(); PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, userId); statement.setLong(2, alertId);
+            try (ResultSet rs = statement.executeQuery()) {
+                if (!rs.next()) throw new IllegalStateException("shortage alert is not open");
+                MesShortageAlert alert = new MesShortageAlert();
+                alert.alertId = rs.getLong("alert_id"); alert.alertNo = rs.getString("alert_no"); alert.taskId = rs.getLong("task_id");
+                alert.materialId = getLong(rs, "material_id"); alert.materialCode = rs.getString("material_code"); alert.materialName = rs.getString("material_name");
+                alert.requiredQty = rs.getBigDecimal("required_qty"); alert.availableQty = rs.getBigDecimal("available_qty"); alert.shortageQty = rs.getBigDecimal("shortage_qty");
+                alert.alertLevel = rs.getString("severity"); alert.alertStatus = rs.getString("alert_status"); alert.acceptedBy = getLong(rs, "accepted_by"); alert.acceptedAt = getLocalDateTime(rs, "accepted_at"); alert.createdAt = getLocalDateTime(rs, "created_at");
+                return alert;
+            }
         }
     }
 
@@ -638,18 +692,24 @@ public class PlanningDao {
         }
     }
 
-    private static void insertAlert(Connection connection, long analysisId, MesKittingShortageItem item) throws SQLException {
+    private static void insertAlert(Connection connection, long taskId, long analysisId, long materialId, String materialCode, String materialName,
+            BigDecimal requiredQty, BigDecimal availableQty, BigDecimal shortageQty) throws SQLException {
         String sql = """
                 insert into mes_shortage_alert
-                    (alert_no, task_id, analysis_id, alert_type, severity, alert_status, receiver_role, alert_content)
-                values (?, ?, ?, 'MATERIAL', ?, 'OPEN', 'WAREHOUSE_KEEPER', ?)
+                    (alert_no, task_id, analysis_id, material_id, material_code, material_name, required_qty, available_qty, shortage_qty,
+                     alert_type, severity, alert_status, receiver_role, alert_content)
+                select ?, ?, ?, ?, ?, ?, ?, ?, ?, 'MATERIAL', ?, 'OPEN', 'WAREHOUSE_KEEPER', ?
+                where not exists (select 1 from mes_shortage_alert where task_id = ? and material_id = ? and alert_status in ('OPEN', 'ACCEPTED'))
                 """;
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setString(1, "ALERT-" + System.currentTimeMillis() + "-" + item.materialId);
-            statement.setLong(2, item.taskId);
+            statement.setString(1, "ALERT-" + System.currentTimeMillis() + "-" + materialId);
+            statement.setLong(2, taskId);
             statement.setLong(3, analysisId);
-            statement.setString(4, item.shortageQty.compareTo(new BigDecimal("100")) > 0 ? "HIGH" : "MEDIUM");
-            statement.setString(5, "物料 " + item.materialName + " 缺口 " + item.shortageQty);
+            statement.setLong(4, materialId); statement.setString(5, materialCode); statement.setString(6, materialName);
+            statement.setBigDecimal(7, requiredQty); statement.setBigDecimal(8, availableQty); statement.setBigDecimal(9, shortageQty);
+            statement.setString(10, shortageQty.compareTo(new BigDecimal("100")) > 0 ? "HIGH" : "MEDIUM");
+            statement.setString(11, "物料 " + materialName + " 缺口 " + shortageQty);
+            statement.setLong(12, taskId); statement.setLong(13, materialId);
             statement.executeUpdate();
         }
     }

@@ -230,6 +230,27 @@ public class ProductionDao {
         }
     }
 
+    public MesWorkReport rejectWorkReport(long reportId) throws SQLException {
+        String sql = """
+                update mes_work_report
+                set report_status = 'REJECTED'
+                where report_id = ? and report_status = 'SUBMITTED'
+                returning report_id, report_no, work_order_id, batch_no, operator_id, report_qty,
+                          qualified_qty, defect_qty, work_hours, report_time, report_status
+                """;
+        try (Connection connection = Db.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, reportId);
+            try (ResultSet rs = statement.executeQuery()) {
+                if (!rs.next()) {
+                    ensureReportExistsAndSubmitted(connection, reportId);
+                    throw new BadRequestException("only SUBMITTED reports can be rejected");
+                }
+                return mapWorkReport(rs);
+            }
+        }
+    }
+
     public List<MesPieceworkWage> listWages() throws SQLException {
         String sql = """
                 select wage_id, report_id, operator_id, piece_rate, qualified_qty,
