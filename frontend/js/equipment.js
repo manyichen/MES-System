@@ -116,19 +116,14 @@ async function assignMaintenance(id) {
 }
 
 async function finishMaintenance(id) {
-    try {
-        const resultDesc = window.prompt("请输入维修结果、故障原因或处理措施");
-        if (!resultDesc || !resultDesc.trim()) {
-            showMessage("已取消完成维修，请先填写维修结果", "info");
-            return;
-        }
-        await postJson(`/maintenance-orders/${id}/finish`, { resultDesc: resultDesc.trim() });
-        showMessage("维修工单已完成，等待设备管理员验收", "ok");
-        await loadEquipment();
-        await loadDashboard();
-    } catch (error) {
-        showMessage(toChineseError(error), "error");
+    const form = document.getElementById("maintenance-result-form");
+    if (form) {
+        form.maintenanceOrderId.value = id;
+        form.scrollIntoView({ behavior: "smooth", block: "center" });
+        showMessage("请填写维修结果后提交验收", "info");
+        return;
     }
+    showMessage("请使用上传维修结果表单提交验收", "info");
 }
 
 async function acceptMaintenance(id) {
@@ -188,6 +183,31 @@ function bindEquipmentEvents() {
             await loadMaintenancePlans();
         } catch (error) {
             showMessage(toChineseError(error), "error");
+        }
+    });
+
+    document.getElementById("maintenance-result-form")?.addEventListener("submit", async event => {
+        event.preventDefault();
+        const status = document.getElementById("maintenance-result-status");
+        if (status) status.textContent = "正在上传维修结果...";
+        try {
+            const values = formToObject(event.target);
+            const resultDesc = [
+                `故障原因：${values.faultCause || ""}`,
+                `处理措施：${values.repairAction || ""}`,
+                values.replacedParts ? `更换备件：${values.replacedParts}` : "",
+                `维修结论：${values.repairConclusion || ""}`
+            ].filter(Boolean).join("\n");
+            await postJson(`/maintenance-orders/${values.maintenanceOrderId}/finish`, { resultDesc });
+            if (status) status.textContent = "维修结果已上传，等待设备管理员验收";
+            showMessage("维修结果已上传，等待设备管理员验收", "ok");
+            event.target.reset();
+            await loadEquipment();
+            await loadDashboard();
+        } catch (error) {
+            const message = toChineseError(error);
+            if (status) status.textContent = `上传失败：${message}`;
+            showMessage(message, "error");
         }
     });
 }

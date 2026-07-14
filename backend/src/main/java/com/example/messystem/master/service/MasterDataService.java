@@ -66,6 +66,23 @@ public class MasterDataService {
         return database(() -> dao.insertProcessRoute(route));
     }
 
+    public MesProcessRoute updateProcessRoute(long processId, MesProcessRoute route) {
+        requireText(route.processName, "processName is required");
+        if (route.processCode == null || route.processCode.isBlank()) {
+            route.processCode = IdGenerator.nextCode("PROC");
+        }
+        route.processSeq = route.processSeq == null ? 1 : route.processSeq;
+        route.enabled = route.enabled == null ? 1 : route.enabled;
+        return database(() -> dao.updateProcessRoute(processId, route));
+    }
+
+    public void deleteProcessRoute(long processId) {
+        database(() -> {
+            dao.deleteProcessRoute(processId);
+            return null;
+        });
+    }
+
     public List<MesProductionLine> listProductionLines() {
         return database(dao::listProductionLines);
     }

@@ -24,7 +24,8 @@ final class AuthorizationPolicy {
             rule("POST", "work-orders/\\d+/dispatch", "planning.work_order.dispatch"),
             rule("POST", "work-orders/\\d+/receive", "planning.work_order.receive"),
 
-            rule("GET", "(?:materials|warehouses|warehouse-locations|inventory|requisitions|picking-tasks|robots|robot-delivery-tasks)(?:/.*)?", "warehouse.read"),
+            any("GET", "materials(?:/.*)?", "warehouse.read", "master.read"),
+            rule("GET", "(?:warehouses|warehouse-locations|inventory|requisitions|picking-tasks|robots|robot-delivery-tasks)(?:/.*)?", "warehouse.read"),
             rule("POST|PUT|DELETE", "(?:materials|warehouses|warehouse-locations|robots)(?:/.*)?", "warehouse.master.manage"),
             rule("POST|PUT|DELETE", "warehouses/locations(?:/.*)?", "warehouse.master.manage"),
             rule("POST|PUT|DELETE", "inventory(?:/.*)?", "warehouse.inventory.adjust"),
@@ -71,7 +72,7 @@ final class AuthorizationPolicy {
             rule("GET", "production-lines(?:/.*)?", "master.read"),
             rule("POST", "production-lines(?:/.*)?", "master.manage"),
             rule("GET", "process-routes(?:/.*)?", "process.read"),
-            rule("POST", "process-routes(?:/.*)?", "process.manage"),
+            rule("POST|PUT|DELETE", "process-routes(?:/.*)?", "process.manage"),
             rule("GET", "sync-logs(?:/.*)?", "system.health.read"),
 
             rule("GET", "product-traces(?:/.*)?", "trace.read"),

@@ -3,6 +3,8 @@
 
 ALTER TABLE mes_quality_inspection ADD COLUMN IF NOT EXISTS submitted_by BIGINT;
 ALTER TABLE mes_quality_inspection ADD COLUMN IF NOT EXISTS submitted_at TIMESTAMP;
+ALTER TABLE mes_quality_inspection ADD COLUMN IF NOT EXISTS submitted_result VARCHAR(30);
+ALTER TABLE mes_quality_inspection ADD COLUMN IF NOT EXISTS result_note TEXT;
 ALTER TABLE mes_quality_inspection ADD COLUMN IF NOT EXISTS reviewed_at TIMESTAMP;
 ALTER TABLE mes_quality_inspection ALTER COLUMN inspector_id DROP NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_mes_quality_inspection_status_assigned
@@ -77,8 +79,12 @@ USING mes_role r, mes_permission p
 WHERE rp.role_id = r.role_id AND rp.permission_id = p.permission_id
   AND (
       (r.role_code = 'QUALITY_MANAGER' AND p.permission_code = 'quality.inspect')
+      OR (r.role_code = 'QUALITY_MANAGER' AND p.permission_code = 'quality.rework.manage')
+      OR (r.role_code = 'SYSTEM_MAINTAINER' AND p.permission_code = 'user.update_role')
       OR (r.role_code = 'VIEWER' AND p.permission_code = 'trace.read')
-      OR (r.role_code = 'SYSTEM_ADMIN' AND p.module_code NOT IN ('system', 'dashboard'))
+      OR (r.role_code = 'PROCESS_ENGINEER' AND p.permission_code IN (
+          'planning.read', 'production.read', 'quality.read', 'equipment.read', 'master.manage'
+      ))
   );
 
 WITH grants(role_code, permission_code) AS (
@@ -133,22 +139,21 @@ WITH grants(role_code, permission_code) AS (
 
     ('QUALITY_MANAGER','dashboard.read'), ('QUALITY_MANAGER','quality.read'),
     ('QUALITY_MANAGER','quality.inspection.create'), ('QUALITY_MANAGER','quality.inspection.assign'),
-    ('QUALITY_MANAGER','quality.review'), ('QUALITY_MANAGER','quality.rework.manage'),
+    ('QUALITY_MANAGER','quality.review'),
     ('QUALITY_MANAGER','planning.read'), ('QUALITY_MANAGER','trace.read'),
     ('QUALITY_MANAGER','feedback.read'), ('QUALITY_MANAGER','feedback.create'),
     ('QUALITY_MANAGER','master.read'), ('QUALITY_MANAGER','process.read'),
 
     ('QUALITY_INSPECTOR','dashboard.read'), ('QUALITY_INSPECTOR','quality.read'),
-    ('QUALITY_INSPECTOR','quality.inspect'), ('QUALITY_INSPECTOR','equipment.fault.report'),
+    ('QUALITY_INSPECTOR','quality.inspect'), ('QUALITY_INSPECTOR','quality.rework.manage'),
+    ('QUALITY_INSPECTOR','equipment.fault.report'),
     ('QUALITY_INSPECTOR','equipment.read'), ('QUALITY_INSPECTOR','trace.read'),
     ('QUALITY_INSPECTOR','feedback.read'), ('QUALITY_INSPECTOR','feedback.create'),
     ('QUALITY_INSPECTOR','process.read'),
 
     ('PROCESS_ENGINEER','dashboard.read'), ('PROCESS_ENGINEER','process.read'),
     ('PROCESS_ENGINEER','process.manage'), ('PROCESS_ENGINEER','master.read'),
-    ('PROCESS_ENGINEER','master.manage'), ('PROCESS_ENGINEER','planning.read'),
-    ('PROCESS_ENGINEER','production.read'), ('PROCESS_ENGINEER','quality.read'),
-    ('PROCESS_ENGINEER','equipment.read'), ('PROCESS_ENGINEER','trace.read'),
+    ('PROCESS_ENGINEER','trace.read'),
     ('PROCESS_ENGINEER','feedback.read'), ('PROCESS_ENGINEER','feedback.create'),
 
     ('EQUIPMENT_ADMIN','dashboard.read'), ('EQUIPMENT_ADMIN','equipment.read'),
@@ -159,11 +164,8 @@ WITH grants(role_code, permission_code) AS (
     ('EQUIPMENT_ADMIN','feedback.create'), ('EQUIPMENT_ADMIN','master.read'),
 
     ('EQUIPMENT_MAINTAINER','dashboard.read'), ('EQUIPMENT_MAINTAINER','equipment.read'),
-    ('EQUIPMENT_MAINTAINER','equipment.fault.report'),
     ('EQUIPMENT_MAINTAINER','equipment.maintenance.execute'),
-    ('EQUIPMENT_MAINTAINER','feedback.read'), ('EQUIPMENT_MAINTAINER','feedback.create'),
-
-    ('VIEWER','dashboard.read')
+    ('EQUIPMENT_MAINTAINER','feedback.read'), ('EQUIPMENT_MAINTAINER','feedback.create')
 )
 INSERT INTO mes_role_permission (role_id, permission_id)
 SELECT r.role_id, p.permission_id
@@ -172,10 +174,18 @@ JOIN mes_role r ON r.role_code = g.role_code
 JOIN mes_permission p ON p.permission_code = g.permission_code
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
--- Keep system administrators focused on platform administration, not production operations.
 DELETE FROM mes_role_permission rp
-USING mes_role r, mes_permission p
+USING mes_role r
 WHERE rp.role_id = r.role_id
-  AND rp.permission_id = p.permission_id
-  AND r.role_code = 'SYSTEM_ADMIN'
-  AND p.module_code NOT IN ('system', 'dashboard');
+  AND r.role_code = 'VIEWER';
+
+UPDATE mes_role
+SET enabled = 0
+WHERE role_code = 'VIEWER';
+
+-- 系统管理员始终拥有全部启用权限。
+INSERT INTO mes_role_permission (role_id, permission_id)
+SELECT r.role_id, p.permission_id
+FROM mes_role r CROSS JOIN mes_permission p
+WHERE r.role_code = 'SYSTEM_ADMIN' AND p.enabled = 1
+ON CONFLICT (role_id, permission_id) DO NOTHING;

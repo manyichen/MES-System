@@ -5,7 +5,7 @@ const DISPLAY_TEXT = {
     GENERAL_MANAGER: "总经理", PMC_PLANNER: "PMC计划员", WORKSHOP_MANAGER: "车间管理员",
     PRODUCTION_OPERATOR: "生产操作工", WORKSHOP_OPERATOR: "生产操作工", WAREHOUSE_ADMIN: "仓库管理员",
     WAREHOUSE_KEEPER: "仓储人员", QUALITY_MANAGER: "质量主管", QUALITY_INSPECTOR: "质检员",
-    PROCESS_ENGINEER: "工艺工程师", EQUIPMENT_ADMIN: "设备管理员", EQUIPMENT_MAINTAINER: "设备维护员", VIEWER: "只读访客",
+    PROCESS_ENGINEER: "工艺工程师", EQUIPMENT_ADMIN: "设备管理员", EQUIPMENT_MAINTAINER: "设备维护员",
     CREATED: "待处理", DRAFT: "草稿", PENDING: "待处理", PENDING_PLAN: "待排产", PLANNED: "已排产",
     RELEASED: "已发布", READY: "齐套", NOT_READY: "未齐套", SHORTAGE: "缺料", ANALYZED: "已分析", PROCESSING: "处理中", IN_PROGRESS: "处理中", RESOLVED: "已解决",
     DISPATCHED: "已派发", RECEIVED: "已接收", RUNNING: "进行中", FINISHED: "已完成", COMPLETED: "已完成",

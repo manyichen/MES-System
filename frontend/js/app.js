@@ -6,6 +6,7 @@ const MODULE_PRESENTATION = {
     production: { icon: "◉", eyebrow: "生产执行", title: "生产报工", description: "提交生产实绩，跟踪报工审核和计件结果。" },
     quality: { icon: "◇", eyebrow: "质量控制", title: "质量管理", description: "执行质量检验、结果判定和返工闭环。" },
     equipment: { icon: "⚙", eyebrow: "设备保障", title: "设备维护", description: "掌握设备状态，处理报修、维修和验收任务。" },
+    process: { icon: "⌘", eyebrow: "工艺工程", title: "工艺管理", description: "查看原料和产品主数据，维护轮胎制造方法和工艺路线。" },
     trace: { icon: "⌁", eyebrow: "全程追溯", title: "产品追溯", description: "按追溯码、批次和工单查询产品生产履历。" },
     feedback: { icon: "✦", eyebrow: "经营管理", title: "管理反馈", description: "记录并跟踪生产经营过程中的管理意见。" },
     systemOps: { icon: "⚙", eyebrow: "系统运行", title: "系统运维", description: "巡检会话、锁定账号、系统健康和数据同步状态。" },
@@ -110,8 +111,24 @@ function selectActionView(drawer, target) {
     [...drawer.querySelectorAll(".module-action-tabs button")].forEach((button, index) => button.classList.toggle("active", String(index) === target));
 }
 
+function syncDrawerActions(drawer) {
+    const views = [...drawer.querySelectorAll("[data-action-view]")];
+    const buttons = [...drawer.querySelectorAll(".module-action-tabs button")];
+    let firstAllowed = null;
+    views.forEach((view, index) => {
+        const allowed = !view.classList.contains("permission-hidden");
+        buttons[index]?.classList.toggle("permission-hidden", !allowed);
+        if (allowed && firstAllowed === null) firstAllowed = view.dataset.actionView;
+    });
+    const active = views.find(view => view.classList.contains("action-view-active") && !view.classList.contains("permission-hidden"));
+    if (!active && firstAllowed !== null) {
+        selectActionView(drawer, firstAllowed);
+    }
+}
+
 function openModuleDrawer(drawer) {
     closeModuleDrawers();
+    syncDrawerActions(drawer);
     ensureWorkspaceBackdrop().classList.add("open");
     drawer.classList.add("open");
     document.body.classList.add("overlay-open");
@@ -159,6 +176,7 @@ function initializeApp() {
     if (typeof bindDashboardEvents === "function") bindDashboardEvents();
     if (typeof bindQualityEvents === "function") bindQualityEvents();
     if (typeof bindEquipmentEvents === "function") bindEquipmentEvents();
+    if (typeof bindProcessEvents === "function") bindProcessEvents();
     if (typeof bindProfileEvents === "function") bindProfileEvents();
     if (typeof loadDashboard === "function") loadDashboard();
     if (typeof loadProfile === "function") loadProfile();
@@ -167,6 +185,7 @@ function initializeApp() {
     if (hasPermission("production.read") && typeof refreshProduction === "function") refreshProduction();
     if (hasPermission("quality.read") && typeof loadQuality === "function") loadQuality();
     if (hasPermission("equipment.read") && typeof loadEquipment === "function") loadEquipment();
+    if (hasPermission("process.read") && typeof loadProcess === "function") loadProcess();
     if (hasPermission("trace.read") && typeof loadTraces === "function") loadTraces();
     if (hasPermission("feedback.read") && typeof loadFeedback === "function") loadFeedback(1);
     if (typeof loadAccessManagement === "function") loadAccessManagement();

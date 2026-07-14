@@ -30,6 +30,11 @@ function applyPermissionVisibility() {
         const allowed = element.dataset.permission.split("|").some(hasPermission);
         element.classList.toggle("permission-hidden", !allowed);
     });
+    if (hasRole("PROCESS_ENGINEER")) {
+        ["planning", "quality", "equipment", "production"].forEach(tab => {
+            document.querySelector(`.sidebar button[data-tab="${tab}"]`)?.classList.add("permission-hidden");
+        });
+    }
     document.querySelectorAll(".sidebar .nav-group").forEach(group => {
         let hasVisibleItem = false;
         for (let item = group.nextElementSibling; item && !item.classList.contains("nav-group"); item = item.nextElementSibling) {
