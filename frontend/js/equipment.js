@@ -1,6 +1,7 @@
 async function loadEquipment(options = {}) {
     try {
         const equipment = await getJson("/equipment");
+        const equipmentById = new Map(equipment.map(item => [String(item.equipmentId), item]));
         renderTable("equipment-table", equipment, [
             { key: "equipmentId", label: "ID" },
             { key: "equipmentCode", label: "编码" },
@@ -8,11 +9,8 @@ async function loadEquipment(options = {}) {
             { key: "equipmentType", label: "类型", render: row => typeText(row.equipmentType) },
             { key: "lineId", label: "产线" },
             { key: "equipmentStatus", label: "状态", render: row => equipmentStatusText(row.equipmentStatus) },
-            { key: "enabled", label: "启用" }
-        ], [
-            { name: "status-running", label: "设为运行", idKey: "equipmentId", permission: "equipment.manage", visible: row => row.equipmentStatus !== "RUNNING", handler: id => updateEquipmentStatus(id, "RUNNING") },
-            { name: "status-fault", label: "设为故障", idKey: "equipmentId", permission: "equipment.manage", visible: row => row.equipmentStatus !== "FAULT", handler: id => updateEquipmentStatus(id, "FAULT") }
-        ]);
+            { key: "enabled", label: "启用", render: row => equipmentEnabledText(row) }
+        ], equipmentStatusActions());
 
         const repairs = await getJson("/equipment-repair-reports");
         renderTable("repair-table", repairs, [
@@ -29,16 +27,16 @@ async function loadEquipment(options = {}) {
 
         const orders = await getJson("/maintenance-orders");
         renderTable("maintenance-table", orders, [
+            { key: "equipmentId", label: "对应设备", render: row => equipmentDisplay(row.equipmentId, equipmentById) },
             { key: "maintenanceOrderId", label: "ID" },
             { key: "maintenanceOrderNo", label: "维修单" },
             { key: "repairReportId", label: "报修单" },
-            { key: "equipmentId", label: "设备" },
             { key: "maintainerId", label: "维护员" },
             { key: "maintenanceStatus", label: "状态", render: row => maintenanceStatusText(row.maintenanceStatus) },
             { key: "resultDesc", label: "结果" }
         ], [
             { name: "assign-maintenance", label: "派工", idKey: "maintenanceOrderId", permission: "equipment.maintenance.assign", visible: row => row.maintenanceStatus === "CREATED", handler: assignMaintenance },
-            { name: "finish-maintenance", label: "完成维修", idKey: "maintenanceOrderId", permission: "equipment.maintenance.execute", visible: row => ["ASSIGNED", "IN_PROGRESS"].includes(row.maintenanceStatus), handler: finishMaintenance },
+            { name: "finish-maintenance", label: "上传结果", idKey: "maintenanceOrderId", permission: "equipment.maintenance.execute", visible: row => ["ASSIGNED", "IN_PROGRESS"].includes(row.maintenanceStatus), handler: finishMaintenance },
             { name: "accept-maintenance", label: "验收", idKey: "maintenanceOrderId", permission: "equipment.maintenance.accept", visible: row => row.maintenanceStatus === "FINISHED", handler: acceptMaintenance }
         ]);
 
@@ -78,6 +76,32 @@ async function updateEquipmentStatus(id, status) {
     }
 }
 
+function equipmentStatusActions() {
+    return [
+        { status: "RUNNING", label: "设为运行" },
+        { status: "IDLE", label: "设为空闲" },
+        { status: "FAULT", label: "设为故障" },
+        { status: "MAINTENANCE", label: "设为维护" }
+    ].map(item => ({
+        name: `status-${item.status.toLowerCase()}`,
+        label: item.label,
+        idKey: "equipmentId",
+        permission: "equipment.manage",
+        visible: row => row.equipmentStatus !== item.status,
+        handler: id => updateEquipmentStatus(id, item.status)
+    }));
+}
+
+function equipmentEnabledText(row) {
+    return row.equipmentStatus === "RUNNING" ? "是" : "否";
+}
+
+function equipmentDisplay(equipmentId, equipmentById) {
+    const equipment = equipmentById.get(String(equipmentId));
+    if (!equipment) return equipmentId || "-";
+    return `${equipment.equipmentName}（${equipment.equipmentCode}）`;
+}
+
 async function approveRepair(id) {
     try {
         await postJson(`/equipment-repair-reports/${id}/approve`);
@@ -100,14 +124,63 @@ async function toMaintenanceOrder(id) {
 }
 
 async function assignMaintenance(id) {
+    await openAssignMaintenanceDialog(id);
+}
+
+async function openAssignMaintenanceDialog(id) {
     try {
-        const maintainerId = window.prompt("请输入设备维护员用户 ID");
-        if (!maintainerId) {
-            showMessage("已取消维修派工", "info");
-            return;
+        const users = await getJson("/users").catch(() => []);
+        const maintainers = users.filter(user => user.roleCode === "EQUIPMENT_MAINTAINER" && Number(user.enabled) !== 0);
+        let drawer = document.getElementById("maintenance-assign-dialog");
+        if (!drawer) {
+            drawer = document.createElement("aside");
+            drawer.id = "maintenance-assign-dialog";
+            drawer.className = "detail-drawer";
+            document.body.appendChild(drawer);
         }
+        const options = maintainers.map(user =>
+            `<option value="${escapeHtml(user.userId)}">${escapeHtml(user.realName || user.username)}（ID ${escapeHtml(user.userId)}）</option>`
+        ).join("");
+        drawer.innerHTML = `
+            <div class="detail-drawer-head">
+                <div><span>维修派工</span><h3>维修工单 ${escapeHtml(id)} · 选择设备维修员</h3></div>
+                <button type="button" class="detail-close" aria-label="关闭">×</button>
+            </div>
+            <div class="detail-drawer-body quality-submit-body">
+                <form id="maintenance-assign-form" class="quality-submit-form">
+                    <section class="quality-submit-card">
+                        <span class="quality-submit-label">设备维修员</span>
+                        ${maintainers.length
+                            ? `<select id="maintenance-assign-maintainer" required>${options}</select>`
+                            : `<input id="maintenance-assign-maintainer" type="number" min="1" required placeholder="没有读取到维修员列表，请输入维修员用户 ID">`}
+                    </section>
+                    <button type="submit" class="quality-submit-button">派发维修工单</button>
+                </form>
+            </div>`;
+        closeModuleDrawers();
+        ensureWorkspaceBackdrop().classList.add("open");
+        drawer.classList.add("open");
+        document.body.classList.add("overlay-open");
+        drawer.querySelector(".detail-close")?.addEventListener("click", closeModuleDrawers);
+        drawer.querySelector("#maintenance-assign-form")?.addEventListener("submit", async event => {
+            event.preventDefault();
+            const maintainerId = drawer.querySelector("#maintenance-assign-maintainer")?.value;
+            if (!maintainerId) {
+                showMessage("请选择设备维修员", "error");
+                return;
+            }
+            await submitMaintenanceAssignment(id, maintainerId);
+        });
+    } catch (error) {
+        showMessage(toChineseError(error), "error");
+    }
+}
+
+async function submitMaintenanceAssignment(id, maintainerId) {
+    try {
         await postJson(`/maintenance-orders/${id}/assign?maintainerId=${encodeURIComponent(maintainerId)}`);
         showMessage("维修工单已派发给维护员", "ok");
+        closeModuleDrawers();
         await loadEquipment();
         await loadDashboard();
     } catch (error) {
@@ -119,7 +192,15 @@ async function finishMaintenance(id) {
     const form = document.getElementById("maintenance-result-form");
     if (form) {
         form.maintenanceOrderId.value = id;
-        form.scrollIntoView({ behavior: "smooth", block: "center" });
+        const drawer = form.closest(".module-drawer");
+        if (drawer && typeof selectActionView === "function") {
+            selectActionView(drawer, form.dataset.actionView);
+        }
+        if (drawer && typeof openModuleDrawer === "function") {
+            openModuleDrawer(drawer);
+        } else {
+            form.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
         showMessage("请填写维修结果后提交验收", "info");
         return;
     }

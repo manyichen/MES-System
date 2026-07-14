@@ -77,10 +77,11 @@ public class EquipmentDao {
     }
 
     public boolean updateStatus(long equipmentId, String newStatus) throws SQLException {
-        String sql = "UPDATE mes_equipment SET equipment_status = ? WHERE equipment_id = ?";
+        String sql = "UPDATE mes_equipment SET equipment_status = ?, enabled = ? WHERE equipment_id = ?";
         try (Connection conn = Db.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, newStatus);
-            ps.setLong(2, equipmentId);
+            ps.setInt(2, "RUNNING".equals(newStatus) ? 1 : 0);
+            ps.setLong(3, equipmentId);
             return ps.executeUpdate() > 0;
         }
     }

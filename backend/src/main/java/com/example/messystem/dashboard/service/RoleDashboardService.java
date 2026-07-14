@@ -246,7 +246,7 @@ public class RoleDashboardService {
                     modules("dashboard", "planning", "quality", "trace", "feedback"),
                     "不能代替质检员录入其检验数据", "不能提交生产报工或修改库存", "不能修改用户权限", "不能发布工艺参数");
             case "QUALITY_INSPECTOR" -> profile(role, "质检员", "仅本人被分配的质检任务及相关批次追溯",
-                    modules("dashboard", "quality", "trace", "equipment", "feedback"),
+                    modules("dashboard", "quality", "trace", "feedback"),
                     "不能审核或最终放行自己的检验结果", "不能维护质检标准", "不能查看其他质检员任务", "不能修改生产、库存和用户数据");
             case "PROCESS_ENGINEER" -> profile(role, "工艺工程师", "工艺路线、SOP、产品和原料主数据",
                     modules("dashboard", "process", "trace", "feedback"),

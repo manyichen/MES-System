@@ -80,6 +80,9 @@ WHERE rp.role_id = r.role_id AND rp.permission_id = p.permission_id
   AND (
       (r.role_code = 'QUALITY_MANAGER' AND p.permission_code = 'quality.inspect')
       OR (r.role_code = 'QUALITY_MANAGER' AND p.permission_code = 'quality.rework.manage')
+      OR (r.role_code = 'QUALITY_INSPECTOR' AND p.permission_code IN (
+          'equipment.fault.report', 'equipment.read'
+      ))
       OR (r.role_code = 'SYSTEM_MAINTAINER' AND p.permission_code = 'user.update_role')
       OR (r.role_code = 'VIEWER' AND p.permission_code = 'trace.read')
       OR (r.role_code = 'PROCESS_ENGINEER' AND p.permission_code IN (
@@ -146,8 +149,7 @@ WITH grants(role_code, permission_code) AS (
 
     ('QUALITY_INSPECTOR','dashboard.read'), ('QUALITY_INSPECTOR','quality.read'),
     ('QUALITY_INSPECTOR','quality.inspect'), ('QUALITY_INSPECTOR','quality.rework.manage'),
-    ('QUALITY_INSPECTOR','equipment.fault.report'),
-    ('QUALITY_INSPECTOR','equipment.read'), ('QUALITY_INSPECTOR','trace.read'),
+    ('QUALITY_INSPECTOR','trace.read'),
     ('QUALITY_INSPECTOR','feedback.read'), ('QUALITY_INSPECTOR','feedback.create'),
     ('QUALITY_INSPECTOR','process.read'),
 
@@ -161,7 +163,7 @@ WITH grants(role_code, permission_code) AS (
     ('EQUIPMENT_ADMIN','equipment.repair.review'), ('EQUIPMENT_ADMIN','equipment.maintenance.assign'),
     ('EQUIPMENT_ADMIN','equipment.maintenance.accept'), ('EQUIPMENT_ADMIN','planning.read'),
     ('EQUIPMENT_ADMIN','trace.read'), ('EQUIPMENT_ADMIN','feedback.read'),
-    ('EQUIPMENT_ADMIN','feedback.create'), ('EQUIPMENT_ADMIN','master.read'),
+    ('EQUIPMENT_ADMIN','feedback.create'), ('EQUIPMENT_ADMIN','master.read'), ('EQUIPMENT_ADMIN','user.read'),
 
     ('EQUIPMENT_MAINTAINER','dashboard.read'), ('EQUIPMENT_MAINTAINER','equipment.read'),
     ('EQUIPMENT_MAINTAINER','equipment.maintenance.execute'),
