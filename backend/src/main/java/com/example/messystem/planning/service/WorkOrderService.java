@@ -4,6 +4,8 @@ import com.example.messystem.common.BadRequestException;
 import com.example.messystem.common.Db;
 import com.example.messystem.common.IdGenerator;
 import com.example.messystem.common.NotFoundException;
+import com.example.messystem.master.entity.MesProcessRoute;
+import com.example.messystem.master.entity.MesProductionLine;
 import com.example.messystem.planning.dao.PlanningDao;
 import com.example.messystem.planning.entity.MesProductionTask;
 import com.example.messystem.planning.entity.MesWorkOrder;
@@ -121,17 +123,17 @@ public class WorkOrderService {
         requireId(workOrder.taskId, "taskId is required");
         MesProductionTask task = database(() -> planningDao.findTask(workOrder.taskId))
                 .orElseThrow(() -> new BadRequestException("production task not found"));
-        if (!"RELEASED".equals(task.taskStatus)) {
-            throw new BadRequestException("production task must be RELEASED before creating work order");
+        if (!"READY".equals(task.taskStatus) || !"READY".equals(task.kittingStatus)) {
+            throw new BadRequestException("production task must pass kitting analysis before creating work order");
         }
         workOrder.workOrderNo = workOrder.workOrderNo == null || workOrder.workOrderNo.isBlank()
                 ? IdGenerator.nextCode("WO")
                 : workOrder.workOrderNo;
         workOrder.productId = workOrder.productId == null ? task.productId : workOrder.productId;
-        workOrder.lineId = workOrder.lineId == null ? task.targetLineId : workOrder.lineId;
-        workOrder.processId = workOrder.processId == null ? firstProcessId(task.productId) : workOrder.processId;
         requireId(workOrder.lineId, "lineId is required");
         requireId(workOrder.processId, "processId is required");
+        requireAvailableLine(workOrder.lineId);
+        requireProcessForProduct(workOrder.processId, task.productId);
         workOrder.plannedQty = workOrder.plannedQty == null || workOrder.plannedQty <= 0 ? task.planQty : workOrder.plannedQty;
         workOrder.actualQty = workOrder.actualQty == null ? 0 : workOrder.actualQty;
         workOrder.priorityLevel = workOrder.priorityLevel == null ? 3 : workOrder.priorityLevel;
@@ -164,6 +166,7 @@ public class WorkOrderService {
                     rs.next();
                     created = mapWorkOrder(rs);
                 }
+                releaseTaskForConfirmedWorkOrder(connection, task.taskId);
                 addLog(connection, created.workOrderId, "CREATE", null, "CREATED", actorId, "创建生产工单");
                 connection.commit();
                 return created;
@@ -296,6 +299,41 @@ public class WorkOrderService {
             return processId == 0L ? null : processId;
         } catch (SQLException e) {
             throw new IllegalStateException("database operation failed: " + e.getMessage(), e);
+        }
+    }
+
+    private void requireAvailableLine(Long lineId) {
+        boolean available = database(() -> planningDao.listProductionLines()).stream()
+                .anyMatch(line -> lineId.equals(line.lineId)
+                        && line.enabled != null && line.enabled == 1
+                        && !"FAULT".equals(line.lineStatus)
+                        && !"DISABLED".equals(line.lineStatus));
+        if (!available) {
+            throw new BadRequestException("lineId must be an available production line");
+        }
+    }
+
+    private void requireProcessForProduct(Long processId, Long productId) {
+        boolean matched = database(() -> planningDao.listProcessRoutes()).stream()
+                .anyMatch(route -> processId.equals(route.processId)
+                        && route.enabled != null && route.enabled == 1
+                        && (route.productId == null || route.productId.equals(productId)));
+        if (!matched) {
+            throw new BadRequestException("processId must match the production task product");
+        }
+    }
+
+    private static void releaseTaskForConfirmedWorkOrder(Connection connection, Long taskId) throws SQLException {
+        String sql = """
+                update mes_production_task
+                set task_status = 'RELEASED', release_time = current_timestamp, updated_at = current_timestamp
+                where task_id = ? and task_status = 'READY' and kitting_status = 'READY'
+                """;
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, taskId);
+            if (statement.executeUpdate() != 1) {
+                throw new BadRequestException("production task status changed; please refresh and confirm again");
+            }
         }
     }
 

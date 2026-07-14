@@ -2,6 +2,8 @@ package com.example.messystem.planning.ai;
 
 import com.example.messystem.common.BadRequestException;
 import com.example.messystem.master.entity.MesProductBom;
+import com.example.messystem.master.entity.MesProcessRoute;
+import com.example.messystem.master.entity.MesProductionLine;
 import com.example.messystem.planning.dao.PlanningDao;
 import com.example.messystem.planning.entity.MesCustomerOrder;
 import com.example.messystem.planning.entity.MesKittingAnalysis;
@@ -43,17 +45,18 @@ public class AiPlanningDataService {
                 .map(task -> task.productId)
                 .filter(id -> id != null && id > 0)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
+        List<MesWorkOrder> activeWorkOrders = workOrderService.listWorkOrders().stream()
+                .filter(row -> !"COMPLETED".equals(row.workOrderStatus) && !"CANCELLED".equals(row.workOrderStatus))
+                .toList();
 
         Map<String, Object> snapshot = new LinkedHashMap<>();
         snapshot.put("today", LocalDate.now().toString());
         snapshot.put("objective", normalizeObjective(request));
         snapshot.put("horizonDays", normalizeHorizonDays(request));
         snapshot.put("candidateTasks", selectedTasks.stream().map(task -> taskView(task, orderById.get(task.orderId))).toList());
-        snapshot.put("productionLines", database(dao::listProductionLines));
-        snapshot.put("openWorkOrders", workOrderService.listWorkOrders().stream()
-                .filter(row -> row.taskId != null && taskIds.contains(row.taskId))
-                .map(this::workOrderView)
-                .toList());
+        snapshot.put("productionLines", lineCapacityView(database(dao::listProductionLines), activeWorkOrders));
+        snapshot.put("selectedProcessRoute", processRouteView(selectedTasks.get(0).productId));
+        snapshot.put("openWorkOrders", activeWorkOrders.stream().map(this::workOrderView).toList());
         snapshot.put("kittingAnalyses", database(dao::listAnalyses).stream()
                 .filter(row -> row.taskId != null && taskIds.contains(row.taskId))
                 .map(this::analysisView)
@@ -78,6 +81,14 @@ public class AiPlanningDataService {
     public Set<Long> validLineIds(Map<String, Object> snapshot) {
         return ((List<?>) snapshot.getOrDefault("productionLines", List.of())).stream()
                 .map(row -> {
+                    if (row instanceof Map<?, ?> map) return map.get("lineId");
+                    try { return row.getClass().getField("lineId").get(row); } catch (ReflectiveOperationException ex) { return null; }
+                })
+                .filter(Number.class::isInstance)
+                .map(value -> ((Number) value).longValue())
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        /*
+                .map(row -> {
                     try {
                         return row.getClass().getField("lineId").get(row);
                     } catch (ReflectiveOperationException ex) {
@@ -87,6 +98,7 @@ public class AiPlanningDataService {
                 .filter(Number.class::isInstance)
                 .map(value -> ((Number) value).longValue())
                 .collect(Collectors.toCollection(LinkedHashSet::new));
+        */
     }
 
     private List<MesProductionTask> selectTasks(AiPlanningAdviceRequest request, List<MesProductionTask> allTasks) {
@@ -104,14 +116,16 @@ public class AiPlanningDataService {
             if (selected.size() != ids.size()) {
                 throw new BadRequestException("部分生产任务不存在，请刷新后重试");
             }
+            if (selected.size() != 1) {
+                throw new BadRequestException("制定生产工单时一次只能分析一个生产任务");
+            }
+            MesProductionTask task = selected.get(0);
+            if (!"READY".equals(task.kittingStatus) || !"READY".equals(task.taskStatus)) {
+                throw new BadRequestException("请先完成并通过齐套分析，再使用 AI 排产辅助");
+            }
             return selected;
         }
-        return allTasks.stream()
-                .filter(task -> !"RELEASED".equals(task.taskStatus))
-                .sorted(Comparator.comparing((MesProductionTask task) -> statusRank(task.taskStatus))
-                        .thenComparing(task -> task.taskId))
-                .limit(10)
-                .toList();
+        throw new BadRequestException("请在制定生产工单时选择一个已齐套的生产任务");
     }
 
     private int statusRank(String status) {
@@ -151,6 +165,29 @@ public class AiPlanningDataService {
         row.put("actualQty", workOrder.actualQty);
         row.put("workOrderStatus", workOrder.workOrderStatus);
         return row;
+    }
+
+    private List<Map<String, Object>> lineCapacityView(List<MesProductionLine> lines, List<MesWorkOrder> activeWorkOrders) {
+        return lines.stream().map(line -> {
+            int activeCount = (int) activeWorkOrders.stream().filter(workOrder -> line.lineId.equals(workOrder.lineId)).count();
+            int pendingQty = activeWorkOrders.stream().filter(workOrder -> line.lineId.equals(workOrder.lineId))
+                    .mapToInt(workOrder -> Math.max(0, (workOrder.plannedQty == null ? 0 : workOrder.plannedQty) - (workOrder.actualQty == null ? 0 : workOrder.actualQty))).sum();
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("lineId", line.lineId); row.put("lineCode", line.lineCode); row.put("lineName", line.lineName);
+            row.put("lineType", line.lineType); row.put("lineStatus", line.lineStatus); row.put("enabled", line.enabled);
+            row.put("dailyCapacity", line.capacityPerDay); row.put("activeWorkOrderCount", activeCount); row.put("pendingQty", pendingQty);
+            row.put("schedulable", line.enabled != null && line.enabled == 1 && !"FAULT".equals(line.lineStatus) && !"DISABLED".equals(line.lineStatus));
+            return row;
+        }).toList();
+    }
+
+    private List<Map<String, Object>> processRouteView(Long productId) {
+        return database(dao::listProcessRoutes).stream().filter(route -> productId != null && productId.equals(route.productId))
+                .sorted(Comparator.comparing(route -> route.processSeq == null ? 0 : route.processSeq)).map(route -> {
+                    Map<String, Object> row = new LinkedHashMap<>();
+                    row.put("sequence", route.processSeq); row.put("processCode", route.processCode); row.put("processName", route.processName);
+                    row.put("requiredEquipmentType", route.workCenter); return row;
+                }).toList();
     }
 
     private Map<String, Object> analysisView(MesKittingAnalysis analysis) {
