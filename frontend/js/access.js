@@ -142,6 +142,7 @@ function roleNeedsLineScope(role) {
 function roleNeedsWarehouseScope(role) {
     const code = String(role?.roleCode || "");
     const scope = String(role?.dataScope || "").toUpperCase();
+    if (code === "WORKSHOP_MANAGER") return false;
     return scope === "WAREHOUSE" || scope === "CUSTOM" || code.includes("WAREHOUSE");
 }
 
@@ -170,12 +171,12 @@ async function showRoleAdjustmentDialog(user, roles) {
                     </select>
                 </label>
             </div>
-            <div class="role-scope-section">
+            <div class="role-scope-section hidden">
                 <h4>选择产线</h4>
                 <p class="scope-hint">当前角色需要产线范围时选择。</p>
                 <div id="role-adjust-lines" class="scope-checkbox-grid"></div>
             </div>
-            <div class="role-scope-section">
+            <div class="role-scope-section hidden">
                 <h4>选择仓库</h4>
                 <p class="scope-hint">当前角色需要仓库范围时选择。</p>
                 <div id="role-adjust-warehouses" class="scope-checkbox-grid"></div>
@@ -197,8 +198,10 @@ async function showRoleAdjustmentDialog(user, roles) {
 
     const updateScopeVisibility = () => {
         const selectedRole = availableRoles.find(role => role.roleCode === roleSelect.value);
-        const needsLine = roleNeedsLineScope(selectedRole);
-        const needsWarehouse = roleNeedsWarehouseScope(selectedRole);
+        const hasDepartment = Boolean(departmentSelect.value);
+        const hasRole = Boolean(selectedRole);
+        const needsLine = hasDepartment && hasRole && roleNeedsLineScope(selectedRole);
+        const needsWarehouse = hasDepartment && hasRole && roleNeedsWarehouseScope(selectedRole);
         lineSection?.classList.toggle("hidden", !needsLine);
         warehouseSection?.classList.toggle("hidden", !needsWarehouse);
         if (!needsLine) mask.querySelectorAll(`[data-scope-type="line"]`).forEach(input => { input.checked = false; });

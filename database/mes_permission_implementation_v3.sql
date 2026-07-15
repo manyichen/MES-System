@@ -119,7 +119,7 @@ WITH grants(role_code, permission_code) AS (
     ('PMC_PLANNER','master.read'), ('PMC_PLANNER','process.read'),
 
     ('WORKSHOP_MANAGER','dashboard.read'), ('WORKSHOP_MANAGER','planning.read'),
-    ('WORKSHOP_MANAGER','planning.work_order.dispatch'), ('WORKSHOP_MANAGER','warehouse.read'),
+    ('WORKSHOP_MANAGER','planning.work_order.dispatch'),
     ('WORKSHOP_MANAGER','production.read'),
     ('WORKSHOP_MANAGER','production.report.review'), ('WORKSHOP_MANAGER','production.wage.read_summary'),
     ('WORKSHOP_MANAGER','equipment.read'),
@@ -220,10 +220,10 @@ WHERE rp.role_id = r.role_id
   AND r.role_code = 'SYSTEM_ADMIN'
   AND (p.module_code NOT IN ('system', 'dashboard') OR p.permission_code = 'user.update_role');
 
--- Workshop managers should not enter quality management or product trace modules.
+-- Workshop managers should not enter warehouse logistics, quality management, or product trace modules.
 DELETE FROM mes_role_permission rp
 USING mes_role r, mes_permission p
 WHERE rp.role_id = r.role_id
   AND rp.permission_id = p.permission_id
   AND r.role_code = 'WORKSHOP_MANAGER'
-  AND p.permission_code IN ('quality.read', 'trace.read');
+  AND (p.permission_code LIKE 'warehouse.%' OR p.permission_code IN ('quality.read', 'trace.read'));

@@ -41,7 +41,7 @@
     <div class="sidebar-brand"><span class="brand-mark"><img src="assets/mes-icon.svg" alt=""></span><div><strong>双星轮胎 MES</strong><small>制造执行系统</small></div></div>
     <nav>
         <span class="nav-group">首页</span><button data-tab="dashboard" class="active"><i>⌂</i><span>工作台</span></button><button data-tab="profile"><i>◎</i><span>个人主页</span></button>
-        <span class="nav-group">生产业务</span><button data-tab="planning" data-permission="planning.read|planning.work_order.read"><i>▤</i><span>计划与工单</span></button><button data-tab="warehouse" data-permission="warehouse.read|warehouse.requisition.create"><i>▦</i><span>仓储物流</span></button><button data-tab="production" data-permission="production.read"><i>◉</i><span>生产报工</span></button><button data-tab="quality" data-permission="quality.read"><i>◇</i><span>质量管理</span></button><button data-tab="equipment" data-permission="equipment.read|equipment.fault.report"><i>⚙</i><span>设备维护</span></button>
+        <span class="nav-group">生产业务</span><button data-tab="planning" data-permission="planning.read|planning.work_order.read"><i>▤</i><span>计划与工单</span></button><button data-tab="warehouse" data-permission="warehouse.read|warehouse.requisition.create" data-deny-role="WORKSHOP_MANAGER"><i>▦</i><span>仓储物流</span></button><button data-tab="production" data-permission="production.read"><i>◉</i><span>生产报工</span></button><button data-tab="quality" data-permission="quality.read"><i>◇</i><span>质量管理</span></button><button data-tab="equipment" data-permission="equipment.read|equipment.fault.report"><i>⚙</i><span>设备维护</span></button>
         <span class="nav-group">综合管理</span><button data-tab="process" data-permission="process.read"><i>⌘</i><span>工艺管理</span></button><button data-tab="trace" data-permission="trace.read" data-deny-role="WORKSHOP_MANAGER"><i>⌁</i><span>产品追溯</span></button><button data-tab="feedback" data-permission="feedback.read|feedback.create" data-deny-role="PRODUCTION_OPERATOR"><i>✦</i><span>管理反馈</span></button>
         <span class="nav-group">系统管理</span><button data-tab="systemOps" data-permission="system.health.read"><i>⚙</i><span>系统运维</span></button><button data-tab="audit" data-permission="audit.read"><i>◎</i><span>审计日志</span></button><button data-tab="system" data-permission="user.read|role.read"><i>♙</i><span>用户与权限</span></button>
     </nav>
@@ -166,7 +166,7 @@
         </div>
     </section>
 
-    <section id="warehouse" class="panel">
+    <section id="warehouse" class="panel" data-deny-role="WORKSHOP_MANAGER">
         <header>
             <h2>仓储物流</h2>
             <div class="actions">

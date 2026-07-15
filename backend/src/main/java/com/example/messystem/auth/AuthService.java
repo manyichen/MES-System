@@ -198,6 +198,9 @@ public class AuthService {
             permissions.add("master.read");
             permissions.add("warehouse.read");
         }
+        if (roles.contains("WORKSHOP_MANAGER")) {
+            permissions.removeIf(permission -> permission.startsWith("warehouse."));
+        }
         Set<Long> lineIds = loadScopeIds(connection, "mes_user_line_scope", "line_id", user.userId);
         Set<Long> warehouseIds = loadScopeIds(connection, "mes_user_warehouse_scope", "warehouse_id", user.userId);
         return new AuthenticatedUser(user, roles, permissions, lineIds, warehouseIds, expiresAt);

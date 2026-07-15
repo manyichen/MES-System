@@ -183,7 +183,9 @@ function initializeApp() {
     if (typeof loadDashboard === "function") loadDashboard();
     if (typeof loadProfile === "function") loadProfile();
     if ((hasPermission("planning.read") || hasPermission("planning.work_order.read")) && typeof refreshPlanning === "function") refreshPlanning();
-    if ((hasPermission("warehouse.read") || (hasRole("PRODUCTION_OPERATOR") && hasPermission("warehouse.requisition.create"))) && typeof refreshWarehouse === "function") refreshWarehouse();
+    if (!hasRole("WORKSHOP_MANAGER")
+            && (hasPermission("warehouse.read") || (hasRole("PRODUCTION_OPERATOR") && hasPermission("warehouse.requisition.create")))
+            && typeof refreshWarehouse === "function") refreshWarehouse();
     if (hasPermission("production.read") && typeof refreshProduction === "function") refreshProduction();
     if (hasPermission("quality.read") && typeof loadQuality === "function") loadQuality();
     if (hasPermission("equipment.read") && typeof loadEquipment === "function") loadEquipment();
