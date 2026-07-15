@@ -23,8 +23,10 @@ final class AuthorizationPolicy {
             rule("POST", "work-orders", "planning.work_order.create"),
             rule("POST", "work-orders/\\d+/dispatch", "planning.work_order.dispatch"),
             rule("POST", "work-orders/\\d+/receive", "planning.work_order.receive"),
+            rule("POST", "work-orders/\\d+/reject", "planning.work_order.receive"),
 
-            any("GET", "materials(?:/.*)?", "warehouse.read", "master.read"),
+            any("GET", "materials(?:/.*)?", "warehouse.read", "warehouse.requisition.create", "master.read"),
+            any("GET", "warehouses(?:/\\d+)?", "warehouse.read", "warehouse.requisition.create"),
             rule("GET", "(?:warehouses|warehouse-locations|inventory|requisitions|picking-tasks|robots|robot-delivery-tasks)(?:/.*)?", "warehouse.read"),
             rule("POST|PUT|DELETE", "(?:materials|warehouses|warehouse-locations|robots)(?:/.*)?", "warehouse.master.manage"),
             rule("POST|PUT|DELETE", "warehouses/locations(?:/.*)?", "warehouse.master.manage"),

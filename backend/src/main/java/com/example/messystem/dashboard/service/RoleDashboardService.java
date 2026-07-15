@@ -58,7 +58,6 @@ public class RoleDashboardService {
             case "WORKSHOP_MANAGER" -> {
                 card(cards, "active_work_orders", "本车间执行工单", count(c, "select count(*) from mes_work_order wo where wo.work_order_status in ('DISPATCHED','RECEIVED','IN_PROGRESS') and wo.line_id in (select line_id from mes_user_line_scope where user_id = ?)", userId), "单", "normal", "planning");
                 card(cards, "report_review", "待审核报工", count(c, "select count(*) from mes_work_report r join mes_work_order wo on wo.work_order_id = r.work_order_id where r.report_status = 'SUBMITTED' and wo.line_id in (select line_id from mes_user_line_scope where user_id = ?)", userId), "单", "warning", "production");
-                card(cards, "material_request", "待协调领料", count(c, "select count(*) from mes_material_requisition r join mes_work_order wo on wo.work_order_id = r.work_order_id where r.request_status in ('CREATED','APPROVED') and wo.line_id in (select line_id from mes_user_line_scope where user_id = ?)", userId), "单", "normal", "warehouse");
                 card(cards, "equipment_fault", "影响生产的报修", count(c, "select count(*) from mes_equipment_repair_report r join mes_equipment e on e.equipment_id = r.equipment_id where r.repair_status = 'REPORTED' and e.line_id in (select line_id from mes_user_line_scope where user_id = ?)", userId), "单", "danger", "equipment");
             }
             case "PRODUCTION_OPERATOR" -> {
@@ -234,10 +233,10 @@ public class RoleDashboardService {
                     modules("dashboard", "planning", "warehouse", "quality", "equipment", "trace", "feedback"),
                     "不能提交或审核生产报工", "不能修改库存", "不能审核质检结论或维修结果", "不能管理用户");
             case "WORKSHOP_MANAGER" -> profile(role, "车间管理员", "仅明确分配的产线，以及这些产线关联的工单、报工和设备数据",
-                    modules("dashboard", "planning", "warehouse", "production", "equipment", "trace", "feedback"),
+                    modules("dashboard", "planning", "production", "equipment", "trace", "feedback"),
                     "不能创建客户订单或最终排产", "不能修改库存", "不能审核质检结果", "不能管理用户");
             case "PRODUCTION_OPERATOR" -> profile(role, "生产操作工", "本人、本人被派工单和本人报工/计件记录",
-                    modules("dashboard", "planning", "production", "equipment", "feedback"),
+                    modules("dashboard", "planning", "production", "equipment"),
                     "不能查看其他员工报工和工资", "不能派发工单或审核报工", "不能修改库存、质检结论和设备台账", "不能查看用户信息");
             case "WAREHOUSE_ADMIN" -> profile(role, "仓库管理员", "仅明确分配的仓库、库位、库存、领料、拣货、机器人和配送数据",
                     modules("dashboard", "planning", "warehouse", "trace", "feedback"),

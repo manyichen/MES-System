@@ -22,7 +22,7 @@ public class ProductionDao {
     public List<MesWorkReport> listWorkReports() throws SQLException {
         String sql = """
                 select report_id, report_no, work_order_id, batch_no, operator_id, report_qty,
-                       qualified_qty, defect_qty, work_hours, report_time, report_status
+                       qualified_qty, defect_qty, work_hours, report_time, report_status, remark, reject_reason
                 from mes_work_report
                 order by report_id asc
                 """;
@@ -40,7 +40,7 @@ public class ProductionDao {
     public List<MesWorkReport> listWorkReportsByOperator(long operatorId) throws SQLException {
         String sql = """
                 select report_id, report_no, work_order_id, batch_no, operator_id, report_qty,
-                       qualified_qty, defect_qty, work_hours, report_time, report_status
+                       qualified_qty, defect_qty, work_hours, report_time, report_status, remark, reject_reason
                 from mes_work_report where operator_id = ? order by report_id asc
                 """;
         try (Connection connection = Db.getConnection();
@@ -58,10 +58,10 @@ public class ProductionDao {
         String sql = """
                 insert into mes_work_report
                     (report_no, work_order_id, batch_no, operator_id, report_qty, qualified_qty,
-                     defect_qty, work_hours, report_status)
-                values (?, ?, ?, ?, ?, ?, ?, ?, 'SUBMITTED')
+                     defect_qty, work_hours, report_status, remark)
+                values (?, ?, ?, ?, ?, ?, ?, ?, 'SUBMITTED', ?)
                 returning report_id, report_no, work_order_id, batch_no, operator_id, report_qty,
-                          qualified_qty, defect_qty, work_hours, report_time, report_status
+                          qualified_qty, defect_qty, work_hours, report_time, report_status, remark, reject_reason
         """;
         try (Connection connection = Db.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -77,6 +77,7 @@ public class ProductionDao {
             statement.setInt(6, nvl(report.qualifiedQty));
             statement.setInt(7, nvl(report.defectQty));
             statement.setBigDecimal(8, report.workHours == null ? BigDecimal.ZERO : report.workHours);
+            statement.setString(9, report.remark);
             try (ResultSet rs = statement.executeQuery()) {
                 rs.next();
                 return mapWorkReport(rs);
@@ -87,7 +88,7 @@ public class ProductionDao {
     public MesWorkReport findWorkReport(long reportId) throws SQLException {
         String sql = """
                 select report_id, report_no, work_order_id, batch_no, operator_id, report_qty,
-                       qualified_qty, defect_qty, work_hours, report_time, report_status
+                       qualified_qty, defect_qty, work_hours, report_time, report_status, remark, reject_reason
                 from mes_work_report
                 where report_id = ?
                 """;
@@ -114,10 +115,12 @@ public class ProductionDao {
                     qualified_qty = ?,
                     defect_qty = ?,
                     work_hours = ?,
-                    report_status = ?
+                    report_status = ?,
+                    remark = ?,
+                    reject_reason = case when ? = 'SUBMITTED' then null else reject_reason end
                 where report_id = ?
                 returning report_id, report_no, work_order_id, batch_no, operator_id, report_qty,
-                          qualified_qty, defect_qty, work_hours, report_time, report_status
+                          qualified_qty, defect_qty, work_hours, report_time, report_status, remark, reject_reason
                 """;
         try (Connection connection = Db.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -138,8 +141,11 @@ public class ProductionDao {
             statement.setInt(6, report.qualifiedQty == null ? current.qualifiedQty : report.qualifiedQty);
             statement.setInt(7, report.defectQty == null ? current.defectQty : report.defectQty);
             statement.setBigDecimal(8, report.workHours == null ? current.workHours : report.workHours);
-            statement.setString(9, defaultText(report.reportStatus, current.reportStatus));
-            statement.setLong(10, reportId);
+            String nextStatus = defaultText(report.reportStatus, current.reportStatus);
+            statement.setString(9, nextStatus);
+            statement.setString(10, defaultText(report.remark, current.remark));
+            statement.setString(11, nextStatus);
+            statement.setLong(12, reportId);
             try (ResultSet rs = statement.executeQuery()) {
                 if (!rs.next()) {
                     throw new NotFoundException("work report not found");
@@ -162,7 +168,7 @@ public class ProductionDao {
     public List<MesWorkReport> listWorkReportsByWorkOrder(long workOrderId) throws SQLException {
         String sql = """
                 select report_id, report_no, work_order_id, batch_no, operator_id, report_qty,
-                       qualified_qty, defect_qty, work_hours, report_time, report_status
+                       qualified_qty, defect_qty, work_hours, report_time, report_status, remark, reject_reason
                 from mes_work_report
                 where work_order_id = ?
                 order by report_id asc
@@ -186,7 +192,7 @@ public class ProductionDao {
                 set report_status = 'APPROVED'
                 where report_id = ? and report_status = 'SUBMITTED'
                 returning report_id, report_no, work_order_id, batch_no, operator_id, report_qty,
-                          qualified_qty, defect_qty, work_hours, report_time, report_status
+                          qualified_qty, defect_qty, work_hours, report_time, report_status, remark, reject_reason
                 """;
         String wageSql = """
                 insert into mes_piecework_wage
@@ -231,16 +237,22 @@ public class ProductionDao {
     }
 
     public MesWorkReport rejectWorkReport(long reportId) throws SQLException {
+        return rejectWorkReport(reportId, null);
+    }
+
+    public MesWorkReport rejectWorkReport(long reportId, String reason) throws SQLException {
         String sql = """
                 update mes_work_report
-                set report_status = 'REJECTED'
+                set report_status = 'REJECTED',
+                    reject_reason = ?
                 where report_id = ? and report_status = 'SUBMITTED'
                 returning report_id, report_no, work_order_id, batch_no, operator_id, report_qty,
-                          qualified_qty, defect_qty, work_hours, report_time, report_status
+                          qualified_qty, defect_qty, work_hours, report_time, report_status, remark, reject_reason
                 """;
         try (Connection connection = Db.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setLong(1, reportId);
+            statement.setString(1, reason);
+            statement.setLong(2, reportId);
             try (ResultSet rs = statement.executeQuery()) {
                 if (!rs.next()) {
                     ensureReportExistsAndSubmitted(connection, reportId);
@@ -272,7 +284,7 @@ public class ProductionDao {
     public List<MesWorkReport> listWorkReportsByWorkOrderAndOperator(long workOrderId, long operatorId) throws SQLException {
         String sql = """
                 select report_id, report_no, work_order_id, batch_no, operator_id, report_qty,
-                       qualified_qty, defect_qty, work_hours, report_time, report_status
+                       qualified_qty, defect_qty, work_hours, report_time, report_status, remark, reject_reason
                 from mes_work_report where work_order_id = ? and operator_id = ? order by report_id asc
                 """;
         try (Connection connection = Db.getConnection();
@@ -495,6 +507,8 @@ public class ProductionDao {
         item.workHours = rs.getBigDecimal("work_hours");
         item.reportTime = getLocalDateTime(rs, "report_time");
         item.reportStatus = rs.getString("report_status");
+        item.remark = rs.getString("remark");
+        item.rejectReason = rs.getString("reject_reason");
         return item;
     }
 

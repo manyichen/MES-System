@@ -1,8 +1,12 @@
+let equipmentCache = [];
+
 async function loadEquipment(options = {}) {
     try {
         const equipment = await getJson("/equipment");
-        const equipmentById = new Map(equipment.map(item => [String(item.equipmentId), item]));
-        renderTable("equipment-table", equipment, [
+        equipmentCache = Array.isArray(equipment) ? equipment : [];
+        const equipmentById = new Map(equipmentCache.map(item => [String(item.equipmentId), item]));
+        refreshRepairEquipmentOptions(equipmentCache);
+        renderTable("equipment-table", equipmentCache, [
             { key: "equipmentId", label: "ID" },
             { key: "equipmentCode", label: "编码" },
             { key: "equipmentName", label: "名称" },
@@ -10,13 +14,16 @@ async function loadEquipment(options = {}) {
             { key: "lineId", label: "产线" },
             { key: "equipmentStatus", label: "状态", render: row => equipmentStatusText(row.equipmentStatus) },
             { key: "enabled", label: "启用", render: row => equipmentEnabledText(row) }
-        ], equipmentStatusActions());
+        ], [
+            { name: "repair-equipment", label: "报修", idKey: "equipmentId", permission: "equipment.fault.report", visible: row => row.equipmentStatus === "FAULT", handler: openRepairReportDialog },
+            ...equipmentStatusActions()
+        ]);
 
         const repairs = await getJson("/equipment-repair-reports");
         renderTable("repair-table", repairs, [
             { key: "repairReportId", label: "ID" },
             { key: "repairReportNo", label: "报修单" },
-            { key: "equipmentId", label: "设备" },
+            { key: "equipmentId", label: "故障设备", render: row => equipmentDisplay(row.equipmentId, equipmentById) },
             { key: "faultLevel", label: "级别", render: row => levelText(row.faultLevel) },
             { key: "faultDesc", label: "描述" },
             { key: "repairStatus", label: "状态", render: row => repairStatusText(row.repairStatus) }
@@ -65,6 +72,74 @@ async function loadMaintenancePlans(options = {}) {
     }
 }
 
+function openRepairReportDialog(id) {
+    const equipment = equipmentCache.find(item => Number(item.equipmentId) === Number(id));
+    if (!equipment) {
+        showMessage("未找到设备信息，请刷新后重试", "error");
+        return;
+    }
+    const mask = document.createElement("div");
+    mask.className = "modal-mask";
+    mask.innerHTML = `
+        <div class="modal-card equipment-repair-modal">
+            <h3>填写报修单</h3>
+            <form id="equipmentRepairDialogForm" class="equipment-repair-form">
+                <input type="hidden" name="equipmentId" value="${escapeHtml(equipment.equipmentId)}">
+                <div class="edit-summary">
+                    ${equipmentDialogField("设备编码", equipment.equipmentCode)}
+                    ${equipmentDialogField("设备名称", equipment.equipmentName)}
+                    ${equipmentDialogField("设备类型", typeText(equipment.equipmentType))}
+                    ${equipmentDialogField("当前状态", equipmentStatusText(equipment.equipmentStatus))}
+                </div>
+                <label>报修单号 <input name="repairReportNo" value="${escapeHtml(`REP-${Date.now()}`)}" required></label>
+                <label>工单ID <input name="workOrderId" type="number" min="1"></label>
+                <label>故障级别
+                    <select name="faultLevel">
+                        <option value="HIGH" selected>高</option>
+                        <option value="MEDIUM">中</option>
+                        <option value="LOW">低</option>
+                        <option value="URGENT">紧急</option>
+                        <option value="CRITICAL">严重</option>
+                    </select>
+                </label>
+                <label class="wide-field">故障描述 <textarea name="faultDesc" rows="3" required placeholder="请填写设备故障现象">设备异常停机</textarea></label>
+                <div class="modal-actions">
+                    <button type="button" id="equipmentRepairCancel">取消</button>
+                    <button type="submit">提交报修</button>
+                </div>
+            </form>
+        </div>`;
+    document.body.appendChild(mask);
+    mask.querySelector("#equipmentRepairCancel")?.addEventListener("click", () => mask.remove());
+    mask.addEventListener("click", event => {
+        if (event.target === mask) mask.remove();
+    });
+    mask.querySelector("#equipmentRepairDialogForm")?.addEventListener("submit", async event => {
+        event.preventDefault();
+        try {
+            await submitRepairReport(event.target);
+            mask.remove();
+        } catch (error) {
+            showMessage(toChineseError(error), "error");
+        }
+    });
+}
+
+async function submitRepairReport(form) {
+    const payload = { ...formToObject(form), reportTime: nowIsoLocal(), repairStatus: "REPORTED" };
+    if (!payload.repairReportNo || payload.repairReportNo === "REP-DEMO-001") {
+        payload.repairReportNo = `REP-${Date.now()}`;
+    }
+    await postJson("/equipment-repair-reports", payload);
+    showMessage("报修单已提交", "ok");
+    await loadEquipment();
+    await loadDashboard();
+}
+
+function equipmentDialogField(label, value) {
+    return `<div class="detail-row"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value ?? "-")}</strong></div>`;
+}
+
 async function updateEquipmentStatus(id, status) {
     try {
         await postJson(`/equipment/${id}/status`, { status });
@@ -100,6 +175,27 @@ function equipmentDisplay(equipmentId, equipmentById) {
     const equipment = equipmentById.get(String(equipmentId));
     if (!equipment) return equipmentId || "-";
     return `${equipment.equipmentName}（${equipment.equipmentCode}）`;
+}
+
+function refreshRepairEquipmentOptions(equipment) {
+    const select = document.getElementById("repairEquipmentSelect");
+    if (!select) return;
+    const currentValue = select.value;
+    select.innerHTML = "";
+    if (!equipment.length) {
+        const option = document.createElement("option");
+        option.value = "";
+        option.textContent = "暂无可报修设备";
+        select.appendChild(option);
+        return;
+    }
+    for (const item of equipment) {
+        const option = document.createElement("option");
+        option.value = item.equipmentId;
+        option.textContent = `${item.equipmentName}（${item.equipmentCode}） / ${equipmentStatusText(item.equipmentStatus)}`;
+        select.appendChild(option);
+    }
+    select.value = equipment.some(item => String(item.equipmentId) === currentValue) ? currentValue : (equipment[0]?.equipmentId || "");
 }
 
 async function approveRepair(id) {
@@ -240,15 +336,8 @@ function bindEquipmentEvents() {
     document.getElementById("repair-form")?.addEventListener("submit", async event => {
         event.preventDefault();
         try {
-            const payload = { ...formToObject(event.target), reportTime: nowIsoLocal(), repairStatus: "REPORTED" };
-            if (payload.repairReportNo === "REP-DEMO-001") {
-                payload.repairReportNo = `REP-${Date.now()}`;
-            }
-            await postJson("/equipment-repair-reports", payload);
-            showMessage("报修单已提交，设备状态已自动变为故障", "ok");
+            await submitRepairReport(event.target);
             event.target.reset();
-            await loadEquipment();
-            await loadDashboard();
         } catch (error) {
             showMessage(toChineseError(error), "error");
         }

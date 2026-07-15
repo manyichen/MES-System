@@ -89,18 +89,32 @@ public class SystemMaintenanceService {
 
     public int revokeSession(long sessionId, long actorUserId) {
         if (sessionId <= 0) throw new BadRequestException("会话ID不正确");
-        try (Connection connection = Db.getConnection();
-                PreparedStatement statement = connection.prepareStatement("""
+        try (Connection connection = Db.getConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                Long userId = findSessionUserId(connection, sessionId);
+                if (userId == null) throw new BadRequestException("会话不存在或已失效");
+                if (userId == actorUserId) throw new BadRequestException("不能强制下线当前自己的会话");
+                int updated;
+                try (PreparedStatement statement = connection.prepareStatement("""
                         update mes_user_session
                         set revoked_at = current_timestamp
-                        where session_id = ?
-                          and user_id <> ?
+                        where user_id = ?
                           and revoked_at is null
                           and expires_at > current_timestamp
                         """)) {
-            statement.setLong(1, sessionId);
-            statement.setLong(2, actorUserId);
-            return statement.executeUpdate();
+                    statement.setLong(1, userId);
+                    updated = statement.executeUpdate();
+                }
+                lockUser(connection, userId);
+                connection.commit();
+                return updated;
+            } catch (SQLException | RuntimeException ex) {
+                connection.rollback();
+                throw ex;
+            } finally {
+                connection.setAutoCommit(true);
+            }
         } catch (SQLException ex) {
             throw new IllegalStateException("database operation failed: " + ex.getMessage(), ex);
         }
@@ -109,16 +123,29 @@ public class SystemMaintenanceService {
     public int revokeUserSessions(long userId, long actorUserId) {
         if (userId <= 0) throw new BadRequestException("用户ID不正确");
         if (userId == actorUserId) throw new BadRequestException("不能撤销当前自己的登录会话");
-        try (Connection connection = Db.getConnection();
-                PreparedStatement statement = connection.prepareStatement("""
+        try (Connection connection = Db.getConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                int updated;
+                try (PreparedStatement statement = connection.prepareStatement("""
                         update mes_user_session
                         set revoked_at = current_timestamp
                         where user_id = ?
                           and revoked_at is null
                           and expires_at > current_timestamp
                         """)) {
-            statement.setLong(1, userId);
-            return statement.executeUpdate();
+                    statement.setLong(1, userId);
+                    updated = statement.executeUpdate();
+                }
+                lockUser(connection, userId);
+                connection.commit();
+                return updated;
+            } catch (SQLException | RuntimeException ex) {
+                connection.rollback();
+                throw ex;
+            } finally {
+                connection.setAutoCommit(true);
+            }
         } catch (SQLException ex) {
             throw new IllegalStateException("database operation failed: " + ex.getMessage(), ex);
         }
@@ -135,6 +162,34 @@ public class SystemMaintenanceService {
             return statement.executeUpdate();
         } catch (SQLException ex) {
             throw new IllegalStateException("database operation failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    private static Long findSessionUserId(Connection connection, long sessionId) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement("""
+                select user_id
+                from mes_user_session
+                where session_id = ?
+                  and revoked_at is null
+                  and expires_at > current_timestamp
+                """)) {
+            statement.setLong(1, sessionId);
+            try (ResultSet rs = statement.executeQuery()) {
+                return rs.next() ? rs.getLong("user_id") : null;
+            }
+        }
+    }
+
+    private static void lockUser(Connection connection, long userId) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement("""
+                update mes_user
+                set locked_until = current_timestamp + interval '100 years',
+                    failed_login_count = 0,
+                    updated_at = current_timestamp
+                where user_id = ?
+                """)) {
+            statement.setLong(1, userId);
+            statement.executeUpdate();
         }
     }
 

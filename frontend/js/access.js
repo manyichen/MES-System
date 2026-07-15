@@ -142,6 +142,7 @@ function roleNeedsLineScope(role) {
 function roleNeedsWarehouseScope(role) {
     const code = String(role?.roleCode || "");
     const scope = String(role?.dataScope || "").toUpperCase();
+    if (code === "WORKSHOP_MANAGER") return false;
     return scope === "WAREHOUSE" || scope === "CUSTOM" || code.includes("WAREHOUSE");
 }
 
@@ -170,12 +171,12 @@ async function showRoleAdjustmentDialog(user, roles) {
                     </select>
                 </label>
             </div>
-            <div class="role-scope-section">
+            <div class="role-scope-section hidden">
                 <h4>选择产线</h4>
                 <p class="scope-hint">当前角色需要产线范围时选择。</p>
                 <div id="role-adjust-lines" class="scope-checkbox-grid"></div>
             </div>
-            <div class="role-scope-section">
+            <div class="role-scope-section hidden">
                 <h4>选择仓库</h4>
                 <p class="scope-hint">当前角色需要仓库范围时选择。</p>
                 <div id="role-adjust-warehouses" class="scope-checkbox-grid"></div>
@@ -197,8 +198,10 @@ async function showRoleAdjustmentDialog(user, roles) {
 
     const updateScopeVisibility = () => {
         const selectedRole = availableRoles.find(role => role.roleCode === roleSelect.value);
-        const needsLine = roleNeedsLineScope(selectedRole);
-        const needsWarehouse = roleNeedsWarehouseScope(selectedRole);
+        const hasDepartment = Boolean(departmentSelect.value);
+        const hasRole = Boolean(selectedRole);
+        const needsLine = hasDepartment && hasRole && roleNeedsLineScope(selectedRole);
+        const needsWarehouse = hasDepartment && hasRole && roleNeedsWarehouseScope(selectedRole);
         lineSection?.classList.toggle("hidden", !needsLine);
         warehouseSection?.classList.toggle("hidden", !needsWarehouse);
         if (!needsLine) mask.querySelectorAll(`[data-scope-type="line"]`).forEach(input => { input.checked = false; });
@@ -422,14 +425,14 @@ function hideSystemMaintenanceDetail() {
 
 function sessionActions() {
     return [
-        { name: "revoke-session", label: "强制下线", idKey: "sessionId", permission: "system.health.read", visible: row => Number(row.userId) !== Number(getCurrentSession()?.user?.userId), handler: revokeSession }
+        { name: "revoke-session", label: "下线并锁定", idKey: "sessionId", permission: "system.health.read", visible: row => Number(row.userId) !== Number(getCurrentSession()?.user?.userId), handler: revokeSession }
     ];
 }
 
 function lockedUserActions() {
     return [
         { name: "unlock-user", label: "解除锁定", idKey: "userId", permission: "system.health.read", handler: unlockUser },
-        { name: "revoke-user-sessions", label: "撤销会话", idKey: "userId", permission: "system.health.read", visible: row => Number(row.userId) !== Number(getCurrentSession()?.user?.userId), handler: revokeUserSessions }
+        { name: "revoke-user-sessions", label: "撤销并锁定", idKey: "userId", permission: "system.health.read", visible: row => Number(row.userId) !== Number(getCurrentSession()?.user?.userId), handler: revokeUserSessions }
     ];
 }
 
@@ -442,7 +445,7 @@ function syncLogActions() {
 function failedLoginActions() {
     return [
         { name: "unlock-login-user", label: "解除锁定", idKey: "actorUserId", permission: "system.health.read", visible: row => Boolean(row.actorUserId), handler: unlockUser },
-        { name: "revoke-login-user-sessions", label: "撤销会话", idKey: "actorUserId", permission: "system.health.read", visible: row => Boolean(row.actorUserId) && Number(row.actorUserId) !== Number(getCurrentSession()?.user?.userId), handler: revokeUserSessions }
+        { name: "revoke-login-user-sessions", label: "撤销并锁定", idKey: "actorUserId", permission: "system.health.read", visible: row => Boolean(row.actorUserId) && Number(row.actorUserId) !== Number(getCurrentSession()?.user?.userId), handler: revokeUserSessions }
     ];
 }
 
@@ -464,13 +467,13 @@ async function runSystemMaintenanceAction(path, message) {
 }
 
 async function revokeSession(sessionId) {
-    if (!window.confirm("确定要强制下线这个会话吗？")) return;
-    await runSystemMaintenanceAction(`/access/system-maintenance/sessions/${sessionId}/revoke`, "登录会话已强制下线");
+    if (!window.confirm("确定要强制下线并锁定这个账号吗？锁定后需要管理员解除锁定才能再次登录。")) return;
+    await runSystemMaintenanceAction(`/access/system-maintenance/sessions/${sessionId}/revoke`, "登录会话已强制下线，账号已锁定");
 }
 
 async function revokeUserSessions(userId) {
-    if (!window.confirm("确定要撤销该用户的所有有效会话吗？")) return;
-    await runSystemMaintenanceAction(`/access/system-maintenance/users/${userId}/revoke-sessions`, "用户有效会话已撤销");
+    if (!window.confirm("确定要撤销该用户的所有有效会话并锁定账号吗？锁定后需要管理员解除锁定才能再次登录。")) return;
+    await runSystemMaintenanceAction(`/access/system-maintenance/users/${userId}/revoke-sessions`, "用户有效会话已撤销，账号已锁定");
 }
 
 async function cleanupExpiredSessions() {

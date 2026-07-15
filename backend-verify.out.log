@@ -1,0 +1,14 @@
+7月 14, 2026 5:14:06 下午 org.apache.coyote.AbstractProtocol init
+信息: Initializing ProtocolHandler ["http-nio-8080"]
+7月 14, 2026 5:14:06 下午 org.apache.catalina.core.StandardService startInternal
+信息: Starting service [Tomcat]
+7月 14, 2026 5:14:06 下午 org.apache.catalina.core.StandardEngine startInternal
+信息: Starting Servlet engine: [Apache Tomcat/10.1.42]
+7月 14, 2026 5:14:06 下午 org.glassfish.jersey.server.wadl.WadlFeature configure
+警告: JAXBContext implementation could not be found. WADL feature is disabled.
+7月 14, 2026 5:14:07 下午 org.apache.coyote.AbstractProtocol start
+信息: Starting ProtocolHandler ["http-nio-8080"]
+MES backend started: http://127.0.0.1:8080/
+Web root: E:\Projects\xiaoxueqishixun\chenlun\MES-System\frontend
+Listening on 127.0.0.1:8080
+Press Ctrl+C to stop.

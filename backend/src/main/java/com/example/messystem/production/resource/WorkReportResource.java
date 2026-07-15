@@ -79,10 +79,12 @@ public class WorkReportResource {
         try {
             AuthenticatedUser user = AuthFilter.currentUser(context);
             MesWorkReport current = service.getWorkReport(id);
-            if (!user.user.userId.equals(current.operatorId) || !"SUBMITTED".equals(current.reportStatus)) {
-                throw new BadRequestException("只能修改本人尚未审核的报工单");
+            if (!user.user.userId.equals(current.operatorId)
+                    || (!"SUBMITTED".equals(current.reportStatus) && !"REJECTED".equals(current.reportStatus))) {
+                throw new BadRequestException("只能修改本人待审核或已驳回的报工单");
             }
             report.operatorId = user.user.userId;
+            report.reportStatus = "SUBMITTED";
             return ResourceSupport.action("报工单已更新", service.updateWorkReport(id, report));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
@@ -118,7 +120,7 @@ public class WorkReportResource {
             if (reason.isEmpty()) {
                 throw new BadRequestException("驳回理由不能为空");
             }
-            return ResourceSupport.action("报工单已驳回", service.rejectWorkReport(id));
+            return ResourceSupport.action("报工单已驳回", service.rejectWorkReport(id, reason));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }

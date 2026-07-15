@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 public class MesWorkOrderOperationLog {
     public Long logId;
     public Long workOrderId;
+    public String workOrderNo;
     public String operationType;
     public Long operatorId;
     public String fromStatus;

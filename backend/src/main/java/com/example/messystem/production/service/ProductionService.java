@@ -44,6 +44,10 @@ public class ProductionService {
                 || report.defectQty != null && report.defectQty < 0) {
             throw new BadRequestException("数量不能为负数");
         }
+        if (report.reportQty != null && report.qualifiedQty != null && report.defectQty != null
+                && report.qualifiedQty + report.defectQty > report.reportQty) {
+            throw new BadRequestException("合格数量与不合格数量之和不能超过报工数量");
+        }
         return database(() -> dao.updateWorkReport(reportId, report));
     }
 
@@ -66,7 +70,11 @@ public class ProductionService {
     }
 
     public MesWorkReport rejectWorkReport(long reportId) {
-        return database(() -> dao.rejectWorkReport(reportId));
+        return rejectWorkReport(reportId, null);
+    }
+
+    public MesWorkReport rejectWorkReport(long reportId, String reason) {
+        return database(() -> dao.rejectWorkReport(reportId, reason));
     }
 
     public List<MesPieceworkWage> listWages() {

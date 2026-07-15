@@ -96,6 +96,34 @@ public class WorkOrderResource {
         }
     }
 
+    @POST
+    @Path("/{id}/reject")
+    public Response reject(@PathParam("id") long id, @Context ContainerRequestContext context) {
+        try {
+            AuthenticatedUser user = AuthFilter.currentUser(context);
+            if (!user.hasRole("PRODUCTION_OPERATOR")) {
+                throw new BadRequestException("只有被派发的生产操作工才能拒绝工单");
+            }
+            return ResourceSupport.action("生产工单已拒绝接收",
+                    service.reject(id, user.user.userId));
+        } catch (RuntimeException ex) {
+            return ResourceSupport.handle(ex);
+        }
+    }
+
+    @GET
+    @Path("/logs")
+    public Response logs(@Context ContainerRequestContext context) {
+        try {
+            AuthenticatedUser user = AuthFilter.currentUser(context);
+            return ResourceSupport.ok(user.hasRole("PRODUCTION_OPERATOR")
+                    ? service.listLogsForOperator(user.user.userId)
+                    : service.listAllLogs());
+        } catch (RuntimeException ex) {
+            return ResourceSupport.handle(ex);
+        }
+    }
+
     @GET
     @Path("/{id}/logs")
     public Response logs(@PathParam("id") long id, @Context ContainerRequestContext context) {

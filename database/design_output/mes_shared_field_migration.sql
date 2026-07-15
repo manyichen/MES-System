@@ -13,5 +13,11 @@ CREATE INDEX IF NOT EXISTS idx_mes_work_order_batch_no
 ALTER TABLE mes_work_report
     ADD COLUMN IF NOT EXISTS batch_no VARCHAR(50);
 
+ALTER TABLE mes_work_report
+    ADD COLUMN IF NOT EXISTS remark VARCHAR(500);
+
+ALTER TABLE mes_work_report
+    ADD COLUMN IF NOT EXISTS reject_reason VARCHAR(500);
+
 ALTER TABLE mes_quality_inspection
     ADD COLUMN IF NOT EXISTS work_report_id BIGINT;

@@ -52,7 +52,10 @@ public class WorkOrderService {
                        assigned_to, accepted_by,
                        dispatch_time, receive_time, completed_time, created_at, updated_at
                 from mes_work_order
-                where assigned_to = ? or accepted_by = ?
+                where accepted_by = ?
+                   or (work_order_status in ('DISPATCHED', 'REJECTED')
+                       and accepted_by is null
+                       and assigned_to = ?)
                 order by work_order_id asc
                 """;
         try (Connection connection = Db.getConnection();
@@ -134,7 +137,13 @@ public class WorkOrderService {
                        assigned_to, accepted_by,
                        dispatch_time, receive_time, completed_time, created_at, updated_at
                 from mes_work_order
-                where work_order_id = ? and (assigned_to = ? or accepted_by = ?)
+                where work_order_id = ?
+                  and (
+                      accepted_by = ?
+                      or (work_order_status in ('DISPATCHED', 'REJECTED')
+                          and accepted_by is null
+                          and assigned_to = ?)
+                  )
                 """;
         try (Connection connection = Db.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -231,6 +240,87 @@ public class WorkOrderService {
     public MesWorkOrder receive(long workOrderId, Long operatorId) {
         return changeStatus(workOrderId, "DISPATCHED", "RECEIVED", "RECEIVE", operatorId, operatorId,
                 "生产工单已接收");
+    }
+
+    public MesWorkOrder reject(long workOrderId, Long operatorId) {
+        requireId(operatorId, "operatorId is required");
+        String sql = """
+                update mes_work_order
+                set work_order_status = 'REJECTED', updated_at = current_timestamp
+                where work_order_id = ? and work_order_status = 'DISPATCHED' and assigned_to = ?
+                returning work_order_id, work_order_no, task_id, product_id, line_id, process_id,
+                          planned_qty, actual_qty, priority_level, work_order_status, batch_no,
+                          assigned_to, accepted_by,
+                          dispatch_time, receive_time, completed_time, created_at, updated_at
+                """;
+        try (Connection connection = Db.getConnection()) {
+            connection.setAutoCommit(false);
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setLong(1, workOrderId);
+                statement.setLong(2, operatorId);
+                MesWorkOrder workOrder;
+                try (ResultSet rs = statement.executeQuery()) {
+                    if (!rs.next()) {
+                        getWorkOrder(workOrderId);
+                        throw new BadRequestException("只有被派发给本人且尚未接收的生产工单才能拒绝");
+                    }
+                    workOrder = mapWorkOrder(rs);
+                }
+                addLog(connection, workOrderId, "REJECT", "DISPATCHED", "REJECTED", operatorId, "生产操作工拒绝接收工单");
+                connection.commit();
+                return workOrder;
+            } catch (SQLException | RuntimeException ex) {
+                connection.rollback();
+                throw ex;
+            } finally {
+                connection.setAutoCommit(true);
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("database operation failed: " + e.getMessage(), e);
+        }
+    }
+
+    public List<MesWorkOrderOperationLog> listLogsForOperator(long userId) {
+        String sql = """
+                select l.operation_log_id, l.work_order_id, l.operation_type, l.before_status,
+                       l.after_status, l.operator_id, l.operation_reason, l.operation_time,
+                       w.work_order_no
+                from mes_work_order_operation_log l
+                left join mes_work_order w on w.work_order_id = l.work_order_id
+                where l.operator_id = ?
+                order by l.operation_time desc, l.operation_log_id desc
+                """;
+        try (Connection connection = Db.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, userId);
+            try (ResultSet rs = statement.executeQuery()) {
+                List<MesWorkOrderOperationLog> rows = new ArrayList<>();
+                while (rs.next()) rows.add(mapLogWithWorkOrder(rs));
+                return rows;
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("database operation failed: " + e.getMessage(), e);
+        }
+    }
+
+    public List<MesWorkOrderOperationLog> listAllLogs() {
+        String sql = """
+                select l.operation_log_id, l.work_order_id, l.operation_type, l.before_status,
+                       l.after_status, l.operator_id, l.operation_reason, l.operation_time,
+                       w.work_order_no
+                from mes_work_order_operation_log l
+                left join mes_work_order w on w.work_order_id = l.work_order_id
+                order by l.operation_time desc, l.operation_log_id desc
+                """;
+        try (Connection connection = Db.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet rs = statement.executeQuery()) {
+            List<MesWorkOrderOperationLog> rows = new ArrayList<>();
+            while (rs.next()) rows.add(mapLogWithWorkOrder(rs));
+            return rows;
+        } catch (SQLException e) {
+            throw new IllegalStateException("database operation failed: " + e.getMessage(), e);
+        }
     }
 
     public List<MesWorkOrderOperationLog> listLogs(long workOrderId) {
@@ -444,6 +534,12 @@ public class WorkOrderService {
         item.operatorId = rs.getLong("operator_id");
         item.remark = rs.getString("operation_reason");
         item.operatedAt = getLocalDateTime(rs, "operation_time");
+        return item;
+    }
+
+    private static MesWorkOrderOperationLog mapLogWithWorkOrder(ResultSet rs) throws SQLException {
+        MesWorkOrderOperationLog item = mapLog(rs);
+        item.workOrderNo = rs.getString("work_order_no");
         return item;
     }
 

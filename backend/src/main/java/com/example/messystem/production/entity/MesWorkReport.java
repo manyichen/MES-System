@@ -15,4 +15,6 @@ public class MesWorkReport {
     public BigDecimal workHours;
     public LocalDateTime reportTime;
     public String reportStatus;
+    public String remark;
+    public String rejectReason;
 }

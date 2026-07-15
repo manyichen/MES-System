@@ -196,13 +196,15 @@ function initializeApp() {
         return;
     }
     if ((hasPermission("planning.read") || hasPermission("planning.work_order.read")) && typeof refreshPlanning === "function") refreshPlanning();
-    if (hasPermission("warehouse.read") && typeof refreshWarehouse === "function") refreshWarehouse();
+    if (!hasRole("WORKSHOP_MANAGER")
+            && (hasPermission("warehouse.read") || (hasRole("PRODUCTION_OPERATOR") && hasPermission("warehouse.requisition.create")))
+            && typeof refreshWarehouse === "function") refreshWarehouse();
     if (hasPermission("production.read") && typeof refreshProduction === "function") refreshProduction();
     if (hasPermission("quality.read") && typeof loadQuality === "function") loadQuality();
     if (hasPermission("equipment.read") && typeof loadEquipment === "function") loadEquipment();
     if (hasPermission("process.read") && typeof loadProcess === "function") loadProcess();
     if (hasPermission("trace.read") && typeof loadTraces === "function") loadTraces();
-    if (hasPermission("feedback.read") && typeof loadFeedback === "function") loadFeedback(1);
+    if (hasPermission("feedback.read") && !hasRole("PRODUCTION_OPERATOR") && typeof loadFeedback === "function") loadFeedback(1);
     if (typeof loadAccessManagement === "function") loadAccessManagement();
 }
 
