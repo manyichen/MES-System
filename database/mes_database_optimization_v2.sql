@@ -15,12 +15,12 @@ CREATE TABLE IF NOT EXISTS mes_department (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS uk_mes_department_dept_code ON mes_department (dept_code);
 CREATE INDEX IF NOT EXISTS idx_mes_department_parent_dept_id ON mes_department (parent_dept_id);
-COMMENT ON TABLE mes_department IS '组织部门表：存储部门、车间、仓库、质量、设备等组织单元。';
+COMMENT ON TABLE mes_department IS '组织部门表：存储部门、车间、仓库、质量、设备等组织单元�?;
 COMMENT ON COLUMN mes_department.dept_code IS '部门编码';
 COMMENT ON COLUMN mes_department.dept_name IS '部门名称';
 COMMENT ON COLUMN mes_department.parent_dept_id IS '上级部门';
 COMMENT ON COLUMN mes_department.dept_type IS '部门类型';
-COMMENT ON COLUMN mes_department.manager_user_id IS '负责人用户';
+COMMENT ON COLUMN mes_department.manager_user_id IS '负责人用�?;
 
 ALTER TABLE mes_user ADD COLUMN IF NOT EXISTS employee_no VARCHAR(50);
 ALTER TABLE mes_user ADD COLUMN IF NOT EXISTS dept_id BIGINT;
@@ -34,7 +34,7 @@ ALTER TABLE mes_user ADD COLUMN IF NOT EXISTS updated_by BIGINT;
 CREATE UNIQUE INDEX IF NOT EXISTS uk_mes_user_employee_no ON mes_user (employee_no) WHERE employee_no IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_mes_user_dept_id ON mes_user (dept_id);
 COMMENT ON COLUMN mes_user.employee_no IS '员工工号';
-COMMENT ON COLUMN mes_user.dept_id IS '所属部门';
+COMMENT ON COLUMN mes_user.dept_id IS '所属部�?;
 COMMENT ON COLUMN mes_user.position_name IS '岗位名称';
 COMMENT ON COLUMN mes_user.account_type IS '账号类型：EMPLOYEE/SYSTEM/API/ROBOT';
 COMMENT ON COLUMN mes_user.failed_login_count IS '连续登录失败次数';
@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS mes_role (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS uk_mes_role_role_code ON mes_role (role_code);
 CREATE INDEX IF NOT EXISTS idx_mes_role_enabled ON mes_role (enabled);
-COMMENT ON TABLE mes_role IS '角色表：存储系统管理员、PMC、车间、仓库、质量、工艺、设备、人事等角色。';
+COMMENT ON TABLE mes_role IS '角色表：存储系统管理员、PMC、车间、仓库、质量、工艺、设备、人事等角色�?;
 COMMENT ON COLUMN mes_role.data_scope IS '数据范围：ALL/DEPT/LINE/OWN/CUSTOM';
 
 CREATE TABLE IF NOT EXISTS mes_permission (
@@ -72,7 +72,7 @@ CREATE TABLE IF NOT EXISTS mes_permission (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS uk_mes_permission_permission_code ON mes_permission (permission_code);
 CREATE INDEX IF NOT EXISTS idx_mes_permission_module_action ON mes_permission (module_code, action_code);
-COMMENT ON TABLE mes_permission IS '权限点表：存储模块资源动作粒度的权限。';
+COMMENT ON TABLE mes_permission IS '权限点表：存储模块资源动作粒度的权限�?;
 
 CREATE TABLE IF NOT EXISTS mes_role_permission (
     role_id BIGINT NOT NULL,
@@ -82,7 +82,7 @@ CREATE TABLE IF NOT EXISTS mes_role_permission (
     PRIMARY KEY (role_id, permission_id)
 );
 CREATE INDEX IF NOT EXISTS idx_mes_role_permission_permission_id ON mes_role_permission (permission_id);
-COMMENT ON TABLE mes_role_permission IS '角色权限关联表。';
+COMMENT ON TABLE mes_role_permission IS '角色权限关联表�?;
 
 CREATE TABLE IF NOT EXISTS mes_user_role (
     user_id BIGINT NOT NULL,
@@ -93,7 +93,7 @@ CREATE TABLE IF NOT EXISTS mes_user_role (
     PRIMARY KEY (user_id, role_id)
 );
 CREATE INDEX IF NOT EXISTS idx_mes_user_role_role_id ON mes_user_role (role_id);
-COMMENT ON TABLE mes_user_role IS '用户角色关联表：支持一个用户多个角色，兼容 mes_user.role_code。';
+COMMENT ON TABLE mes_user_role IS '用户角色关联表：支持一个用户多个角色，兼容 mes_user.role_code�?;
 
 CREATE TABLE IF NOT EXISTS mes_role_data_scope (
     scope_id BIGSERIAL PRIMARY KEY,
@@ -104,7 +104,7 @@ CREATE TABLE IF NOT EXISTS mes_role_data_scope (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS idx_mes_role_data_scope_role_id ON mes_role_data_scope (role_id);
-COMMENT ON TABLE mes_role_data_scope IS '角色数据范围表：按部门、产线、仓库等限制数据可见范围。';
+COMMENT ON TABLE mes_role_data_scope IS '角色数据范围表：按部门、产线、仓库等限制数据可见范围�?;
 
 CREATE TABLE IF NOT EXISTS mes_permission_apply (
     apply_id BIGSERIAL PRIMARY KEY,
@@ -124,7 +124,7 @@ CREATE TABLE IF NOT EXISTS mes_permission_apply (
 CREATE UNIQUE INDEX IF NOT EXISTS uk_mes_permission_apply_apply_no ON mes_permission_apply (apply_no);
 CREATE INDEX IF NOT EXISTS idx_mes_permission_apply_target_user_id ON mes_permission_apply (target_user_id);
 CREATE INDEX IF NOT EXISTS idx_mes_permission_apply_status ON mes_permission_apply (apply_status);
-COMMENT ON TABLE mes_permission_apply IS '权限变更申请表：人事经理发起，系统管理员处理。';
+COMMENT ON TABLE mes_permission_apply IS '权限变更申请表：人事经理发起，系统管理员处理�?;
 
 CREATE TABLE IF NOT EXISTS mes_user_session (
     session_id BIGSERIAL PRIMARY KEY,
@@ -139,7 +139,7 @@ CREATE TABLE IF NOT EXISTS mes_user_session (
 CREATE UNIQUE INDEX IF NOT EXISTS uk_mes_user_session_token_hash ON mes_user_session (token_hash);
 CREATE INDEX IF NOT EXISTS idx_mes_user_session_user_id ON mes_user_session (user_id);
 CREATE INDEX IF NOT EXISTS idx_mes_user_session_expires_at ON mes_user_session (expires_at);
-COMMENT ON TABLE mes_user_session IS '用户登录会话表：用于后端可校验、可过期、可撤销的登录状态。';
+COMMENT ON TABLE mes_user_session IS '用户登录会话表：用于后端可校验、可过期、可撤销的登录状态�?;
 
 CREATE TABLE IF NOT EXISTS mes_audit_log (
     audit_id BIGSERIAL PRIMARY KEY,
@@ -164,7 +164,7 @@ CREATE INDEX IF NOT EXISTS idx_mes_audit_log_user_id ON mes_audit_log (user_id);
 CREATE INDEX IF NOT EXISTS idx_mes_audit_log_event_type ON mes_audit_log (event_type);
 CREATE INDEX IF NOT EXISTS idx_mes_audit_log_created_at ON mes_audit_log (created_at);
 CREATE INDEX IF NOT EXISTS idx_mes_audit_log_resource ON mes_audit_log (resource_type, resource_id);
-COMMENT ON TABLE mes_audit_log IS '审计日志表：记录登录、权限变更、删除、审批、库存调整、质量判定等关键动作。';
+COMMENT ON TABLE mes_audit_log IS '审计日志表：记录登录、权限变更、删除、审批、库存调整、质量判定等关键动作�?;
 
 CREATE TABLE IF NOT EXISTS mes_api_client (
     client_id BIGSERIAL PRIMARY KEY,
@@ -178,7 +178,7 @@ CREATE TABLE IF NOT EXISTS mes_api_client (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 CREATE UNIQUE INDEX IF NOT EXISTS uk_mes_api_client_client_code ON mes_api_client (client_code);
-COMMENT ON TABLE mes_api_client IS '系统集成客户端表：管理机器人、WMS、财务系统等非人工账号。';
+COMMENT ON TABLE mes_api_client IS '系统集成客户端表：管理机器人、WMS、财务系统等非人工账号�?;
 
 CREATE TABLE IF NOT EXISTS mes_approval_record (
     approval_id BIGSERIAL PRIMARY KEY,
@@ -192,7 +192,7 @@ CREATE TABLE IF NOT EXISTS mes_approval_record (
 );
 CREATE INDEX IF NOT EXISTS idx_mes_approval_record_business ON mes_approval_record (business_type, business_id);
 CREATE INDEX IF NOT EXISTS idx_mes_approval_record_approver_id ON mes_approval_record (approver_id);
-COMMENT ON TABLE mes_approval_record IS '通用审批记录表：记录报工、领料、质检、维修、权限申请等审批过程。';
+COMMENT ON TABLE mes_approval_record IS '通用审批记录表：记录报工、领料、质检、维修、权限申请等审批过程�?;
 
 CREATE TABLE IF NOT EXISTS mes_notification (
     notification_id BIGSERIAL PRIMARY KEY,
@@ -208,7 +208,7 @@ CREATE TABLE IF NOT EXISTS mes_notification (
 );
 CREATE INDEX IF NOT EXISTS idx_mes_notification_receiver_user_id ON mes_notification (receiver_user_id);
 CREATE INDEX IF NOT EXISTS idx_mes_notification_receiver_role ON mes_notification (receiver_role_code);
-COMMENT ON TABLE mes_notification IS '系统通知表：用于缺料、报工审核、质检任务、维修派工等消息提醒。';
+COMMENT ON TABLE mes_notification IS '系统通知表：用于缺料、报工审核、质检任务、维修派工等消息提醒�?;
 
 CREATE TABLE IF NOT EXISTS mes_sop (
     sop_id BIGSERIAL PRIMARY KEY,
@@ -228,7 +228,7 @@ CREATE TABLE IF NOT EXISTS mes_sop (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS uk_mes_sop_code_version ON mes_sop (sop_code, version_no);
 CREATE INDEX IF NOT EXISTS idx_mes_sop_product_process ON mes_sop (product_id, process_id);
-COMMENT ON TABLE mes_sop IS 'SOP标准作业指导书表：由工艺工程师维护。';
+COMMENT ON TABLE mes_sop IS 'SOP标准作业指导书表：由工艺工程师维护�?;
 
 CREATE TABLE IF NOT EXISTS mes_defect_reason (
     reason_id BIGSERIAL PRIMARY KEY,
@@ -242,7 +242,7 @@ CREATE TABLE IF NOT EXISTS mes_defect_reason (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS uk_mes_defect_reason_reason_code ON mes_defect_reason (reason_code);
 CREATE INDEX IF NOT EXISTS idx_mes_defect_reason_process_id ON mes_defect_reason (process_id);
-COMMENT ON TABLE mes_defect_reason IS '工序不良原因表：用于质检判定、返工原因和质量统计。';
+COMMENT ON TABLE mes_defect_reason IS '工序不良原因表：用于质检判定、返工原因和质量统计�?;
 
 CREATE TABLE IF NOT EXISTS mes_process_parameter (
     parameter_id BIGSERIAL PRIMARY KEY,
@@ -261,7 +261,7 @@ CREATE TABLE IF NOT EXISTS mes_process_parameter (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS uk_mes_process_parameter_code_version ON mes_process_parameter (parameter_code, version_no);
 CREATE INDEX IF NOT EXISTS idx_mes_process_parameter_product_process ON mes_process_parameter (product_id, process_id);
-COMMENT ON TABLE mes_process_parameter IS '工艺参数表：维护轮胎用料和工序控制参数。';
+COMMENT ON TABLE mes_process_parameter IS '工艺参数表：维护轮胎用料和工序控制参数�?;
 
 CREATE TABLE IF NOT EXISTS mes_quality_standard (
     standard_id BIGSERIAL PRIMARY KEY,
@@ -280,7 +280,7 @@ CREATE TABLE IF NOT EXISTS mes_quality_standard (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS uk_mes_quality_standard_code_version ON mes_quality_standard (standard_code, version_no);
 CREATE INDEX IF NOT EXISTS idx_mes_quality_standard_product_process ON mes_quality_standard (product_id, process_id);
-COMMENT ON TABLE mes_quality_standard IS '质量检验标准表：由质量主管维护和审核。';
+COMMENT ON TABLE mes_quality_standard IS '质量检验标准表：由质量主管维护和审核�?;
 
 CREATE TABLE IF NOT EXISTS mes_quality_standard_item (
     standard_item_id BIGSERIAL PRIMARY KEY,
@@ -295,7 +295,7 @@ CREATE TABLE IF NOT EXISTS mes_quality_standard_item (
     required SMALLINT NOT NULL DEFAULT 1
 );
 CREATE INDEX IF NOT EXISTS idx_mes_quality_standard_item_standard_id ON mes_quality_standard_item (standard_id);
-COMMENT ON TABLE mes_quality_standard_item IS '质量检验标准项目表：定义抽检项目、标准值和上下限。';
+COMMENT ON TABLE mes_quality_standard_item IS '质量检验标准项目表：定义抽检项目、标准值和上下限�?;
 
 CREATE TABLE IF NOT EXISTS mes_equipment_status_log (
     status_log_id BIGSERIAL PRIMARY KEY,
@@ -308,7 +308,7 @@ CREATE TABLE IF NOT EXISTS mes_equipment_status_log (
 );
 CREATE INDEX IF NOT EXISTS idx_mes_equipment_status_log_equipment_id ON mes_equipment_status_log (equipment_id);
 CREATE INDEX IF NOT EXISTS idx_mes_equipment_status_log_changed_at ON mes_equipment_status_log (changed_at);
-COMMENT ON TABLE mes_equipment_status_log IS '设备状态履历表：记录设备状态变化全过程。';
+COMMENT ON TABLE mes_equipment_status_log IS '设备状态履历表：记录设备状态变化全过程�?;
 
 ALTER TABLE mes_customer_order ADD COLUMN IF NOT EXISTS created_by BIGINT;
 ALTER TABLE mes_customer_order ADD COLUMN IF NOT EXISTS updated_by BIGINT;
@@ -351,31 +351,31 @@ CREATE INDEX IF NOT EXISTS idx_mes_maintenance_order_verified_by ON mes_maintena
 
 INSERT INTO mes_department (dept_code, dept_name, dept_type)
 VALUES
-    ('ADMIN', '系统管理部', 'SYSTEM'),
-    ('PMC', '计划管理部', 'PLANNING'),
+    ('ADMIN', '系统管理�?, 'SYSTEM'),
+    ('PMC', '计划管理�?, 'PLANNING'),
     ('WORKSHOP', '生产车间', 'WORKSHOP'),
-    ('WAREHOUSE', '仓储物流部', 'WAREHOUSE'),
-    ('QUALITY', '质量管理部', 'QUALITY'),
-    ('PROCESS', '工艺工程部', 'PROCESS'),
-    ('EQUIPMENT', '设备管理部', 'EQUIPMENT'),
-    ('HR', '人事部', 'HR'),
-    ('MANAGEMENT', '经营管理层', 'MANAGEMENT')
+    ('WAREHOUSE', '仓储物流�?, 'WAREHOUSE'),
+    ('QUALITY', '质量管理�?, 'QUALITY'),
+    ('PROCESS', '工艺工程�?, 'PROCESS'),
+    ('EQUIPMENT', '设备管理�?, 'EQUIPMENT'),
+    ('HR', '人事�?, 'HR'),
+    ('MANAGEMENT', '经营管理�?, 'MANAGEMENT')
 ON CONFLICT (dept_code) DO NOTHING;
 
 INSERT INTO mes_role (role_code, role_name, role_type, role_level, data_scope, builtin, description)
 VALUES
-    ('SYSTEM_ADMIN', '系统管理员', 'SYSTEM', 1, 'ALL', 1, '最高系统权限'),
-    ('HR_MANAGER', '人事经理', 'BUSINESS', 30, 'DEPT', 1, '员工信息维护和权限申请'),
-    ('GENERAL_MANAGER', '总经理/管理层', 'MANAGEMENT', 20, 'ALL', 1, '经营看板和决策查询'),
-    ('PMC_PLANNER', 'PMC计划员', 'BUSINESS', 50, 'DEPT', 1, '订单、计划、齐套、工单'),
-    ('WORKSHOP_MANAGER', '车间管理员', 'BUSINESS', 50, 'DEPT', 1, '车间执行和报工审核'),
-    ('PRODUCTION_OPERATOR', '生产操作工', 'BUSINESS', 80, 'OWN', 1, '工单执行和生产报工'),
-    ('WAREHOUSE_ADMIN', '仓库管理员', 'BUSINESS', 60, 'DEPT', 1, '仓储、库存、领料、配送'),
-    ('QUALITY_MANAGER', '质量主管', 'BUSINESS', 50, 'DEPT', 1, '质检标准、任务分配、结果审核'),
-    ('QUALITY_INSPECTOR', '质检员', 'BUSINESS', 70, 'OWN', 1, '质检执行和结果录入'),
-    ('PROCESS_ENGINEER', '工艺工程师', 'BUSINESS', 60, 'DEPT', 1, 'SOP、工艺参数、不良原因'),
-    ('EQUIPMENT_ADMIN', '设备管理员', 'BUSINESS', 50, 'DEPT', 1, '设备台账、状态、维修派工'),
-    ('EQUIPMENT_MAINTAINER', '设备维护员', 'BUSINESS', 70, 'OWN', 1, '维修执行和维护记录')
+    ('SYSTEM_ADMIN', '系统管理�?, 'SYSTEM', 1, 'ALL', 1, '最高系统权�?),
+    ('HR_MANAGER', '人事经理', 'BUSINESS', 30, 'DEPT', 1, '员工信息维护和权限申�?),
+    ('GENERAL_MANAGER', '总经�?管理�?, 'MANAGEMENT', 20, 'ALL', 1, '经营看板和决策查�?),
+    ('PMC_PLANNER', 'PMC计划�?, 'BUSINESS', 50, 'DEPT', 1, '订单、计划、齐套、工�?),
+    ('WORKSHOP_MANAGER', '车间管理�?, 'BUSINESS', 50, 'DEPT', 1, '车间执行和报工审�?),
+    ('PRODUCTION_OPERATOR', '生产操作�?, 'BUSINESS', 80, 'OWN', 1, '工单执行和生产报�?),
+    ('WAREHOUSE_ADMIN', '仓库管理�?, 'BUSINESS', 60, 'DEPT', 1, '仓储、库存、领料、配�?),
+    ('QUALITY_MANAGER', '质量主管', 'BUSINESS', 50, 'DEPT', 1, '质检标准、任务分配、结果审�?),
+    ('QUALITY_INSPECTOR', '质检�?, 'BUSINESS', 70, 'OWN', 1, '质检执行和结果录�?),
+    ('PROCESS_ENGINEER', '工艺工程�?, 'BUSINESS', 60, 'DEPT', 1, 'SOP、工艺参数、不良原�?),
+    ('EQUIPMENT_ADMIN', '设备管理�?, 'BUSINESS', 50, 'DEPT', 1, '设备台账、状态、维修派�?),
+    ('EQUIPMENT_MAINTAINER', '设备维护�?, 'BUSINESS', 70, 'OWN', 1, '维修执行和维护记�?)
 ON CONFLICT (role_code) DO NOTHING;
 
 INSERT INTO mes_permission (permission_code, permission_name, module_code, resource_type, action_code, risk_level)
@@ -433,7 +433,7 @@ ON CONFLICT (role_id, permission_id) DO NOTHING;
 INSERT INTO mes_role_permission (role_id, permission_id)
 SELECT r.role_id, p.permission_id
 FROM mes_role r
-JOIN mes_permission p ON p.permission_code IN ('production.report.review', 'dashboard.read', 'trace.read')
+JOIN mes_permission p ON p.permission_code IN ('production.report.review', 'dashboard.read')
 WHERE r.role_code = 'WORKSHOP_MANAGER'
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 

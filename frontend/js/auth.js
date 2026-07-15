@@ -30,10 +30,24 @@ function applyPermissionVisibility() {
         const allowed = element.dataset.permission.split("|").some(hasPermission);
         element.classList.toggle("permission-hidden", !allowed);
     });
+    document.querySelectorAll("[data-deny-role]").forEach(element => {
+        const denied = element.dataset.denyRole.split("|").some(hasRole);
+        element.classList.toggle("permission-hidden", denied);
+    });
     if (hasRole("PROCESS_ENGINEER")) {
         ["planning", "quality", "equipment", "production"].forEach(tab => {
             document.querySelector(`.sidebar button[data-tab="${tab}"]`)?.classList.add("permission-hidden");
         });
+    }
+    const activeButton = document.querySelector(".sidebar button[data-tab].active");
+    if (activeButton?.classList.contains("permission-hidden")) {
+        const fallback = document.querySelector(".sidebar button[data-tab]:not(.permission-hidden)");
+        if (fallback) {
+            document.querySelectorAll(".sidebar button[data-tab]").forEach(item => item.classList.remove("active"));
+            document.querySelectorAll(".panel").forEach(item => item.classList.remove("active"));
+            fallback.classList.add("active");
+            document.getElementById(fallback.dataset.tab)?.classList.add("active");
+        }
     }
     document.querySelectorAll(".sidebar .nav-group").forEach(group => {
         let hasVisibleItem = false;
