@@ -1,4 +1,8 @@
 const AUTH_STORAGE_KEY = "mes.auth.session";
+const ROLE_PERMISSION_FALLBACKS = {
+    PRODUCTION_OPERATOR: ["warehouse.requisition.create"],
+    WAREHOUSE_ADMIN: ["warehouse.read", "warehouse.requisition.approve"]
+};
 
 function getCurrentSession() {
     try {
@@ -18,7 +22,10 @@ function clearCurrentSession() {
 
 function hasPermission(permission) {
     if (!permission) return true;
-    return new Set(getCurrentSession()?.permissions || []).has(permission);
+    const session = getCurrentSession();
+    const permissions = new Set(session?.permissions || []);
+    if (permissions.has(permission)) return true;
+    return (session?.roles || []).some(role => ROLE_PERMISSION_FALLBACKS[role]?.includes(permission));
 }
 
 function hasRole(roleCode) {

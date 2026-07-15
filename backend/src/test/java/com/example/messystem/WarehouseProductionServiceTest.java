@@ -49,9 +49,12 @@ class WarehouseProductionServiceTest {
     void approveRequisitionShouldReserveOrDeductInventory() {
         MesMaterialRequisition requisition = createDatabaseRequisition(new BigDecimal("100"));
 
+        MesMaterialRequisition received = warehouseService.receiveRequisition(requisition.requisitionId, 1L);
         MesMaterialRequisition approved = warehouseService.approveRequisition(requisition.requisitionId, 1L);
 
+        assertEquals("RECEIVED", received.requestStatus);
         assertEquals("APPROVED", approved.requestStatus);
+        assertTrue(approved.pickingTaskId != null && approved.pickingTaskId > 0);
         assertTrue(warehouseService.listPickingTasks().stream()
                 .anyMatch(task -> Objects.equals(task.requisitionId, requisition.requisitionId)));
         assertEquals("APPROVED", warehouseService.getRequisition(requisition.requisitionId).requestStatus);
@@ -60,6 +63,7 @@ class WarehouseProductionServiceTest {
     @Test
     void completePickingShouldCreateDeliveryTaskAndConfirmReceiptShouldDeductInventory() {
         MesMaterialRequisition requisition = createDatabaseRequisition(new BigDecimal("100"));
+        warehouseService.receiveRequisition(requisition.requisitionId, 1L);
         warehouseService.approveRequisition(requisition.requisitionId, 1L);
         long pickingTaskId = warehouseService.listPickingTasks().stream()
                 .filter(task -> Objects.equals(task.requisitionId, requisition.requisitionId))
@@ -77,9 +81,16 @@ class WarehouseProductionServiceTest {
         warehouseService.confirmDeliveryReceipt(deliveryTaskId);
 
         assertEquals("COMPLETED", warehouseService.getPickingTask(pickingTaskId).taskStatus);
-        assertEquals("ARRIVED", warehouseService.getDeliveryTask(deliveryTaskId).deliveryStatus);
+        assertEquals("RECEIVED", warehouseService.getDeliveryTask(deliveryTaskId).deliveryStatus);
         assertTrue(warehouseService.listTransactions().stream()
                 .anyMatch(transaction -> Long.valueOf(pickingTaskId).equals(transaction.sourceDocId)));
+    }
+
+    @Test
+    void approveRequisitionShouldFailBeforeWarehouseReceive() {
+        MesMaterialRequisition requisition = createDatabaseRequisition(new BigDecimal("100"));
+
+        assertThrows(BadRequestException.class, () -> warehouseService.approveRequisition(requisition.requisitionId, 1L));
     }
 
     @Test
@@ -131,12 +142,14 @@ class WarehouseProductionServiceTest {
     void approveRequisitionShouldFailWhenInventoryIsNotEnough() {
         MesMaterialRequisition requisition = createDatabaseRequisition(new BigDecimal("5"));
 
+        warehouseService.receiveRequisition(requisition.requisitionId, 1L);
         assertThrows(BadRequestException.class, () -> warehouseService.approveRequisition(requisition.requisitionId, 1L));
     }
 
     @Test
     void confirmReceiptShouldFailWhenRepeated() {
         MesMaterialRequisition requisition = createDatabaseRequisition(new BigDecimal("100"));
+        warehouseService.receiveRequisition(requisition.requisitionId, 1L);
         warehouseService.approveRequisition(requisition.requisitionId, 1L);
         long pickingTaskId = pickingTaskIdFor(requisition.requisitionId);
         warehouseService.completePicking(pickingTaskId);

@@ -10,6 +10,7 @@ import com.example.messystem.quality.entity.MesQualityInspection;
 import com.example.messystem.quality.entity.MesQualityInspectionItem;
 import com.example.messystem.quality.entity.MesQualityTrace;
 import com.example.messystem.quality.entity.MesReworkOrder;
+import com.example.messystem.warehouse.dao.WarehouseDao;
 
 import java.sql.SQLException;
 import java.time.LocalDateTime;
@@ -22,6 +23,7 @@ public class QualityInspectionService {
     private final QualityInspectionItemDao itemDao = new QualityInspectionItemDao();
     private final ReworkOrderDao reworkOrderDao = new ReworkOrderDao();
     private final QualityTraceDao traceDao = new QualityTraceDao();
+    private final WarehouseDao warehouseDao = new WarehouseDao();
 
     public long createInspection(MesQualityInspection inspection) throws SQLException {
         return inspectionDao.insert(inspection);
@@ -109,6 +111,12 @@ public class QualityInspectionService {
         String finalStatus = "PASS".equals(finalResult) ? "APPROVED"
                 : "REWORK".equals(finalResult) ? "REWORK_REQUIRED" : "REJECTED";
         if (!inspectionDao.updateStatus(inspectionId, finalStatus, finalResult, reviewedBy)) {
+            if ("PASS".equals(finalResult)
+                    && "APPROVED".equals(inspection.inspectionStatus())
+                    && "PASS".equals(inspection.judgementResult())) {
+                warehouseDao.receiveFinishedGoodsFromQuality(inspectionId, reviewedBy);
+                return true;
+            }
             throw new BadRequestException("只有质检员已提交的检验结果才能审核");
         }
 
@@ -144,6 +152,9 @@ public class QualityInspectionService {
                 ))
                 .orElseThrow(() -> new BadRequestException("质检单未关联到完整的订单、任务、工单链路，无法写入质量追溯"));
         traceDao.insert(trace);
+        if ("PASS".equals(finalResult)) {
+            warehouseDao.receiveFinishedGoodsFromQuality(inspectionId, reviewedBy);
+        }
         return true;
     }
 

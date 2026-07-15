@@ -563,6 +563,8 @@ public class PlanningDao {
                 select alert_id, alert_no, task_id, analysis_id, material_id, material_code, material_name,
                        required_qty, available_qty, shortage_qty, severity, alert_status, accepted_by, accepted_at, created_at
                 from mes_shortage_alert
+                where material_id is not null
+                  and coalesce(shortage_qty, 0) > 0
                 order by created_at asc, alert_id asc
                 """;
         try (Connection connection = Db.getConnection();
@@ -594,9 +596,23 @@ public class PlanningDao {
 
     public List<MesShortageAlert> publishShortageAlerts(long taskId) throws SQLException {
         String query = """
-                select s.analysis_id, s.material_id, s.material_code, s.material_name, s.required_qty, s.available_qty, s.shortage_qty
+                select s.analysis_id,
+                       s.resource_id as material_id,
+                       s.resource_code as material_code,
+                       s.resource_name as material_name,
+                       s.required_qty,
+                       s.available_qty,
+                       s.shortage_qty
                 from mes_kitting_shortage_item s
-                where s.task_id = ? and s.analysis_id = (select max(analysis_id) from mes_kitting_shortage_item where task_id = ?)
+                where s.task_id = ?
+                  and s.shortage_type = 'MATERIAL'
+                  and s.resource_id is not null
+                  and coalesce(s.shortage_qty, 0) > 0
+                  and s.analysis_id = (
+                      select max(analysis_id)
+                      from mes_kitting_shortage_item
+                      where task_id = ? and shortage_type = 'MATERIAL'
+                  )
                 order by s.shortage_item_id
                 """;
         try (Connection connection = Db.getConnection()) {

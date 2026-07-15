@@ -41,7 +41,7 @@
     <div class="sidebar-brand"><span class="brand-mark"><img src="assets/mes-icon.svg" alt=""></span><div><strong>双星轮胎 MES</strong><small>制造执行系统</small></div></div>
     <nav>
         <span class="nav-group">首页</span><button data-tab="dashboard" class="active"><i>⌂</i><span>工作台</span></button><button data-tab="profile"><i>◎</i><span>个人主页</span></button>
-        <span class="nav-group">生产业务</span><button data-tab="planning" data-permission="planning.read|planning.work_order.read"><i>▤</i><span>计划与工单</span></button><button data-tab="warehouse" data-permission="warehouse.read|warehouse.requisition.create"><i>▦</i><span>仓储物流</span></button><button data-tab="production" data-permission="production.read"><i>◉</i><span>生产报工</span></button><button data-tab="quality" data-permission="quality.read"><i>◇</i><span>质量管理</span></button><button data-tab="equipment" data-permission="equipment.read|equipment.fault.report"><i>⚙</i><span>设备维护</span></button>
+        <span class="nav-group">生产业务</span><button data-tab="planning" data-permission="planning.read|planning.work_order.read"><i>▤</i><span>计划与工单</span></button><button data-tab="production" data-permission="production.read"><i>◉</i><span>生产报工</span></button><button data-tab="requisition" data-permission="warehouse.requisition.create"><i>▥</i><span>领料</span></button><button data-tab="warehouse" data-permission="warehouse.read"><i>▦</i><span>仓储物流</span></button><button data-tab="quality" data-permission="quality.read"><i>◇</i><span>质量管理</span></button><button data-tab="equipment" data-permission="equipment.read|equipment.fault.report"><i>⚙</i><span>设备维护</span></button>
         <span class="nav-group">综合管理</span><button data-tab="process" data-permission="process.read"><i>⌘</i><span>工艺管理</span></button><button data-tab="trace" data-permission="trace.read"><i>⌁</i><span>产品追溯</span></button><button data-tab="feedback" data-permission="feedback.read|feedback.create"><i>✦</i><span>管理反馈</span></button>
         <span class="nav-group">系统管理</span><button data-tab="systemOps" data-permission="system.health.read"><i>⚙</i><span>系统运维</span></button><button data-tab="audit" data-permission="audit.read"><i>◎</i><span>审计日志</span></button><button data-tab="system" data-permission="user.read|role.read"><i>♙</i><span>用户与权限</span></button>
         <span class="nav-group general-manager-nav module-hidden">管理驾驶舱</span>
@@ -311,6 +311,29 @@
             <div id="productionDetail" class="tool wide detail-panel">
                 <h3>生产详情</h3>
                 <p>请选择一条记录查看详情。</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="requisition" class="panel">
+        <header>
+            <h2>领料</h2>
+            <button id="refreshRequisition">刷新</button>
+        </header>
+        <div class="grid">
+            <form id="productionRequisitionForm" class="tool" data-permission="warehouse.requisition.create">
+                <h3>申请领料任务</h3>
+                <label>生产工单 <select name="workOrderId" id="productionRequisitionWorkOrderSelect" required></select></label>
+                <label>目标仓库 <select name="warehouseId" id="productionRequisitionWarehouseSelect" required></select></label>
+                <label>物料 <select name="materialId" id="productionRequisitionMaterialSelect" required></select></label>
+                <label>批次号 <input name="batchNo" placeholder="不填则不限批次"></label>
+                <label>申请数量 <input name="requiredQty" type="number" value="10" min="0.01" step="0.01" required></label>
+                <label>备注 <input name="remark" placeholder="可填写用途或紧急说明"></label>
+                <button type="submit">提交领料申请</button>
+            </form>
+            <div class="tool" data-permission="warehouse.requisition.create">
+                <h3>我的领料任务</h3>
+                <div id="productionRequisitionTable"></div>
             </div>
         </div>
     </section>

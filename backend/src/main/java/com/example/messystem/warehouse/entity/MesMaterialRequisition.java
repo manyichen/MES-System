@@ -15,5 +15,9 @@ public class MesMaterialRequisition {
     public Long approvedBy;
     public LocalDateTime approvedTime;
     public String remark;
+    public Long pickingTaskId;
+    public String pickingTaskStatus;
+    public Long deliveryTaskId;
+    public String deliveryStatus;
     public List<MesMaterialRequisitionItem> items = new ArrayList<>();
 }

@@ -2,10 +2,13 @@ package com.example.messystem.warehouse.service;
 
 import com.example.messystem.common.BadRequestException;
 import com.example.messystem.warehouse.dao.WarehouseDao;
+import com.example.messystem.warehouse.entity.ExternalPurchaseRequest;
+import com.example.messystem.warehouse.entity.ExternalPurchaseResult;
 import com.example.messystem.warehouse.entity.MesInventory;
 import com.example.messystem.warehouse.entity.MesInventoryTransaction;
 import com.example.messystem.warehouse.entity.MesMaterial;
 import com.example.messystem.warehouse.entity.MesMaterialRequisition;
+import com.example.messystem.warehouse.entity.MesMaterialRequisitionItem;
 import com.example.messystem.warehouse.entity.MesPickingTask;
 import com.example.messystem.warehouse.entity.MesRobot;
 import com.example.messystem.warehouse.entity.MesRobotDeliveryTask;
@@ -145,6 +148,19 @@ public class WarehouseService {
         return database(() -> dao.insertTransaction(transaction));
     }
 
+    public ExternalPurchaseResult externalPurchase(ExternalPurchaseRequest request, long operatorId) {
+        if (request == null) {
+            throw new BadRequestException("purchase request is required");
+        }
+        requireId(request.materialId, "materialId is required");
+        requireId(request.warehouseId, "warehouseId is required");
+        requireId(operatorId, "operatorId is required");
+        if (request.qty == null || request.qty.signum() <= 0) {
+            throw new BadRequestException("purchase qty must be positive");
+        }
+        return database(() -> dao.externalPurchase(request, operatorId));
+    }
+
     public List<MesMaterialRequisition> listRequisitions() {
         return database(dao::listRequisitions);
     }
@@ -154,8 +170,19 @@ public class WarehouseService {
         return database(() -> dao.listRequisitionsByWorkOrder(workOrderId));
     }
 
+    public List<MesMaterialRequisition> listRequisitionsByRequester(long requesterId) {
+        requireId(requesterId, "requesterId is required");
+        return database(() -> dao.listRequisitionsByRequester(requesterId));
+    }
+
     public MesMaterialRequisition getRequisition(long requisitionId) {
         return database(() -> dao.findRequisition(requisitionId));
+    }
+
+    public MesMaterialRequisition getRequisitionForRequester(long requisitionId, long requesterId) {
+        requireId(requisitionId, "requisitionId is required");
+        requireId(requesterId, "requesterId is required");
+        return database(() -> dao.findRequisitionForRequester(requisitionId, requesterId));
     }
 
     public MesMaterialRequisition createRequisition(MesMaterialRequisition requisition) {
@@ -164,14 +191,33 @@ public class WarehouseService {
         if (requisition.items == null || requisition.items.isEmpty()) {
             throw new BadRequestException("requisition items are required");
         }
+        for (MesMaterialRequisitionItem item : requisition.items) {
+            if (item == null) {
+                throw new BadRequestException("requisition items are required");
+            }
+            requireId(item.materialId, "materialId is required");
+            if (item.requiredQty == null || item.requiredQty.signum() <= 0) {
+                throw new BadRequestException("requiredQty must be positive");
+            }
+        }
         return database(() -> dao.insertRequisition(requisition));
     }
 
+    public MesMaterialRequisition receiveRequisition(long requisitionId, Long receivedBy) {
+        requireId(requisitionId, "requisitionId is required");
+        requireId(receivedBy, "receivedBy is required");
+        return database(() -> dao.receiveRequisition(requisitionId, receivedBy));
+    }
+
     public MesMaterialRequisition approveRequisition(long requisitionId, Long approvedBy) {
+        requireId(requisitionId, "requisitionId is required");
+        requireId(approvedBy, "approvedBy is required");
         return database(() -> dao.approveRequisition(requisitionId, approvedBy));
     }
 
     public MesMaterialRequisition rejectRequisition(long requisitionId, Long approvedBy, String reason) {
+        requireId(requisitionId, "requisitionId is required");
+        requireId(approvedBy, "approvedBy is required");
         return database(() -> dao.rejectRequisition(requisitionId, approvedBy, reason));
     }
 
@@ -240,6 +286,12 @@ public class WarehouseService {
 
     public MesRobotDeliveryTask confirmDeliveryReceipt(long deliveryTaskId) {
         return database(() -> dao.confirmDeliveryReceipt(deliveryTaskId));
+    }
+
+    public MesRobotDeliveryTask confirmDeliveryReceipt(long deliveryTaskId, long requesterId) {
+        requireId(deliveryTaskId, "deliveryTaskId is required");
+        requireId(requesterId, "requesterId is required");
+        return database(() -> dao.confirmDeliveryReceipt(deliveryTaskId, requesterId));
     }
 
     private static void requireId(Long id, String message) {

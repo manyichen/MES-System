@@ -3,6 +3,7 @@ package com.example.messystem.warehouse.resource;
 import com.example.messystem.auth.AuthFilter;
 import com.example.messystem.common.ResourceSupport;
 import com.example.messystem.security.DataScopeService;
+import com.example.messystem.warehouse.entity.ExternalPurchaseRequest;
 import com.example.messystem.warehouse.entity.MesInventory;
 import com.example.messystem.warehouse.entity.MesInventoryTransaction;
 import com.example.messystem.warehouse.service.WarehouseService;
@@ -114,6 +115,21 @@ public class InventoryResource {
             }
             transaction.operatorId = AuthFilter.currentUser(context).user.userId;
             return ResourceSupport.created("库存流水已创建", service.createTransaction(transaction));
+        } catch (RuntimeException ex) {
+            return ResourceSupport.handle(ex);
+        }
+    }
+
+    @POST
+    @Path("/external-purchase")
+    public Response externalPurchase(ExternalPurchaseRequest request, @Context ContainerRequestContext context) {
+        try {
+            var user = AuthFilter.currentUser(context);
+            if (request != null && user.hasRole("WAREHOUSE_ADMIN") && !user.warehouseIds.isEmpty()) {
+                dataScopeService.snapshot(user).requireWarehouse(request.warehouseId);
+            }
+            return ResourceSupport.action("external purchase completed",
+                    service.externalPurchase(request, user.user.userId));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }

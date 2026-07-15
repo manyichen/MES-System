@@ -11,6 +11,9 @@ let productionCache = {
     routes: []
 };
 
+let productionRequisitionCache = { workOrders: [], materials: [], warehouses: [], inventory: [], requisitions: [] };
+let productionRequisitionShortage = null;
+
 async function refreshProduction(options = {}) {
     try {
         const optionalList = path => getJson(path).catch(() => []);
@@ -62,6 +65,143 @@ function sortReportsForReview(reports) {
         if (rankDiff !== 0) return rankDiff;
         return Number(right.reportId || 0) - Number(left.reportId || 0);
     });
+}
+
+function sortProductionRequisitions(requisitions) {
+    const rank = row => {
+        if (row.deliveryStatus === "ARRIVED") return 0;
+        if (row.requestStatus === "CREATED") return 1;
+        if (row.requestStatus === "RECEIVED") return 2;
+        if (row.requestStatus === "APPROVED") return 3;
+        if (row.requestStatus === "REJECTED") return 5;
+        return 4;
+    };
+    return [...(requisitions || [])].sort((left, right) => {
+        const rankDiff = rank(left) - rank(right);
+        if (rankDiff !== 0) return rankDiff;
+        return Number(right.requisitionId || 0) - Number(left.requisitionId || 0);
+    });
+}
+
+async function refreshReportableWorkOrders() {
+    refreshReportableWorkOrdersFrom(await getJson("/work-orders"));
+}
+
+function refreshReportableWorkOrdersFrom(workOrders) {
+    const select = document.getElementById("reportWorkOrderSelect");
+    if (!select) return;
+    const reportable = workOrders.filter(order => REPORTABLE_WORK_ORDER_STATUSES.has(order.workOrderStatus));
+    select.innerHTML = "";
+    if (!reportable.length) {
+        const option = document.createElement("option");
+        option.value = "";
+        option.textContent = "\u6682\u65e0\u53ef\u62a5\u5de5\u5de5\u5355";
+        select.appendChild(option);
+        select.disabled = true;
+        return;
+    }
+    select.disabled = false;
+    for (const order of reportable) {
+        const option = document.createElement("option");
+        option.value = order.workOrderId;
+        option.textContent = `${order.workOrderNo || "WO-" + order.workOrderId} / ${statusText(order.workOrderStatus || "")} / \u8ba1\u5212 ${order.plannedQty ?? "-"}`;
+        option.dataset.batchNo = order.batchNo || "";
+        select.appendChild(option);
+    }
+    syncReportBatchNo();
+}
+
+function refreshProductionRequisitionSelectors() {
+    const workOrders = productionRequisitionCache.workOrders
+        .filter(order => REPORTABLE_WORK_ORDER_STATUSES.has(order.workOrderStatus));
+    fillProductionSelect("productionRequisitionWorkOrderSelect", workOrders, "workOrderId",
+        order => `${order.workOrderNo || "WO-" + order.workOrderId} / ${statusText(order.workOrderStatus || "")} / ID ${order.workOrderId}`,
+        "暂无可申请领料的工单");
+    fillProductionSelect("productionRequisitionMaterialSelect", productionRequisitionCache.materials, "materialId",
+        material => `${material.materialName || material.materialCode || "物料"} / ID ${material.materialId}`,
+        "暂无可选物料");
+    refreshProductionRequisitionWarehouses();
+}
+
+function fillProductionSelect(id, rows, valueKey, labelFn, emptyText) {
+    const select = document.getElementById(id);
+    if (!select) return;
+    select.innerHTML = "";
+    if (!rows.length) {
+        const option = document.createElement("option");
+        option.value = "";
+        option.textContent = emptyText;
+        select.appendChild(option);
+        select.disabled = true;
+        return;
+    }
+    select.disabled = false;
+    for (const row of rows) {
+        const option = document.createElement("option");
+        option.value = row[valueKey];
+        option.textContent = labelFn(row);
+        select.appendChild(option);
+    }
+}
+
+function refreshProductionRequisitionWarehouses() {
+    const materialId = Number(document.getElementById("productionRequisitionMaterialSelect")?.value || 0);
+    const batchNo = String(document.querySelector("#productionRequisitionForm [name='batchNo']")?.value || "").trim();
+    const requiredQty = Number(document.querySelector("#productionRequisitionForm [name='requiredQty']")?.value || 0);
+    const needsEnoughQty = Number.isFinite(requiredQty) && requiredQty > 0;
+    const hasInventorySnapshot = productionRequisitionCache.inventory.length > 0;
+    const rows = productionRequisitionCache.warehouses
+        .map(warehouse => ({
+            ...warehouse,
+            availableQty: productionRequisitionAvailableQty(materialId, warehouse.warehouseId, batchNo)
+        }))
+        .filter(warehouse => !materialId || !hasInventorySnapshot
+            || (needsEnoughQty ? warehouse.availableQty >= requiredQty : warehouse.availableQty > 0));
+    const maxAvailable = productionRequisitionCache.warehouses
+        .map(warehouse => productionRequisitionAvailableQty(materialId, warehouse.warehouseId, batchNo))
+        .reduce((max, qty) => Math.max(max, qty), 0);
+    productionRequisitionShortage = materialId && hasInventorySnapshot && needsEnoughQty && !rows.length
+        ? { materialId, batchNo, requiredQty, availableQty: maxAvailable, shortageQty: Math.max(requiredQty - maxAvailable, requiredQty) }
+        : null;
+    fillProductionSelect("productionRequisitionWarehouseSelect", rows, "warehouseId",
+        warehouse => `${warehouse.warehouseName || warehouse.warehouseCode || "仓库"} / ${hasInventorySnapshot ? `可用 ${warehouse.availableQty}` : "库存未加载"}`,
+        materialId ? (hasInventorySnapshot ? "当前物料/数量暂无可用库存仓库" : "库存未加载，请刷新后重试") : "请先选择物料");
+    syncProductionPurchasePrompt();
+}
+
+function productionRequisitionAvailableQty(materialId, warehouseId, batchNo = "") {
+    return productionRequisitionCache.inventory
+        .filter(item => Number(item.materialId) === Number(materialId))
+        .filter(item => Number(item.warehouseId) === Number(warehouseId))
+        .filter(item => !batchNo || String(item.batchNo || "") === batchNo)
+        .reduce((sum, item) => sum + (Number(item.availableQty) || 0), 0);
+}
+
+async function refreshRequisition(options = {}) {
+    if (!hasPermission("warehouse.requisition.create")) return;
+    try {
+        const [requisitions, requisitionOptions, inventoryRows] = await Promise.all([
+            getJson("/requisitions").catch(() => []),
+            getJson("/requisitions/create-options").catch(() => null),
+            getJson("/inventory").catch(() => [])
+        ]);
+        const myRequisitions = sortProductionRequisitions(requisitions);
+        const createOptions = requisitionOptions || { workOrders: [], materials: [], warehouses: [], inventory: [] };
+        productionRequisitionCache = {
+            workOrders: createOptions.workOrders || [],
+            materials: createOptions.materials || [],
+            warehouses: createOptions.warehouses || [],
+            inventory: (createOptions.inventory && createOptions.inventory.length) ? createOptions.inventory : inventoryRows,
+            requisitions: myRequisitions
+        };
+        refreshProductionRequisitionSelectors();
+        renderRequisitionFocus(myRequisitions);
+        renderProductionRequisitionTable(myRequisitions);
+        if (typeof updateModuleWorkspace === "function") updateModuleWorkspace(document.getElementById("requisition"));
+        if (options.notify) showMessage("领料数据已刷新", "ok");
+    } catch (error) {
+        showMessage(toChineseError(error), "error");
+    }
 }
 
 function renderProductionFocus(workOrders, reports, wages) {
@@ -210,6 +350,40 @@ function showWorkOrderReportDialog(order) {
     });
 }
 
+function renderRequisitionFocus(requisitions = []) {
+    const grid = document.querySelector("#requisition .grid");
+    if (!grid) return;
+    let focus = document.getElementById("requisitionFocus");
+    if (!focus) {
+        focus = document.createElement("div");
+        focus.id = "requisitionFocus";
+        focus.className = "tool wide workflow-focus b-focus";
+        grid.prepend(focus);
+    }
+    const requestableWorkOrders = productionRequisitionCache.workOrders
+        .filter(order => REPORTABLE_WORK_ORDER_STATUSES.has(order.workOrderStatus)).length;
+    const openRequisitions = requisitions.filter(row => !["COMPLETED", "REJECTED", "CLOSED"].includes(row.requestStatus)).length;
+    const waitingWarehouse = requisitions.filter(row => ["CREATED", "RECEIVED"].includes(row.requestStatus)).length;
+    const waitingReceipt = requisitions.filter(row => row.deliveryStatus === "ARRIVED").length;
+    focus.innerHTML = `
+        <h3>领料工作台</h3>
+        <p class="focus-hint">提交生产领料申请，跟踪仓库接收、审批、配送和收料确认。</p>
+        <div class="workflow-steps">
+            <button type="button" onclick="scrollBSection('productionRequisitionForm')"><strong>${requestableWorkOrders}</strong><span>可申请工单</span></button>
+            <button type="button" onclick="scrollBSection('productionRequisitionTable')"><strong>${openRequisitions}</strong><span>处理中领料</span></button>
+            <button type="button" onclick="scrollBSection('productionRequisitionTable')"><strong>${waitingWarehouse}</strong><span>待仓库处理</span></button>
+            <button type="button" onclick="scrollBSection('productionRequisitionTable')"><strong>${waitingReceipt}</strong><span>待确认收料</span></button>
+        </div>`;
+}
+
+function syncReportBatchNo() {
+    const select = document.getElementById("reportWorkOrderSelect");
+    const batchInput = document.querySelector("#reportForm [name='batchNo']");
+    if (!select || !batchInput) return;
+    const selected = select.options[select.selectedIndex];
+    if (selected?.dataset.batchNo) batchInput.value = selected.dataset.batchNo;
+}
+
 function renderReportActions(row) {
     const actions = [`<button type="button" onclick="showReportDetail(${Number(row.reportId)})">详情</button>`];
     if (canEditReport(row)) {
@@ -223,6 +397,164 @@ function renderReportActions(row) {
 
 function canEditReport(row) {
     return hasPermission("production.report.update_own") && ["SUBMITTED", "REJECTED"].includes(row.reportStatus);
+}
+
+function renderProductionRequisitionTable(rows) {
+    if (!document.getElementById("productionRequisitionTable")) return;
+    renderTable("productionRequisitionTable", rows, [
+        { title: "ID", key: "requisitionId" },
+        { title: "编号", key: "requisitionNo" },
+        { title: "工单", key: "workOrderId" },
+        { title: "仓库", render: row => productionWarehouseName(row.warehouseId) },
+        { title: "领料状态", render: row => productionRequisitionStatus(row.requestStatus) },
+        { title: "配送状态", render: row => row.deliveryStatus ? productionRequisitionStatus(row.deliveryStatus) : "-" },
+        { title: "操作", render: renderProductionRequisitionActions }
+    ]);
+}
+
+function renderProductionRequisitionActions(row) {
+    const actions = [`<button onclick="showProductionRequisitionDetail(${row.requisitionId})">详情</button>`];
+    if (row.deliveryStatus === "ARRIVED" && row.deliveryTaskId) {
+        actions.push(`<button onclick="confirmProductionReceipt(${row.deliveryTaskId})">确认收料</button>`);
+    }
+    return actions.join("");
+}
+
+function productionRequisitionStatus(status) {
+    const value = status || "";
+    const label = productionRequisitionStatusText(value);
+    return `<span class="status status-${escapeHtml(value.toLowerCase())}">${escapeHtml(label)}</span>`;
+}
+
+function productionWarehouseName(id) {
+    const warehouse = productionRequisitionCache.warehouses.find(item => Number(item.warehouseId) === Number(id));
+    return warehouse ? `${warehouse.warehouseName || warehouse.warehouseCode} / ID ${id}` : `ID ${id}`;
+}
+
+async function showProductionRequisitionDetail(id) {
+    try {
+        const requisition = await getJson(`/requisitions/${id}`);
+        showProductionRecordDialog("领料任务详情", productionRequisitionDetailSections(requisition));
+    } catch (error) {
+        showMessage(toChineseError(error), "error");
+    }
+}
+
+function productionRequisitionDetailSections(requisition) {
+    const items = Array.isArray(requisition.items) ? requisition.items : [];
+    return [
+        {
+            title: "领料单",
+            rows: [
+                detailField("领料编号", requisition.requisitionNo || requisition.requisitionId),
+                detailField("生产工单", requisition.workOrderId),
+                detailField("目标仓库", productionWarehouseName(requisition.warehouseId)),
+                detailField("领料状态", productionRequisitionStatusText(requisition.requestStatus)),
+                detailField("配送状态", requisition.deliveryStatus ? productionRequisitionStatusText(requisition.deliveryStatus) : "-"),
+                detailField("申请时间", formatProductionDateTime(requisition.requestTime)),
+                detailField("审核时间", formatProductionDateTime(requisition.approvedTime)),
+                detailField("备注", requisition.remark || "-")
+            ]
+        },
+        {
+            title: "物料明细",
+            rows: items.length ? items.flatMap(item => [
+                detailField("物料", productionMaterialName(item.materialId)),
+                detailField("需求数量", item.requiredQty ?? "-"),
+                detailField("已发数量", item.issuedQty ?? "-"),
+                detailField("单位", item.unit || "-"),
+                detailField("批次", item.batchNo || "-")
+            ]) : [detailField("物料", "暂无明细")]
+        }
+    ];
+}
+
+function productionMaterialName(id) {
+    const material = productionRequisitionCache.materials.find(item => Number(item.materialId) === Number(id));
+    return material ? `${material.materialName || material.materialCode} / ID ${id}` : `ID ${id ?? "-"}`;
+}
+
+function productionRequisitionStatusText(status) {
+    const value = status || "";
+    return value === "CREATED" ? "待仓库接收"
+        : value === "RECEIVED" ? "仓库已接收"
+        : value === "APPROVED" ? "已审批待发料"
+        : value === "ARRIVED" ? "已到达待确认"
+        : statusText(value);
+}
+
+async function confirmProductionReceipt(deliveryTaskId) {
+    try {
+        await postJson(`/robot-delivery-tasks/${deliveryTaskId}/confirm-receipt`);
+        showMessage("收料已确认，领料任务已完成处理", "ok");
+        await refreshRequisition();
+    } catch (error) {
+        showMessage(toChineseError(error), "error");
+    }
+}
+
+function ensureProductionPurchaseControls() {
+    const form = document.getElementById("productionRequisitionForm");
+    if (!form || document.getElementById("productionPurchaseButton")) return;
+    const status = document.createElement("p");
+    status.id = "productionPurchaseHint";
+    status.className = "form-help";
+    const button = document.createElement("button");
+    button.type = "button";
+    button.id = "productionPurchaseButton";
+    button.textContent = "采购补料";
+    button.className = "hidden";
+    button.addEventListener("click", purchaseForProductionRequisition);
+    form.querySelector("button[type='submit']")?.before(status, button);
+}
+
+function syncProductionPurchasePrompt() {
+    ensureProductionPurchaseControls();
+    const hint = document.getElementById("productionPurchaseHint");
+    const button = document.getElementById("productionPurchaseButton");
+    if (!hint || !button) return;
+    if (!productionRequisitionShortage) {
+        hint.textContent = "";
+        button.classList.add("hidden");
+        return;
+    }
+    hint.textContent = `当前申请数量没有足够库存，缺口 ${productionRequisitionShortage.shortageQty}。`;
+    button.classList.remove("hidden");
+}
+
+function defaultProductionPurchaseWarehouseId() {
+    const selected = Number(document.getElementById("productionRequisitionWarehouseSelect")?.value || 0);
+    if (selected) return selected;
+    return Number(productionRequisitionCache.warehouses[0]?.warehouseId || 0);
+}
+
+async function purchaseForProductionRequisition() {
+    const form = document.getElementById("productionRequisitionForm");
+    if (!form) return;
+    const data = new FormData(form);
+    const materialId = Number(data.get("materialId") || 0);
+    const warehouseId = defaultProductionPurchaseWarehouseId();
+    const requiredQty = Number(data.get("requiredQty") || 0);
+    const batchNo = String(data.get("batchNo") || "").trim();
+    const availableQty = productionRequisitionAvailableQty(materialId, warehouseId, batchNo);
+    const qty = Math.max(requiredQty - availableQty, requiredQty, 1);
+    if (!materialId || !warehouseId || qty <= 0) {
+        showMessage("请先选择物料并填写申请数量", "error");
+        return;
+    }
+    try {
+        await postJson("/inventory/external-purchase", {
+            materialId,
+            warehouseId,
+            batchNo: batchNo || null,
+            qty,
+            reason: "production requisition shortage"
+        });
+        showMessage("采购补料已完成，库存已更新，可以重新提交领料申请", "ok");
+        await refreshRequisition();
+    } catch (error) {
+        showMessage(toChineseError(error), "error");
+    }
 }
 
 function isPendingReport(row) {
@@ -498,6 +830,47 @@ async function rejectReport(id, reason) {
 }
 
 document.getElementById("refreshProduction")?.addEventListener("click", () => refreshProduction({ notify: true }));
+document.getElementById("refreshRequisition")?.addEventListener("click", () => refreshRequisition({ notify: true }));
+ensureProductionPurchaseControls();
+document.getElementById("productionRequisitionMaterialSelect")?.addEventListener("change", refreshProductionRequisitionWarehouses);
+document.querySelector("#productionRequisitionForm [name='batchNo']")?.addEventListener("input", refreshProductionRequisitionWarehouses);
+document.querySelector("#productionRequisitionForm [name='requiredQty']")?.addEventListener("input", refreshProductionRequisitionWarehouses);
+document.getElementById("productionRequisitionForm")?.addEventListener("submit", async event => {
+    event.preventDefault();
+    const form = new FormData(event.target);
+    try {
+        if (!form.get("workOrderId") || !form.get("warehouseId") || !form.get("materialId")) {
+            showMessage("请先选择工单、仓库和物料", "error");
+            return;
+        }
+        const batchNo = String(form.get("batchNo") || "").trim();
+        const remark = String(form.get("remark") || "").trim();
+        const materialId = Number(form.get("materialId"));
+        const warehouseId = Number(form.get("warehouseId"));
+        const requiredQty = Number(form.get("requiredQty"));
+        const availableQty = productionRequisitionAvailableQty(materialId, warehouseId, batchNo);
+        if (productionRequisitionCache.inventory.length && availableQty < requiredQty) {
+            showMessage(`目标仓库可用库存不足：需求 ${requiredQty}，可用 ${availableQty}。请换有库存的仓库或清空批次号。`, "error");
+            return;
+        }
+        await postJson("/requisitions", {
+            workOrderId: Number(form.get("workOrderId")),
+            warehouseId,
+            remark: remark || null,
+            items: [{
+                materialId,
+                requiredQty,
+                unit: "kg",
+                batchNo: batchNo || null
+            }]
+        });
+        showMessage("领料申请已提交，等待仓库管理员接收审批", "ok");
+        event.target.reset();
+        await refreshRequisition();
+    } catch (error) {
+        showMessage(toChineseError(error), "error");
+    }
+});
 
 function reportPayloadFromForm(form) {
     const reportQty = Number(form.get("reportQty")) || 0;
@@ -610,6 +983,17 @@ function scrollProductionSection(id) {
     window.setTimeout(() => target.closest(".tool")?.scrollIntoView({ behavior: "smooth", block: "center" }), 80);
 }
 
+function scrollBSection(id) {
+    const target = document.getElementById(id);
+    const panel = document.getElementById("requisition");
+    if (!target || !panel) return;
+    const workspaceView = target.closest("[data-workspace-view]");
+    if (workspaceView?.dataset.workspaceView && typeof selectModuleView === "function") {
+        selectModuleView(panel, workspaceView.dataset.workspaceView);
+    }
+    window.setTimeout(() => target.closest(".tool")?.scrollIntoView({ behavior: "smooth", block: "center" }), 80);
+}
+
 function applyProductionRolePresentation() {
     const isWorkshopManager = hasRole("WORKSHOP_MANAGER");
     document.getElementById("reportableWorkOrderTool")?.classList.toggle("permission-hidden", isWorkshopManager || !canCreateWorkReport());
@@ -636,4 +1020,19 @@ function relabelProductionStaticText() {
     document.getElementById("refreshProduction").textContent = "刷新";
 }
 
+function relabelRequisitionStaticText() {
+    const panel = document.getElementById("requisition");
+    if (!panel) return;
+    panel.querySelector("h2").textContent = "领料";
+    document.getElementById("refreshRequisition").textContent = "刷新";
+    const titles = panel.querySelectorAll(".tool > h3");
+    const names = ["申请领料任务", "我的领料任务"];
+    titles.forEach((title, index) => {
+        if (names[index]) title.textContent = names[index];
+    });
+    const requisitionSubmit = document.querySelector("#productionRequisitionForm button[type='submit']");
+    if (requisitionSubmit) requisitionSubmit.textContent = "提交领料申请";
+}
+
 relabelProductionStaticText();
+relabelRequisitionStaticText();

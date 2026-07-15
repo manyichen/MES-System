@@ -1,6 +1,8 @@
 package com.example.messystem.warehouse.resource;
 
 import com.example.messystem.auth.AuthFilter;
+import com.example.messystem.auth.AuthenticatedUser;
+import com.example.messystem.common.BadRequestException;
 import com.example.messystem.common.ResourceSupport;
 import com.example.messystem.security.DataScopeService;
 import com.example.messystem.warehouse.entity.MesRobotDeliveryTask;
@@ -61,9 +63,13 @@ public class RobotDeliveryTaskResource {
 
     @POST
     @Path("/{id}/confirm-receipt")
-    public Response confirmReceipt(@PathParam("id") long id) {
+    public Response confirmReceipt(@PathParam("id") long id, @Context ContainerRequestContext context) {
         try {
-            return ResourceSupport.action("物料已确认接收", service.confirmDeliveryReceipt(id));
+            AuthenticatedUser user = AuthFilter.currentUser(context);
+            if (!user.hasRole("PRODUCTION_OPERATOR")) {
+                throw new BadRequestException("only production operators can confirm requisition receipt");
+            }
+            return ResourceSupport.action("物料已确认接收", service.confirmDeliveryReceipt(id, user.user.userId));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }

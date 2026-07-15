@@ -40,6 +40,7 @@ public final class ChineseMessageSupport {
         CONTAINS_MESSAGES.put("only created picking tasks can be completed", "只有待拣货任务可以完成拣货");
         CONTAINS_MESSAGES.put("only pending delivery tasks can arrive", "只有待配送任务可以标记到达");
         CONTAINS_MESSAGES.put("only arrived delivery tasks can be confirmed", "只有已到达的配送任务可以确认收料");
+        CONTAINS_MESSAGES.put("only approved passed quality inspections can receive finished goods", "只有已审核通过且判定合格的质检单才能成品入库");
         CONTAINS_MESSAGES.put("only submitted reports can be approved", "只有已提交的报工单可以审核");
         CONTAINS_MESSAGES.put("reported quantity exceeds", "报工数量不能超过生产工单计划数量的 110%");
         CONTAINS_MESSAGES.put("work order status does not allow work report", "当前工单状态不允许报工");

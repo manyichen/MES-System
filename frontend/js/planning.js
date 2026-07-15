@@ -152,7 +152,7 @@ function renderPlanningTables() {
         { title: "\u72b6\u6001", key: "taskStatus", render: renderTaskStatus },
         { title: "\u64cd\u4f5c", render: renderTaskActions }
     ]);
-    renderTable("planningShortageAlertTable", planningCache.shortageAlerts, [
+    renderTable("planningShortageAlertTable", planningCache.shortageAlerts.filter(isMeaningfulPlanningShortageAlert), [
         { title: "预警编号", key: "alertNo" },
         { title: "生产任务", key: "taskId" },
         { title: "缺料名称", key: "materialName" },
@@ -169,6 +169,11 @@ function renderPlanningTables() {
         { title: "\u72b6\u6001", key: "workOrderStatus" },
         { title: "\u64cd\u4f5c", render: renderWorkOrderActions }
     ]);
+}
+
+function isMeaningfulPlanningShortageAlert(row) {
+    return Boolean(row?.materialId || row?.materialCode || row?.materialName)
+        && Number(row?.shortageQty || 0) > 0;
 }
 
 function renderOrderProduct(row) {
@@ -231,7 +236,7 @@ function scrollBSection(id) {
 
 function jumpPlanningWorkbench(id) {
     const target = document.getElementById(id);
-    const panel = document.getElementById("planning");
+    const panel = target?.closest(".panel");
     if (!target || !panel) return;
 
     const actionForm = target.matches("form[data-action-view]") ? target : target.closest("form[data-action-view]");

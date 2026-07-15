@@ -4,6 +4,7 @@ const MODULE_PRESENTATION = {
     planning: { icon: "▤", eyebrow: "生产计划", title: "计划与工单", description: "管理客户订单、生产任务、齐套分析和工单执行。" },
     warehouse: { icon: "▦", eyebrow: "仓储作业", title: "仓储物流", description: "查看库存资源并处理领料、拣货和配送业务。" },
     production: { icon: "◉", eyebrow: "生产执行", title: "生产报工", description: "提交生产实绩，跟踪报工审核和计件结果。" },
+    requisition: { icon: "▥", eyebrow: "生产领料", title: "领料", description: "提交领料申请，跟踪仓库接收、审批、配送和收料确认。" },
     quality: { icon: "◇", eyebrow: "质量控制", title: "质量管理", description: "执行质量检验、结果判定和返工闭环。" },
     equipment: { icon: "⚙", eyebrow: "设备保障", title: "设备维护", description: "掌握设备状态，处理报修、维修和验收任务。" },
     process: { icon: "⌘", eyebrow: "工艺工程", title: "工艺管理", description: "查看原料和产品主数据，维护轮胎制造方法和工艺路线。" },
@@ -200,6 +201,7 @@ function initializeApp() {
             && (hasPermission("warehouse.read") || (hasRole("PRODUCTION_OPERATOR") && hasPermission("warehouse.requisition.create")))
             && typeof refreshWarehouse === "function") refreshWarehouse();
     if (hasPermission("production.read") && typeof refreshProduction === "function") refreshProduction();
+    if (hasPermission("warehouse.requisition.create") && typeof refreshRequisition === "function") refreshRequisition();
     if (hasPermission("quality.read") && typeof loadQuality === "function") loadQuality();
     if (hasPermission("equipment.read") && typeof loadEquipment === "function") loadEquipment();
     if (hasPermission("process.read") && typeof loadProcess === "function") loadProcess();

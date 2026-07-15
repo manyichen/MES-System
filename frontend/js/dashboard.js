@@ -25,6 +25,7 @@ function applyDashboardProfile(dashboard) {
         ? new Set(["executiveOverview", "productionLive", "departmentReports", "managementAudit"])
         : new Set(dashboard.visibleModules || ["dashboard"]);
     document.body.classList.toggle("executive-session", isGeneralManager);
+    if (hasPermission("warehouse.requisition.create")) visibleModules.add("requisition");
     document.querySelectorAll(".sidebar button[data-tab]").forEach(button => {
         const visible = (button.dataset.tab === "profile" || visibleModules.has(button.dataset.tab))
             && !button.classList.contains("permission-hidden");

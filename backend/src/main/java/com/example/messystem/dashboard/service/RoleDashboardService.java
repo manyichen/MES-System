@@ -58,6 +58,7 @@ public class RoleDashboardService {
             case "WORKSHOP_MANAGER" -> {
                 card(cards, "active_work_orders", "本车间执行工单", count(c, "select count(*) from mes_work_order wo where wo.work_order_status in ('DISPATCHED','RECEIVED','IN_PROGRESS') and wo.line_id in (select line_id from mes_user_line_scope where user_id = ?)", userId), "单", "normal", "planning");
                 card(cards, "report_review", "待审核报工", count(c, "select count(*) from mes_work_report r join mes_work_order wo on wo.work_order_id = r.work_order_id where r.report_status = 'SUBMITTED' and wo.line_id in (select line_id from mes_user_line_scope where user_id = ?)", userId), "单", "warning", "production");
+                card(cards, "material_request", "待协调领料", count(c, "select count(*) from mes_material_requisition r join mes_work_order wo on wo.work_order_id = r.work_order_id where r.request_status in ('CREATED','RECEIVED','APPROVED') and wo.line_id in (select line_id from mes_user_line_scope where user_id = ?)", userId), "单", "normal", "warehouse");
                 card(cards, "equipment_fault", "影响生产的报修", count(c, "select count(*) from mes_equipment_repair_report r join mes_equipment e on e.equipment_id = r.equipment_id where r.repair_status = 'REPORTED' and e.line_id in (select line_id from mes_user_line_scope where user_id = ?)", userId), "单", "danger", "equipment");
             }
             case "PRODUCTION_OPERATOR" -> {
@@ -67,7 +68,7 @@ public class RoleDashboardService {
                 card(cards, "my_wage", "已生成计件记录", count(c, "select count(*) from mes_piecework_wage where operator_id = ?", userId), "条", "normal", "production");
             }
             case "WAREHOUSE_ADMIN" -> {
-                card(cards, "requisitions", "待审批领料单", count(c, "select count(*) from mes_material_requisition r where r.request_status = 'CREATED' and r.warehouse_id in (select warehouse_id from mes_user_warehouse_scope where user_id = ?)", userId), "单", "warning", "warehouse");
+                card(cards, "requisitions", "待接收/审批领料单", count(c, "select count(*) from mes_material_requisition r where r.request_status in ('CREATED','RECEIVED') and r.warehouse_id in (select warehouse_id from mes_user_warehouse_scope where user_id = ?)", userId), "单", "warning", "warehouse");
                 card(cards, "picking", "待完成拣货", count(c, "select count(*) from mes_picking_task p where p.task_status not in ('COMPLETED','CLOSED') and p.warehouse_id in (select warehouse_id from mes_user_warehouse_scope where user_id = ?)", userId), "项", "warning", "warehouse");
                 card(cards, "delivery", "配送中任务", count(c, "select count(*) from mes_robot_delivery_task d join mes_picking_task p on p.picking_task_id = d.picking_task_id where d.delivery_status not in ('RECEIVED','COMPLETED','CLOSED') and p.warehouse_id in (select warehouse_id from mes_user_warehouse_scope where user_id = ?)", userId), "项", "normal", "warehouse");
                 card(cards, "shortages", "本仓库存为零", count(c, "select count(*) from mes_inventory i where i.available_qty <= 0 and i.warehouse_id in (select warehouse_id from mes_user_warehouse_scope where user_id = ?)", userId), "项", "danger", "warehouse");
@@ -147,7 +148,7 @@ public class RoleDashboardService {
             }
             case "WAREHOUSE_ADMIN" -> {
                 todo(todos, "approve-requisition", "审核生产领料申请", "核对工单、物料、需求数量和可用库存。",
-                        count(c, "select count(*) from mes_material_requisition r where r.request_status = 'CREATED' and r.warehouse_id in (select warehouse_id from mes_user_warehouse_scope where user_id = ?)", userId), "HIGH", "warehouse", "requisitionTable", "warehouse.requisition.approve");
+                        count(c, "select count(*) from mes_material_requisition r where r.request_status in ('CREATED','RECEIVED') and r.warehouse_id in (select warehouse_id from mes_user_warehouse_scope where user_id = ?)", userId), "HIGH", "warehouse", "requisitionTable", "warehouse.requisition.approve");
                 todo(todos, "picking", "完成待拣货任务", "按库位和批次完成拣货并生成库存流水。",
                         count(c, "select count(*) from mes_picking_task p where p.task_status = 'CREATED' and p.warehouse_id in (select warehouse_id from mes_user_warehouse_scope where user_id = ?)", userId), "HIGH", "warehouse", "pickingTable", "warehouse.picking.execute");
                 todo(todos, "delivery", "跟踪待交接配送任务", "确认到达和生产线收料，完成配送闭环。",
@@ -236,7 +237,7 @@ public class RoleDashboardService {
                     modules("dashboard", "planning", "production", "equipment", "trace", "feedback"),
                     "不能创建客户订单或最终排产", "不能修改库存", "不能审核质检结果", "不能管理用户");
             case "PRODUCTION_OPERATOR" -> profile(role, "生产操作工", "本人、本人被派工单和本人报工/计件记录",
-                    modules("dashboard", "planning", "production", "equipment"),
+                    modules("dashboard", "planning", "production", "requisition", "equipment", "feedback"),
                     "不能查看其他员工报工和工资", "不能派发工单或审核报工", "不能修改库存、质检结论和设备台账", "不能查看用户信息");
             case "WAREHOUSE_ADMIN" -> profile(role, "仓库管理员", "仅明确分配的仓库、库位、库存、领料、拣货、机器人和配送数据",
                     modules("dashboard", "planning", "warehouse", "trace", "feedback"),

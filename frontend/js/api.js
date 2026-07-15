@@ -19,9 +19,10 @@ const DISPLAY_TEXT = {
     ENABLED: "已启用", HIGH: "高", MEDIUM: "中", LOW: "低", URGENT: "紧急", CRITICAL: "严重",
     MIXER: "密炼设备", MIXING: "炼胶", BUILDING: "成型", BUILDING_MACHINE: "成型机", CURING: "硫化", CURING_PRESS: "硫化机", INSPECTION: "检测设备", QUALITY: "质量",
     PRODUCTION: "生产", EQUIPMENT: "设备", MATERIAL: "物料", SYSTEM: "系统", EMPLOYEE: "员工账号",
-    RAW: "原材料", SEMI_FINISHED: "半成品", TRANSFER: "转移", RAW_MATERIAL: "原材料仓", WIP: "在制品仓", FINISHED_GOODS: "成品仓", SPARE_PARTS: "备件仓",
+    RAW: "原材料", SEMI_FINISHED: "半成品", FG: "成品", TRANSFER: "转移", RAW_MATERIAL: "原材料仓", WIP: "在制品仓", FINISHED_GOODS: "成品仓", SPARE_PARTS: "备件仓",
     IN: "入库", OUT: "出库", INBOUND: "入库", OUTBOUND: "出库", RESERVE: "预留", RELEASE: "释放预留",
-    ADJUST_IN: "盘盈调整", ADJUST_OUT: "盘亏调整", REQUISITION: "领料单", PICKING_TASK: "拣货任务",
+    ADJUST_IN: "盘盈调整", ADJUST_OUT: "盘亏调整", PURCHASE_IN: "采购入库", FINISHED_GOODS_IN: "成品入库",
+    EXTERNAL_PURCHASE: "外部采购", QUALITY_INSPECTION: "质检单", REQUISITION: "领料单", PICKING_TASK: "拣货任务",
     DELIVERY_TASK: "配送任务", WORK_REPORT: "报工单", CUSTOMER_ORDER: "客户订单", WORK_ORDER: "生产工单",
     ALL: "全部数据", DEPT: "本部门", SELF: "本人数据", LINE: "指定产线", WAREHOUSE: "指定仓库",
     READ: "查看", CREATE: "新建", UPDATE: "修改", DELETE: "删除", MANAGE: "管理", REVIEW: "审核",
@@ -147,16 +148,26 @@ function toChineseError(error) {
     if (message.includes("work order is not assigned to current operator")) return "该工单未派发给当前操作工，不能报工";
     if (message.includes("work report does not belong to this work order")) return "报工ID不属于当前工单，请选择同一条业务链路的工单和报工";
     if (message.includes("only APPROVED work reports can create quality inspections")) return "只有已审核通过的报工单才能创建质检单";
+    if (message.includes("only approved passed quality inspections can receive finished goods")) return "只有已审核通过且判定合格的质检单才能成品入库";
     if (message.includes("work report not found")) return "报工ID不存在，请检查报工列表";
 
     if (message.includes("warehouse location is required before completing picking")) return "完成拣货前必须有仓库库位，请先维护库位";
     if (message.includes("only CREATED picking tasks can be completed")) return "只有待拣货状态的任务才能完成拣货";
     if (message.includes("only PENDING delivery tasks can arrive")) return "只有待配送状态的任务才能标记到达";
     if (message.includes("only ARRIVED delivery tasks can be confirmed")) return "只有已到达的配送任务才能确认收料";
+    if (message.includes("only CREATED requisitions can be received")) return "只有待接收的领料任务才能接收";
+    if (message.includes("only RECEIVED requisitions can be approved")) return "请先由仓库管理员接收领料任务，再进行审批";
     if (message.includes("only CREATED requisitions can be approved")) return "只有待审核的领料任务才能审核";
+    if (message.includes("only warehouse admins can receive or approve requisitions")) return "只有仓库管理员可以接收和审批领料任务";
+    if (message.includes("only production operators can confirm requisition receipt")) return "只有申请领料的生产操作工可以确认收料";
+    if (message.includes("delivery task is not requested by current operator")) return "该配送任务不属于当前操作工的领料申请";
+    if (message.includes("only APPROVED requisitions can be received")) return "只有已审批发料的领料任务才能确认收料";
     if (message.includes("warehouse is required before approving requisition")) return "审核领料前必须选择目标仓库";
-    if (message.includes("inventory is not enough")) return "库存不足，请检查物料和批次库存";
+    if (message.includes("inventory is not enough")) return "目标仓库库存不足，请换有库存的仓库或清空批次号";
     if (message.includes("requisition items are required")) return "领料明细不能为空";
+    if (message.includes("requiredQty must be positive")) return "领料数量必须大于 0";
+    if (message.includes("purchase qty must be positive")) return "采购数量必须大于 0";
+    if (message.includes("warehouse location does not belong to target warehouse")) return "采购库位不属于目标仓库";
     if (message.includes("work order status does not allow requisition")) return "当前工单状态不允许创建领料任务";
     if (message.includes("materials have already been received for this delivery task")) return "该配送任务已经收料，不能重复确认";
 
