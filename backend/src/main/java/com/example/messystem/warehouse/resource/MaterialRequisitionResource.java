@@ -60,6 +60,7 @@ public class MaterialRequisitionResource {
                 throw new BadRequestException("仓库ID不能为空");
             }
             var user = AuthFilter.currentUser(context);
+            requireRole(user, "PRODUCTION_OPERATOR", "只有生产操作工可以发起领料申请");
             dataScopeService.snapshot(user).requireWorkOrder(requisition.workOrderId);
             if (user.hasRole("PRODUCTION_OPERATOR")) {
                 requireOperatorWorkOrder(requisition.workOrderId, user.user.userId);
@@ -75,8 +76,10 @@ public class MaterialRequisitionResource {
     @Path("/{id}/approve")
     public Response approve(@PathParam("id") long id, @Context ContainerRequestContext context) {
         try {
+            var user = AuthFilter.currentUser(context);
+            requireRole(user, "WAREHOUSE_ADMIN", "只有仓库管理员可以审核领料任务");
             return ResourceSupport.action("领料单已审核通过",
-                    service.approveRequisition(id, AuthFilter.currentUser(context).user.userId));
+                    service.approveRequisition(id, user.user.userId));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }
@@ -87,11 +90,19 @@ public class MaterialRequisitionResource {
     public Response reject(@PathParam("id") long id, MesMaterialRequisition request,
             @Context ContainerRequestContext context) {
         try {
+            var user = AuthFilter.currentUser(context);
+            requireRole(user, "WAREHOUSE_ADMIN", "只有仓库管理员可以审核领料任务");
             String reason = request == null ? null : request.remark;
             return ResourceSupport.action("领料单已驳回",
-                    service.rejectRequisition(id, AuthFilter.currentUser(context).user.userId, reason));
+                    service.rejectRequisition(id, user.user.userId, reason));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
+        }
+    }
+
+    private static void requireRole(com.example.messystem.auth.AuthenticatedUser user, String roleCode, String message) {
+        if (!user.hasRole(roleCode)) {
+            throw new BadRequestException(message);
         }
     }
 

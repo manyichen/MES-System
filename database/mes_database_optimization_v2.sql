@@ -325,6 +325,8 @@ ALTER TABLE mes_material_requisition ADD COLUMN IF NOT EXISTS approved_by BIGINT
 ALTER TABLE mes_material_requisition ADD COLUMN IF NOT EXISTS approved_at TIMESTAMP;
 ALTER TABLE mes_work_report ADD COLUMN IF NOT EXISTS approved_by BIGINT;
 ALTER TABLE mes_work_report ADD COLUMN IF NOT EXISTS approved_at TIMESTAMP;
+ALTER TABLE mes_work_report ADD COLUMN IF NOT EXISTS remark VARCHAR(500);
+ALTER TABLE mes_work_report ADD COLUMN IF NOT EXISTS reject_reason VARCHAR(500);
 ALTER TABLE mes_quality_inspection ADD COLUMN IF NOT EXISTS assigned_to BIGINT;
 ALTER TABLE mes_quality_inspection ADD COLUMN IF NOT EXISTS reviewed_by BIGINT;
 ALTER TABLE mes_quality_inspection ADD COLUMN IF NOT EXISTS reviewed_at TIMESTAMP;

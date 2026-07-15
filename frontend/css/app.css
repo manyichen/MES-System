@@ -133,12 +133,20 @@ table{width:100%;border-collapse:separate;border-spacing:0;font-size:12px}th,td{
 
 #warehouse input,
 #warehouse select,
+#warehouse textarea,
 #planning input,
 #planning select,
+#planning textarea,
 #production input,
-#production select {
+#production select,
+#production textarea {
     min-height: 42px;
     font-size: 15px;
+}
+
+#production textarea {
+    width: 100%;
+    resize: vertical;
 }
 
 #warehouse button,
@@ -197,6 +205,20 @@ table{width:100%;border-collapse:separate;border-spacing:0;font-size:12px}th,td{
 button:disabled{cursor:not-allowed;opacity:.55;filter:none!important;transform:none!important}
 .requisition-review-modal{width:min(720px,100%);max-height:88vh;overflow:auto}
 .report-review-modal{width:min(720px,100%);max-height:88vh;overflow:auto}
+.report-edit-modal,.production-detail-modal,.equipment-repair-modal{width:min(860px,100%);max-height:88vh;overflow:auto}
+.production-report-form,.equipment-repair-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 16px}
+.production-report-form label,.equipment-repair-form label{margin:0}
+.production-report-form .wide-field,.production-report-form button,.production-report-form .edit-summary,.equipment-repair-form .wide-field,.equipment-repair-form .modal-actions,.equipment-repair-form .edit-summary{grid-column:1/-1}
+.production-detail-head{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:14px}
+.production-detail-head span{color:#3478df;font-size:10px;font-weight:800;letter-spacing:1.6px}
+.production-detail-section{margin-top:14px}
+.production-detail-section h4{margin:0 0 9px;color:#24324a}
+.production-detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.production-detail-grid .detail-row{display:block;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc}
+.production-detail-grid .detail-row span,.production-detail-grid .detail-row strong{display:block}
+.production-detail-grid .detail-row span{margin-bottom:5px;color:#718096;font-size:11px}
+.production-detail-grid .detail-row strong{color:#1f2d44;overflow-wrap:anywhere}
+.report-edit-modal .edit-summary,.equipment-repair-modal .edit-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .requisition-review-modal h4{margin:16px 0 8px;color:#24324a}
 .review-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0}
 .review-summary div,.review-checks div,.review-items div{padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc}

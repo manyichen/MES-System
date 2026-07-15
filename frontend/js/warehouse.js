@@ -2,18 +2,21 @@ let warehouseCache = { materials: [], warehouses: [], inventory: [], workOrders:
 
 async function refreshWarehouse(options = {}) {
     try {
+        const canReadWarehouse = hasPermission("warehouse.read");
+        const canCreateRequisition = hasRole("PRODUCTION_OPERATOR") && hasPermission("warehouse.requisition.create");
+        const optionalList = path => getJson(path).catch(() => []);
         const [materials, warehouses, locations, inventory, robots, requisitions, pickingTasks, deliveryTasks, transactions, workOrders, shortageAlerts] = await Promise.all([
-            getJson("/materials"),
-            getJson("/warehouses"),
-            getJson("/warehouses/locations"),
-            getJson("/inventory"),
-            getJson("/robots"),
-            getJson("/requisitions"),
-            getJson("/picking-tasks"),
-            getJson("/robot-delivery-tasks"),
-            getJson("/inventory/transactions"),
-            getJson("/work-orders").catch(() => []),
-            getJson("/shortage-alerts").catch(() => [])
+            (canReadWarehouse || canCreateRequisition || hasPermission("master.read")) ? optionalList("/materials") : [],
+            (canReadWarehouse || canCreateRequisition) ? optionalList("/warehouses") : [],
+            canReadWarehouse ? optionalList("/warehouses/locations") : [],
+            canReadWarehouse ? optionalList("/inventory") : [],
+            canReadWarehouse ? optionalList("/robots") : [],
+            canReadWarehouse ? optionalList("/requisitions") : [],
+            canReadWarehouse ? optionalList("/picking-tasks") : [],
+            canReadWarehouse ? optionalList("/robot-delivery-tasks") : [],
+            canReadWarehouse ? optionalList("/inventory/transactions") : [],
+            (hasPermission("planning.read") || hasPermission("planning.work_order.read")) ? optionalList("/work-orders") : [],
+            (canReadWarehouse || hasPermission("planning.read")) ? optionalList("/shortage-alerts") : []
         ]);
         warehouseCache = { materials, warehouses, inventory, workOrders, shortageAlerts };
         renderRequisitionSelectors();
@@ -35,10 +38,12 @@ function renderRequisitionSelectors() {
 
 function replaceWarehouseInput(name, rows, valueKey, labelFn) {
     const current = document.querySelector(`#requisitionForm [name='${name}']`);
-    if (!current || current.tagName === "SELECT") return;
-    const select = document.createElement("select");
+    if (!current) return;
+    const previousValue = current.value;
+    const select = current.tagName === "SELECT" ? current : document.createElement("select");
     select.name = name;
     select.required = current.required;
+    select.innerHTML = "";
     if (!rows.length) {
         const option = document.createElement("option");
         option.value = "";
@@ -51,7 +56,8 @@ function replaceWarehouseInput(name, rows, valueKey, labelFn) {
         option.textContent = labelFn(row);
         select.appendChild(option);
     });
-    current.replaceWith(select);
+    if ([...select.options].some(option => option.value === previousValue)) select.value = previousValue;
+    if (current !== select) current.replaceWith(select);
 }
 
 function renderWarehouseTables(data) {
@@ -73,7 +79,7 @@ function renderWarehouseTables(data) {
         { title: "\u7f16\u53f7", key: "materialCode" },
         { title: "\u540d\u79f0", key: "materialName" },
         { title: "\u5355\u4f4d", key: "unit" },
-        { title: "\u64cd\u4f5c", render: row => `<button onclick="showMaterialDetail(${row.materialId})">\u8be6\u60c5</button>${hasPermission("warehouse.requisition.create") ? `<button onclick="fillMaterial(${row.materialId})">\u4f7f\u7528</button>` : ""}` }
+        { title: "\u64cd\u4f5c", render: row => `<button onclick="showMaterialDetail(${row.materialId})">\u8be6\u60c5</button>${hasRole("PRODUCTION_OPERATOR") && hasPermission("warehouse.requisition.create") ? `<button onclick="fillMaterial(${row.materialId})">\u4f7f\u7528</button>` : ""}` }
     ]);
     renderTable("warehouseTable", visibleWarehouses, [
         { title: "ID", key: "warehouseId" },
@@ -95,7 +101,7 @@ function renderWarehouseTables(data) {
         { title: "\u6279\u6b21", key: "batchNo" },
         { title: "\u53ef\u7528", key: "availableQty" },
         { title: "\u72b6\u6001", key: "qualityStatus" },
-        { title: "\u64cd\u4f5c", render: row => `<button onclick="showInventoryDetail(${row.inventoryId})">\u8be6\u60c5</button>${hasPermission("warehouse.requisition.create") ? `<button onclick="fillInventory(${row.materialId}, '${escapeJs(row.batchNo)}')">\u4f7f\u7528</button>` : ""}` }
+        { title: "\u64cd\u4f5c", render: row => `<button onclick="showInventoryDetail(${row.inventoryId})">\u8be6\u60c5</button>${hasRole("PRODUCTION_OPERATOR") && hasPermission("warehouse.requisition.create") ? `<button onclick="fillInventory(${row.materialId}, '${escapeJs(row.batchNo)}')">\u4f7f\u7528</button>` : ""}` }
     ]);
     renderTable("robotTable", visibleRobots, [
         { title: "ID", key: "robotId" },
@@ -175,6 +181,10 @@ function renderWarehouseFocus(data) {
     const grid = document.querySelector("#warehouse .grid");
     if (!grid) return;
     let focus = document.getElementById("warehouseFocus");
+    if (hasRole("PRODUCTION_OPERATOR")) {
+        focus?.remove();
+        return;
+    }
     if (!focus) {
         focus = document.createElement("div");
         focus.id = "warehouseFocus";
@@ -185,8 +195,10 @@ function renderWarehouseFocus(data) {
     const pick = data.pickingTasks.filter(row => row.taskStatus === "CREATED").length;
     const arrived = data.deliveryTasks.filter(row => row.deliveryStatus === "ARRIVED").length;
     const pending = data.deliveryTasks.filter(row => row.deliveryStatus === "PENDING").length;
+    const canApproveRequisition = hasRole("WAREHOUSE_ADMIN") && hasPermission("warehouse.requisition.approve");
+    const requisitionLabel = canApproveRequisition ? "\u5f85\u5ba1\u6838\u9886\u6599" : "\u5f85\u5904\u7406\u9886\u6599";
     const steps = [
-        `<button type="button" onclick="scrollWarehouseSection('requisitionTable')"><strong>${req}</strong><span>\u5f85\u5ba1\u6838\u9886\u6599</span></button>`
+        `<button type="button" onclick="scrollWarehouseSection('requisitionTable')"><strong>${req}</strong><span>${requisitionLabel}</span></button>`
     ];
     if (!hasRole("WORKSHOP_MANAGER")) {
         steps.push(
@@ -263,7 +275,8 @@ function renderRequisitionStatus(row) {
 }
 
 function renderRequisitionActions(row) {
-    const label = row.requestStatus === "CREATED" ? "\u5ba1\u6838" : "\u8be6\u60c5";
+    const canReview = row.requestStatus === "CREATED" && hasRole("WAREHOUSE_ADMIN") && hasPermission("warehouse.requisition.approve");
+    const label = canReview ? "\u5ba1\u6838" : "\u8be6\u60c5";
     return `<button onclick="openRequisitionReview(${row.requisitionId})">${label}</button>`;
 }
 
@@ -353,7 +366,7 @@ function showRequisitionReviewDialog(requisition) {
     const checks = buildRequisitionReviewChecks(requisition, itemRows);
     const canApprove = checks.filter(item => item.blocking).every(item => item.pass);
     const isCreated = requisition.requestStatus === "CREATED";
-    const canReview = isCreated && hasPermission("warehouse.requisition.approve");
+    const canReview = isCreated && hasRole("WAREHOUSE_ADMIN") && hasPermission("warehouse.requisition.approve");
     const remark = requisition.remark ? `<h4>\u5907\u6ce8 / \u9a73\u56de\u539f\u56e0</h4><p class="reject-reason-text">${escapeHtml(requisition.remark)}</p>` : "";
     const reviewChecks = canReview ? `
             <h4>\u5ba1\u6838\u5224\u65ad</h4>
@@ -567,11 +580,11 @@ function relabelWarehouseStaticText() {
     document.getElementById("seedWarehouse").textContent = "\u751f\u6210\u6f14\u793a\u6570\u636e";
     document.getElementById("refreshWarehouse").textContent = "\u5237\u65b0";
     const titles = panel.querySelectorAll(".tool > h3");
-    const names = ["\u57fa\u7840\u6570\u636e", "\u521b\u5efa\u9886\u6599\u4efb\u52a1", "\u9886\u6599\u4efb\u52a1", "\u5df2\u9a73\u56de\u9886\u6599\u4efb\u52a1", "\u62e3\u8d27\u4efb\u52a1", "\u914d\u9001\u4efb\u52a1", "\u5e93\u5b58\u6d41\u6c34", "\u4ed3\u50a8\u8be6\u60c5"];
+    const names = ["\u57fa\u7840\u6570\u636e", "\u53d1\u8d77\u9886\u6599", "\u9886\u6599\u4efb\u52a1", "\u5df2\u9a73\u56de\u9886\u6599\u4efb\u52a1", "\u62e3\u8d27\u4efb\u52a1", "\u914d\u9001\u4efb\u52a1", "\u5e93\u5b58\u6d41\u6c34", "\u4ed3\u50a8\u8be6\u60c5"];
     titles.forEach((title, index) => {
         if (names[index]) title.textContent = names[index];
     });
-    document.querySelector("#requisitionForm button[type='submit']").textContent = "\u521b\u5efa\u9886\u6599";
+    document.querySelector("#requisitionForm button[type='submit']").textContent = "\u63d0\u4ea4\u9886\u6599\u7533\u8bf7";
     organizeWarehouseLayout();
 }
 

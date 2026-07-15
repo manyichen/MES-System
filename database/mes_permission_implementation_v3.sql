@@ -132,8 +132,7 @@ WITH grants(role_code, permission_code) AS (
     ('PRODUCTION_OPERATOR','production.report.create'), ('PRODUCTION_OPERATOR','production.report.update_own'),
     ('PRODUCTION_OPERATOR','warehouse.requisition.create'),
     ('PRODUCTION_OPERATOR','production.wage.read_self'), ('PRODUCTION_OPERATOR','equipment.fault.report'),
-    ('PRODUCTION_OPERATOR','equipment.read'), ('PRODUCTION_OPERATOR','feedback.read'),
-    ('PRODUCTION_OPERATOR','feedback.create'),
+    ('PRODUCTION_OPERATOR','equipment.read'),
 
     ('WAREHOUSE_ADMIN','dashboard.read'), ('WAREHOUSE_ADMIN','warehouse.read'),
     ('WAREHOUSE_ADMIN','warehouse.master.manage'), ('WAREHOUSE_ADMIN','warehouse.requisition.approve'),
@@ -186,6 +185,33 @@ WHERE rp.role_id = r.role_id
 UPDATE mes_role
 SET enabled = 0
 WHERE role_code = 'VIEWER';
+
+-- Requisition responsibility boundary: production operators initiate, warehouse admins approve.
+DELETE FROM mes_role_permission rp
+USING mes_role r, mes_permission p
+WHERE rp.role_id = r.role_id
+  AND rp.permission_id = p.permission_id
+  AND r.role_code IN ('PMC_PLANNER', 'WORKSHOP_MANAGER')
+  AND p.permission_code = 'warehouse.requisition.approve';
+
+-- Production operators are limited to the execution permissions listed in the role boundary table.
+DELETE FROM mes_role_permission rp
+USING mes_role r, mes_permission p
+WHERE rp.role_id = r.role_id
+  AND rp.permission_id = p.permission_id
+  AND r.role_code = 'PRODUCTION_OPERATOR'
+  AND p.permission_code NOT IN (
+      'dashboard.read',
+      'planning.work_order.read',
+      'planning.work_order.receive',
+      'production.read',
+      'production.report.create',
+      'production.report.update_own',
+      'production.wage.read_self',
+      'warehouse.requisition.create',
+      'equipment.read',
+      'equipment.fault.report'
+  );
 
 DELETE FROM mes_role_permission rp
 USING mes_role r, mes_permission p

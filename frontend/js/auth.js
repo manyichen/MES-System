@@ -34,6 +34,10 @@ function applyPermissionVisibility() {
         const denied = element.dataset.denyRole.split("|").some(hasRole);
         element.classList.toggle("permission-hidden", denied);
     });
+    document.querySelectorAll("[data-only-role]").forEach(element => {
+        const allowed = element.dataset.onlyRole.split("|").some(hasRole);
+        element.classList.toggle("permission-hidden", !allowed);
+    });
     if (hasRole("PROCESS_ENGINEER")) {
         ["planning", "quality", "equipment", "production"].forEach(tab => {
             document.querySelector(`.sidebar button[data-tab="${tab}"]`)?.classList.add("permission-hidden");

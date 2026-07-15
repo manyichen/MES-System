@@ -237,7 +237,7 @@ public class RoleDashboardService {
                     modules("dashboard", "planning", "warehouse", "production", "equipment", "trace", "feedback"),
                     "不能创建客户订单或最终排产", "不能修改库存", "不能审核质检结果", "不能管理用户");
             case "PRODUCTION_OPERATOR" -> profile(role, "生产操作工", "本人、本人被派工单和本人报工/计件记录",
-                    modules("dashboard", "planning", "production", "equipment", "feedback"),
+                    modules("dashboard", "planning", "production", "equipment"),
                     "不能查看其他员工报工和工资", "不能派发工单或审核报工", "不能修改库存、质检结论和设备台账", "不能查看用户信息");
             case "WAREHOUSE_ADMIN" -> profile(role, "仓库管理员", "仅明确分配的仓库、库位、库存、领料、拣货、机器人和配送数据",
                     modules("dashboard", "planning", "warehouse", "trace", "feedback"),

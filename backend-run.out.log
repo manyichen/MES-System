@@ -1,0 +1,19 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ----------------------< com.example:mes-backend >-----------------------
+[INFO] Building MES Backend 1.0-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ war ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.4.0:resources (default-resources) @ mes-backend ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.14.0:compile (default-compile) @ mes-backend ---
+[INFO] Recompiling the module because of added or removed source files.
+[INFO] Compiling 145 source files with javac [forked debug release 21] to target\classes
+[INFO] 
+[INFO] --- exec:3.5.0:java (default-cli) @ mes-backend ---
+MES backend started: http://127.0.0.1:8080/
+Web root: E:\Projects\xiaoxueqishixun\chenlun\MES-System\frontend
+Listening on 127.0.0.1:8080
+Press Ctrl+C to stop.

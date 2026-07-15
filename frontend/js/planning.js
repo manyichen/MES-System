@@ -1,6 +1,6 @@
 let lastWorkOrderId = null;
 let aiPlanningConfirmedTaskId = null;
-let planningCache = { orders: [], tasks: [], workOrders: [], products: [], lines: [], routes: [], operators: [], shortageAlerts: [] };
+let planningCache = { orders: [], tasks: [], workOrders: [], products: [], lines: [], routes: [], operators: [], shortageAlerts: [], workOrderLogs: [] };
 
 const TXT = {
     refreshPlanning: "\u8ba1\u5212\u5de5\u5355\u6570\u636e\u5df2\u5237\u65b0",
@@ -29,7 +29,8 @@ async function refreshPlanning(options = {}) {
         const canReadPlanning = hasPermission("planning.read");
         const canReadUsers = hasPermission("user.read");
         const canDispatchWorkOrder = hasPermission("planning.work_order.dispatch");
-        const [orders, tasks, workOrders, products, lines, routes, users, shortageAlerts] = await Promise.all([
+        const canReadWorkOrder = hasPermission("planning.work_order.read") || canReadPlanning;
+        const [orders, tasks, workOrders, products, lines, routes, users, shortageAlerts, workOrderLogs] = await Promise.all([
             canReadPlanning ? getJson("/orders") : Promise.resolve([]),
             canReadPlanning ? getJson("/production-tasks") : Promise.resolve([]),
             getJson("/work-orders"),
@@ -38,7 +39,8 @@ async function refreshPlanning(options = {}) {
             canReadPlanning ? getJson("/process-routes").catch(() => []) : Promise.resolve([]),
             canDispatchWorkOrder ? getJson("/work-orders/operators").catch(() => []) :
                 (canReadUsers ? getJson("/users").catch(() => []) : Promise.resolve([])),
-            canReadPlanning ? getJson("/shortage-alerts").catch(() => []) : Promise.resolve([])
+            canReadPlanning ? getJson("/shortage-alerts").catch(() => []) : Promise.resolve([]),
+            canReadWorkOrder ? getJson("/work-orders/logs").catch(() => []) : Promise.resolve([])
         ]);
         planningCache = {
             orders,
@@ -48,6 +50,7 @@ async function refreshPlanning(options = {}) {
             lines,
             routes,
             shortageAlerts,
+            workOrderLogs,
             operators: users.filter(user => user.roleCode === "PRODUCTION_OPERATOR" && user.enabled !== false)
         };
         renderPlanningSelectors();
@@ -158,14 +161,64 @@ function renderPlanningTables() {
         { title: "状态", key: "alertStatus" },
         { title: "仓储接收时间", key: "acceptedAt" }
     ]);
-    renderTable("workOrderTable", planningCache.workOrders, [
+    renderTable("workOrderTable", sortWorkOrdersForDisplay(planningCache.workOrders), [
         { title: "ID", key: "workOrderId" },
         { title: "\u7f16\u53f7", key: "workOrderNo" },
         { title: "\u4efb\u52a1", key: "taskId" },
         { title: "\u4ea7\u7ebf", key: "lineId" },
         { title: "工艺路线", render: renderWorkOrderRoute },
-        { title: "\u72b6\u6001", key: "workOrderStatus" },
+        { title: "\u72b6\u6001", key: "workOrderStatus", render: row => escapeHtml(workOrderStatusText(row.workOrderStatus)) },
         { title: "\u64cd\u4f5c", render: renderWorkOrderActions }
+    ]);
+    renderWorkOrderLogTable();
+}
+
+function sortWorkOrdersForDisplay(workOrders) {
+    const unreceivedRank = row => row.workOrderStatus === "DISPATCHED" ? 0 : 1;
+    return [...(workOrders || [])].sort((left, right) =>
+        unreceivedRank(left) - unreceivedRank(right) || Number(left.workOrderId) - Number(right.workOrderId));
+}
+
+const WORK_ORDER_OPERATION_TEXT = {
+    CREATE: "\u521b\u5efa\u5de5\u5355",
+    DISPATCH: "\u6d3e\u53d1\u5de5\u5355",
+    RECEIVE: "\u63a5\u6536\u5de5\u5355",
+    REJECT: "\u62d2\u7edd\u63a5\u6536",
+    CANCEL: "\u64a4\u9500\u5de5\u5355",
+    COMPLETE: "\u5b8c\u6210\u5de5\u5355"
+};
+
+function workOrderOperationText(type) {
+    return WORK_ORDER_OPERATION_TEXT[type] || statusText(type) || type || "-";
+}
+
+function workOrderStatusText(status) {
+    return status === "REJECTED" ? "已拒绝接收" : statusText(status);
+}
+
+function logStatusText(status) {
+    if (!status) return "-";
+    return workOrderStatusText(status) || status;
+}
+
+function logOperatorLabel(operatorId) {
+    if (!operatorId) return "-";
+    const session = getCurrentSession();
+    if (Number(session?.user?.userId) === Number(operatorId)) {
+        return session?.user?.realName || session?.user?.username || `\u7528\u6237 ${operatorId}`;
+    }
+    return operatorLabel(operatorId);
+}
+
+function renderWorkOrderLogTable() {
+    if (!document.getElementById("workOrderLogTable")) return;
+    renderTable("workOrderLogTable", planningCache.workOrderLogs, [
+        { title: "\u5de5\u5355\u7f16\u53f7", key: "workOrderNo", render: row => escapeHtml(row.workOrderNo || `WO-${row.workOrderId}`) },
+        { title: "\u64cd\u4f5c", key: "operationType", render: row => escapeHtml(workOrderOperationText(row.operationType)) },
+        { title: "\u72b6\u6001\u53d8\u5316", render: row => escapeHtml(`${logStatusText(row.fromStatus)} \u2192 ${logStatusText(row.toStatus)}`) },
+        { title: "\u64cd\u4f5c\u4eba", render: row => escapeHtml(logOperatorLabel(row.operatorId)) },
+        { title: "\u64cd\u4f5c\u65f6\u95f4", key: "operatedAt", render: row => escapeHtml(formatDateTime(row.operatedAt)) },
+        { title: "\u8bf4\u660e", key: "remark" }
     ]);
 }
 
@@ -192,6 +245,16 @@ function renderPlanningFocus() {
         focus.id = "planningFocus";
         focus.className = "tool wide workflow-focus b-focus";
         grid.prepend(focus);
+    }
+    if (hasRole("PRODUCTION_OPERATOR")) {
+        const pendingReceive = planningCache.workOrders.filter(row => row.workOrderStatus === "DISPATCHED").length;
+        focus.innerHTML = `
+        <h3>计划工单工作台</h3>
+        <p class="focus-hint">先处理待接收的生产工单，再查看工单操作日志。</p>
+        <div class="workflow-steps">
+            <button type="button" onclick="scrollBSection('workOrderTable')"><strong>${pendingReceive}</strong><span>待接收工单</span></button>
+        </div>`;
+        return;
     }
     const pendingTasks = planningCache.tasks.filter(row => row.taskStatus !== "RELEASED").length;
     const releasedTasks = planningCache.tasks.filter(row => row.taskStatus === "RELEASED").length;
@@ -456,6 +519,10 @@ function applyAiRecommendedLine(lineId) {
 }
 
 function renderWorkOrderActions(row) {
+    if (hasRole("PRODUCTION_OPERATOR")) {
+        const unreceived = row.workOrderStatus === "DISPATCHED";
+        return `<button type="button" onclick="showWorkOrderDetail(${row.workOrderId})">${unreceived ? "\u63a5\u6536" : "\u8be6\u60c5"}</button>`;
+    }
     return `<button type="button" onclick="showWorkOrderDetail(${row.workOrderId})">\u8be6\u60c5/\u6d3e\u5de5</button>`;
 }
 
@@ -549,7 +616,7 @@ async function showWorkOrderDetail(id) {
         mask.innerHTML = `
             <div class="modal-card work-order-detail-modal">
                 <h3>${TXT.workOrderDetail}</h3>
-                <p class="modal-subtitle">${escapeHtml(workOrder.workOrderNo || `WO-${workOrder.workOrderId}`)} · ${escapeHtml(statusText(workOrder.workOrderStatus || ""))}</p>
+                <p class="modal-subtitle">${escapeHtml(workOrder.workOrderNo || `WO-${workOrder.workOrderId}`)} · ${escapeHtml(workOrderStatusText(workOrder.workOrderStatus || ""))}</p>
                 <div class="work-order-detail-grid">
                     ${workOrderDetailRow("\u5de5\u5355ID", workOrder.workOrderId)}
                     ${workOrderDetailRow("\u751f\u4ea7\u4efb\u52a1", taskLabel(workOrder.taskId))}
@@ -568,8 +635,8 @@ async function showWorkOrderDetail(id) {
                     <select id="workOrderDetailOperator">${operatorOptions()}</select>
                 </label>` : ""}
                 <div class="modal-actions">
-                    <button type="button" id="workOrderDetailClose">\u53d6\u6d88</button>
-                    ${canReceive ? `<button type="button" id="workOrderDetailReceive">\u63a5\u6536\u5de5\u5355</button>` : ""}
+                    <button type="button" id="workOrderDetailClose">${canReceive ? "\u53d6\u6d88" : "\u5173\u95ed"}</button>
+                    ${canReceive ? `<button type="button" id="workOrderDetailReceive">\u786e\u8ba4\u63a5\u6536</button>` : ""}
                     ${canDispatch ? `<button type="button" id="workOrderDetailDispatch">\u786e\u8ba4\u6d3e\u5de5</button>` : ""}
                 </div>
             </div>`;
@@ -626,7 +693,12 @@ function processLabel(processId) {
 function operatorLabel(userId) {
     if (!userId) return "-";
     const user = planningCache.operators.find(item => Number(item.userId) === Number(userId));
-    return user ? `${user.realName || user.username} / ${user.username}` : userId;
+    if (user) return `${user.realName || user.username} / ${user.username}`;
+    const session = getCurrentSession();
+    if (Number(session?.user?.userId) === Number(userId)) {
+        return session?.user?.realName || session?.user?.username || `用户 ${userId}`;
+    }
+    return userId;
 }
 
 function operatorOptions() {
@@ -722,10 +794,16 @@ function relabelPlanningStaticText() {
     panel.querySelector("h2").textContent = "PMC 计划与工单";
     document.getElementById("seedPlanning").textContent = "\u751f\u6210\u6f14\u793a\u4e3b\u7ebf";
     document.getElementById("refreshPlanning").textContent = "\u5237\u65b0";
-    const titles = panel.querySelectorAll(".tool > h3");
-    const names = ["接收并创建生产订单", "制定生产任务", "制定生产工单", "客户订单", "生产任务", "生产工单", "工单操作日志"];
-    titles.forEach((title, index) => {
-        if (names[index]) title.textContent = names[index];
+    const titles = {
+        orderTable: "客户订单",
+        taskTable: "生产任务",
+        planningShortageAlertTable: "缺料协同预警",
+        workOrderTable: "生产工单",
+        workOrderLogTable: "工单操作日志"
+    };
+    Object.entries(titles).forEach(([tableId, title]) => {
+        const heading = document.getElementById(tableId)?.closest(".tool")?.querySelector("h3");
+        if (heading) heading.textContent = title;
     });
     document.querySelector("#orderForm button[type='submit']").textContent = "确认创建生产订单";
     document.querySelector("#taskForm button[type='submit']").textContent = "确认制定生产任务";

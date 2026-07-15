@@ -1,0 +1,38 @@
+7月 14, 2026 11:21:47 上午 org.apache.coyote.AbstractProtocol init
+信息: Initializing ProtocolHandler ["http-nio-8080"]
+7月 14, 2026 11:21:47 上午 org.apache.catalina.util.LifecycleBase handleSubClassException
+严重: Failed to initialize component [Connector["http-nio-8080"]]
+org.apache.catalina.LifecycleException: Protocol handler initialization failed
+	at org.apache.catalina.connector.Connector.initInternal(Connector.java:1075)
+	at org.apache.catalina.util.LifecycleBase.init(LifecycleBase.java:122)
+	at org.apache.catalina.core.StandardService.initInternal(StandardService.java:522)
+	at org.apache.catalina.util.LifecycleBase.init(LifecycleBase.java:122)
+	at org.apache.catalina.core.StandardServer.initInternal(StandardServer.java:957)
+	at org.apache.catalina.util.LifecycleBase.init(LifecycleBase.java:122)
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:155)
+	at org.apache.catalina.startup.Tomcat.start(Tomcat.java:438)
+	at com.example.messystem.MesBackendApplication.main(MesBackendApplication.java:51)
+	at org.codehaus.mojo.exec.ExecJavaMojo.doMain(ExecJavaMojo.java:375)
+	at org.codehaus.mojo.exec.ExecJavaMojo.doExec(ExecJavaMojo.java:364)
+	at org.codehaus.mojo.exec.ExecJavaMojo.lambda$execute$0(ExecJavaMojo.java:286)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+Caused by: java.net.BindException: Address already in use: bind
+	at java.base/sun.nio.ch.Net.bind0(Native Method)
+	at java.base/sun.nio.ch.Net.bind(Net.java:577)
+	at java.base/sun.nio.ch.ServerSocketChannelImpl.netBind(ServerSocketChannelImpl.java:344)
+	at java.base/sun.nio.ch.ServerSocketChannelImpl.bind(ServerSocketChannelImpl.java:301)
+	at org.apache.tomcat.util.net.NioEndpoint.initServerSocket(NioEndpoint.java:266)
+	at org.apache.tomcat.util.net.NioEndpoint.bind(NioEndpoint.java:221)
+	at org.apache.tomcat.util.net.AbstractEndpoint.bindWithCleanup(AbstractEndpoint.java:1399)
+	at org.apache.tomcat.util.net.AbstractEndpoint.init(AbstractEndpoint.java:1412)
+	at org.apache.coyote.AbstractProtocol.init(AbstractProtocol.java:633)
+	at org.apache.coyote.http11.AbstractHttp11Protocol.init(AbstractHttp11Protocol.java:82)
+	at org.apache.catalina.connector.Connector.initInternal(Connector.java:1073)
+	... 12 more
+
+7月 14, 2026 11:21:47 上午 org.apache.catalina.core.StandardService startInternal
+信息: Starting service [Tomcat]
+7月 14, 2026 11:21:47 上午 org.apache.catalina.core.StandardEngine startInternal
+信息: Starting Servlet engine: [Apache Tomcat/10.1.42]
+7月 14, 2026 11:21:48 上午 org.glassfish.jersey.server.wadl.WadlFeature configure
+警告: JAXBContext implementation could not be found. WADL feature is disabled.

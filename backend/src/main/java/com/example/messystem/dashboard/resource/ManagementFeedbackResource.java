@@ -31,7 +31,8 @@ public class ManagementFeedbackResource {
                 return ApiResponse.fail("workOrderId query parameter is required");
             }
             AuthenticatedUser user = AuthFilter.currentUser(context);
-            boolean ownOnly = user.hasRole("PRODUCTION_OPERATOR") || user.hasRole("QUALITY_INSPECTOR")
+            rejectProductionOperator(user);
+            boolean ownOnly = user.hasRole("QUALITY_INSPECTOR")
                     || user.hasRole("EQUIPMENT_MAINTAINER");
             return ApiResponse.ok(ownOnly
                     ? service.listOwnFeedbackForWorkOrder(workOrderId, user.user.userId)
@@ -47,7 +48,8 @@ public class ManagementFeedbackResource {
             @Context ContainerRequestContext context) {
         try {
             AuthenticatedUser user = AuthFilter.currentUser(context);
-            boolean ownOnly = user.hasRole("PRODUCTION_OPERATOR") || user.hasRole("QUALITY_INSPECTOR")
+            rejectProductionOperator(user);
+            boolean ownOnly = user.hasRole("QUALITY_INSPECTOR")
                     || user.hasRole("EQUIPMENT_MAINTAINER");
             return (ownOnly ? service.getOwnFeedback(id, user.user.userId) : service.getFeedback(id))
                     .map(ApiResponse::ok)
@@ -61,14 +63,15 @@ public class ManagementFeedbackResource {
     public ApiResponse<Long> createFeedback(MesManagementFeedback feedback,
             @Context ContainerRequestContext context) {
         try {
+            AuthenticatedUser user = AuthFilter.currentUser(context);
+            rejectProductionOperator(user);
             if (feedback == null) {
                 throw new BadRequestException("反馈内容不能为空");
             }
             if (feedback.workOrderId() != null) {
-                dataScopeService.snapshot(AuthFilter.currentUser(context)).requireWorkOrder(feedback.workOrderId());
+                dataScopeService.snapshot(user).requireWorkOrder(feedback.workOrderId());
             }
-            return ApiResponse.ok(service.createFeedback(feedback,
-                    AuthFilter.currentUser(context).user.userId));
+            return ApiResponse.ok(service.createFeedback(feedback, user.user.userId));
         } catch (SQLException e) {
             throw new BadRequestException(e.getMessage());
         }
@@ -81,6 +84,12 @@ public class ManagementFeedbackResource {
             return ApiResponse.ok(service.closeFeedback(id));
         } catch (SQLException e) {
             throw new BadRequestException(e.getMessage());
+        }
+    }
+
+    private static void rejectProductionOperator(AuthenticatedUser user) {
+        if (user.hasRole("PRODUCTION_OPERATOR")) {
+            throw new BadRequestException("生产操作工不能使用管理反馈功能");
         }
     }
 }
