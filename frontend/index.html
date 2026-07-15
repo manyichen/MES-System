@@ -296,18 +296,12 @@
             <button id="refreshProduction">刷新</button>
         </header>
         <div class="grid">
-            <form id="reportForm" class="tool" data-permission="production.report.create">
-                <h3>提交报工</h3>
-                <label>可报工工单 <select name="workOrderId" id="reportWorkOrderSelect" required></select></label>
-                <label>批次号 <input name="batchNo" value="BATCH-DEMO-001"></label>
-                <label>报工数量 <input name="reportQty" type="number" value="100" min="0" required></label>
-                <label>合格数量 <input name="qualifiedQty" type="number" value="95" min="0" required></label>
-                <label>不合格数量 <input name="defectQty" type="number" value="5" min="0" required></label>
-                <label>工时 <input name="workHours" type="number" value="8" min="0" step="0.1"></label>
-                <button type="submit">提交</button>
-            </form>
-            <div class="tool">
-                <h3>报工单</h3>
+            <div class="tool wide" id="reportableWorkOrderTool" data-permission="production.report.create" data-deny-role="WORKSHOP_MANAGER">
+                <h3>可报工工单</h3>
+                <div id="reportableWorkOrderTable"></div>
+            </div>
+            <div class="tool wide">
+                <h3>我的报工单</h3>
                 <div id="reportTable"></div>
             </div>
             <div class="tool">

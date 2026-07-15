@@ -26,7 +26,9 @@ async function refreshProduction(options = {}) {
         const safeReports = Array.isArray(reports) ? reports : [];
         const safeWages = Array.isArray(wages) ? wages : [];
         const sortedReports = sortReportsForReview(safeReports);
-        const reportableWorkOrders = (Array.isArray(workOrders) ? workOrders : []).filter(isReportableWorkOrder);
+        const reportableWorkOrders = canCreateWorkReport()
+            ? (Array.isArray(workOrders) ? workOrders : []).filter(isReportableWorkOrder)
+            : [];
         productionCache = {
             workOrders: Array.isArray(workOrders) ? workOrders : [],
             reportableWorkOrders,
@@ -37,6 +39,7 @@ async function refreshProduction(options = {}) {
             lines: Array.isArray(lines) ? lines : [],
             routes: Array.isArray(routes) ? routes : []
         };
+        applyProductionRolePresentation();
         renderProductionFocus(reportableWorkOrders, sortedReports, wages);
         renderReportableWorkOrderTable(reportableWorkOrders, sortedReports);
         renderWorkReportTable(sortedReports);
@@ -78,17 +81,24 @@ function renderProductionFocus(workOrders, reports, wages) {
     const todayReportQty = sumBy(todayReports, "reportQty");
     const todayQualifiedQty = sumBy(todayReports, "qualifiedQty");
     const todayDefectQty = sumBy(todayReports, "defectQty");
+    const isWorkshopManager = hasRole("WORKSHOP_MANAGER");
+    const focusHint = isWorkshopManager
+        ? "车间管理员优先处理待审核报工，并查看本车间产线的生产与计件汇总。"
+        : "操作工优先选择可报工工单，车间管理员优先处理待审核报工。";
+    const workflowButtons = [
+        canCreateWorkReport() ? `<button type="button" onclick="scrollProductionSection('reportableWorkOrderTable')"><strong>${workOrders.length}</strong><span>可报工工单</span></button>` : "",
+        canReviewReport() ? `<button type="button" onclick="scrollProductionSection('reportTable')"><strong>${submitted}</strong><span>待审核报工</span></button>` : "",
+        `<button type="button" onclick="scrollProductionSection('reportTable')"><strong>${approved}</strong><span>已审核报工</span></button>`,
+        `<button type="button" onclick="scrollProductionSection('wageTable')"><strong>${wageCount}</strong><span>${isWorkshopManager ? "计件工资汇总" : "计件工资记录"}</span></button>`,
+        `<button type="button" onclick="scrollProductionSection('reportTable')"><strong>${todayReportQty}</strong><span>今日报工数量</span></button>`,
+        `<button type="button" onclick="scrollProductionSection('reportTable')"><strong>${todayQualifiedQty}</strong><span>今日合格数</span></button>`,
+        `<button type="button" onclick="scrollProductionSection('reportTable')"><strong>${todayDefectQty}</strong><span>今日不良数</span></button>`
+    ].filter(Boolean).join("");
     focus.innerHTML = `
         <h3>生产执行工作台</h3>
-        <p class="focus-hint">操作工优先选择可报工工单，车间管理员优先处理待审核报工。</p>
+        <p class="focus-hint">${focusHint}</p>
         <div class="workflow-steps">
-            <button type="button" onclick="scrollProductionSection('reportableWorkOrderTable')"><strong>${workOrders.length}</strong><span>可报工工单</span></button>
-            <button type="button" onclick="scrollProductionSection('reportTable')"><strong>${submitted}</strong><span>待审核报工</span></button>
-            <button type="button" onclick="scrollProductionSection('reportTable')"><strong>${approved}</strong><span>已审核报工</span></button>
-            <button type="button" onclick="scrollProductionSection('wageTable')"><strong>${wageCount}</strong><span>计件工资记录</span></button>
-            <button type="button" onclick="scrollProductionSection('reportTable')"><strong>${todayReportQty}</strong><span>今日报工数量</span></button>
-            <button type="button" onclick="scrollProductionSection('reportTable')"><strong>${todayQualifiedQty}</strong><span>今日合格数</span></button>
-            <button type="button" onclick="scrollProductionSection('reportTable')"><strong>${todayDefectQty}</strong><span>今日不良数</span></button>
+            ${workflowButtons}
         </div>`;
 }
 
@@ -101,7 +111,7 @@ function renderReportableWorkOrderTable(workOrders, reports) {
         { title: "计划数量", key: "plannedQty" },
         { title: "已报工数量", render: row => escapeHtml(reportedQtyForWorkOrder(row.workOrderId, reports)) },
         { title: "当前状态", key: "workOrderStatus", render: row => escapeHtml(workOrderStatusForProduction(row.workOrderStatus)) },
-        { title: "操作", render: row => `<button type="button" onclick="openReportFormForWorkOrder(${Number(row.workOrderId)})">报工</button>` }
+        { title: "操作", render: row => canCreateWorkReport() ? `<button type="button" onclick="openReportFormForWorkOrder(${Number(row.workOrderId)})">报工</button>` : "-" }
     ]);
 }
 
@@ -142,6 +152,10 @@ function renderWageTable(wages) {
 }
 
 function openReportFormForWorkOrder(workOrderId) {
+    if (!canCreateWorkReport()) {
+        showMessage("当前角色不能提交生产报工", "error");
+        return;
+    }
     const order = productionCache.reportableWorkOrders.find(item => Number(item.workOrderId) === Number(workOrderId));
     if (!order) {
         showMessage("未找到可报工工单，请刷新后重试", "error");
@@ -218,14 +232,22 @@ function isPendingReport(row) {
 }
 
 function canReviewReport() {
-    return hasPermission("production.report.review") || hasRole("WORKSHOP_MANAGER");
+    return hasPermission("production.report.review");
+}
+
+function canCreateWorkReport() {
+    return hasPermission("production.report.create") && !hasRole("WORKSHOP_MANAGER");
 }
 
 async function showReportDetail(id) {
     try {
         const report = await getJson(`/work-reports/${id}`);
-        const wages = await getJson(`/piecework-wages/by-report/${id}`).catch(() =>
-            productionCache.wages.filter(wage => Number(wage.reportId) === Number(id)));
+        const wages = hasRole("WORKSHOP_MANAGER")
+            ? []
+            : await getJson(`/piecework-wages/by-report/${id}`).catch(() =>
+                Array.isArray(productionCache.wages)
+                    ? productionCache.wages.filter(wage => Number(wage.reportId) === Number(id))
+                    : []);
         const workOrder = await workOrderForReport(report);
         showReportDetailDialog(report, workOrder, Array.isArray(wages) ? wages : []);
     } catch (error) {
@@ -240,7 +262,7 @@ async function workOrderForReport(report) {
 }
 
 function showReportDetailDialog(report, workOrder, wages) {
-    showProductionRecordDialog("报工单详情", [
+    const sections = [
         {
             title: "工单基础信息",
             rows: [
@@ -270,8 +292,10 @@ function showReportDetailDialog(report, workOrder, wages) {
                 detailField("状态", reportStatusText(report.reportStatus)),
                 detailField("驳回原因", report.reportStatus === "REJECTED" ? (report.rejectReason || "暂未记录") : "-")
             ]
-        },
-        {
+        }
+    ];
+    if (!hasRole("WORKSHOP_MANAGER")) {
+        sections.push({
             title: "对应计件工资记录",
             rows: wages.length
                 ? wages.flatMap(wage => [
@@ -283,8 +307,9 @@ function showReportDetailDialog(report, workOrder, wages) {
                     detailField("生成时间", formatProductionDateTime(wage.createdAt))
                 ])
                 : [detailField("计件工资", "暂无记录")]
-        }
-    ]);
+        });
+    }
+    showProductionRecordDialog("报工单详情", sections);
 }
 
 function showProductionRecordDialog(title, sections) {
@@ -583,6 +608,25 @@ function scrollProductionSection(id) {
         selectModuleView(panel, workspaceView.dataset.workspaceView);
     }
     window.setTimeout(() => target.closest(".tool")?.scrollIntoView({ behavior: "smooth", block: "center" }), 80);
+}
+
+function applyProductionRolePresentation() {
+    const isWorkshopManager = hasRole("WORKSHOP_MANAGER");
+    document.getElementById("reportableWorkOrderTool")?.classList.toggle("permission-hidden", isWorkshopManager || !canCreateWorkReport());
+    setProductionToolTitle("reportTable", isWorkshopManager ? "报工审核" : "我的报工单");
+    setProductionToolTitle("wageTable", isWorkshopManager ? "计件工资汇总" : "计件工资");
+    if (typeof updateModuleWorkspace === "function") updateModuleWorkspace(document.getElementById("production"));
+}
+
+function setProductionToolTitle(tableId, title) {
+    const tool = document.getElementById(tableId)?.closest(".tool");
+    const heading = tool?.querySelector(":scope > h3");
+    if (heading) heading.textContent = title;
+    const panel = tool?.closest(".panel");
+    const view = tool?.closest("[data-workspace-view]");
+    const target = view?.dataset.workspaceView;
+    const tabLabel = target ? panel?.querySelector(`[data-workspace-target="${target}"] span`) : null;
+    if (tabLabel) tabLabel.textContent = title;
 }
 
 function relabelProductionStaticText() {

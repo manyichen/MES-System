@@ -210,14 +210,18 @@ function renderPlanningFocus() {
     const releasedTasks = planningCache.tasks.filter(row => row.taskStatus === "RELEASED").length;
     const createdWorkOrders = planningCache.workOrders.filter(row => row.workOrderStatus === "CREATED").length;
     const dispatchedWorkOrders = planningCache.workOrders.filter(row => row.workOrderStatus === "DISPATCHED").length;
+    const isWorkshopManager = hasRole("WORKSHOP_MANAGER");
+    const workflowButtons = [
+        !isWorkshopManager ? `<button type="button" onclick="scrollBSection('taskTable')"><strong>${pendingTasks}</strong><span>\u5f85\u9f50\u5957/\u53d1\u5e03\u4efb\u52a1</span></button>` : "",
+        !isWorkshopManager ? `<button type="button" onclick="scrollBSection('taskTable')"><strong>${releasedTasks}</strong><span>可制定工单任务</span></button>` : "",
+        `<button type="button" onclick="scrollBSection('workOrderTable')"><strong>${createdWorkOrders}</strong><span>\u5f85\u6d3e\u53d1\u5de5\u5355</span></button>`,
+        `<button type="button" onclick="scrollBSection('workOrderTable')"><strong>${dispatchedWorkOrders}</strong><span>\u5df2\u6d3e\u53d1\u5f85\u63a5\u6536</span></button>`
+    ].filter(Boolean).join("");
     focus.innerHTML = `
         <h3>\u8ba1\u5212\u5de5\u5355\u5de5\u4f5c\u53f0</h3>
-        <p class="focus-hint">\u5148\u5904\u7406\u4e0b\u9762\u6570\u91cf\u5927\u4e8e 0 \u7684\u4efb\u52a1\uff0c\u518d\u67e5\u770b\u660e\u7ec6\u8868\u3002</p>
+        <p class="focus-hint">${isWorkshopManager ? "\u5148\u5904\u7406\u5f85\u6d3e\u53d1\u6216\u5f85\u63a5\u6536\u7684\u751f\u4ea7\u5de5\u5355\uff0c\u518d\u67e5\u770b\u660e\u7ec6\u8868\u3002" : "\u5148\u5904\u7406\u4e0b\u9762\u6570\u91cf\u5927\u4e8e 0 \u7684\u4efb\u52a1\uff0c\u518d\u67e5\u770b\u660e\u7ec6\u8868\u3002"}</p>
         <div class="workflow-steps">
-            <button type="button" onclick="scrollBSection('taskTable')"><strong>${pendingTasks}</strong><span>\u5f85\u9f50\u5957/\u53d1\u5e03\u4efb\u52a1</span></button>
-            <button type="button" onclick="scrollBSection('taskTable')"><strong>${releasedTasks}</strong><span>可制定工单任务</span></button>
-            <button type="button" onclick="scrollBSection('workOrderTable')"><strong>${createdWorkOrders}</strong><span>\u5f85\u6d3e\u53d1\u5de5\u5355</span></button>
-            <button type="button" onclick="scrollBSection('workOrderTable')"><strong>${dispatchedWorkOrders}</strong><span>\u5df2\u6d3e\u53d1\u5f85\u63a5\u6536</span></button>
+            ${workflowButtons}
         </div>`;
 }
 
