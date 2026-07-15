@@ -352,7 +352,11 @@
             <form id="repair-form" class="tool" data-permission="equipment.fault.report">
                 <h3>提交报修</h3>
                 <label>报修单号 <input name="repairReportNo" value="REP-DEMO-001" required></label>
-                <label>设备ID <input name="equipmentId" type="number" value="1" min="1" required></label>
+                <label>故障设备
+                    <select id="repairEquipmentSelect" name="equipmentId" required>
+                        <option value="">正在加载设备...</option>
+                    </select>
+                </label>
                 <label>工单ID <input name="workOrderId" type="number" value="1"></label>
                 <label>故障级别
                     <select name="faultLevel">

@@ -2,6 +2,7 @@ async function loadEquipment(options = {}) {
     try {
         const equipment = await getJson("/equipment");
         const equipmentById = new Map(equipment.map(item => [String(item.equipmentId), item]));
+        refreshRepairEquipmentOptions(equipment);
         renderTable("equipment-table", equipment, [
             { key: "equipmentId", label: "ID" },
             { key: "equipmentCode", label: "编码" },
@@ -16,7 +17,7 @@ async function loadEquipment(options = {}) {
         renderTable("repair-table", repairs, [
             { key: "repairReportId", label: "ID" },
             { key: "repairReportNo", label: "报修单" },
-            { key: "equipmentId", label: "设备" },
+            { key: "equipmentId", label: "故障设备", render: row => equipmentDisplay(row.equipmentId, equipmentById) },
             { key: "faultLevel", label: "级别", render: row => levelText(row.faultLevel) },
             { key: "faultDesc", label: "描述" },
             { key: "repairStatus", label: "状态", render: row => repairStatusText(row.repairStatus) }
@@ -100,6 +101,27 @@ function equipmentDisplay(equipmentId, equipmentById) {
     const equipment = equipmentById.get(String(equipmentId));
     if (!equipment) return equipmentId || "-";
     return `${equipment.equipmentName}（${equipment.equipmentCode}）`;
+}
+
+function refreshRepairEquipmentOptions(equipment) {
+    const select = document.getElementById("repairEquipmentSelect");
+    if (!select) return;
+    const currentValue = select.value;
+    select.innerHTML = "";
+    if (!equipment.length) {
+        const option = document.createElement("option");
+        option.value = "";
+        option.textContent = "暂无可报修设备";
+        select.appendChild(option);
+        return;
+    }
+    for (const item of equipment) {
+        const option = document.createElement("option");
+        option.value = item.equipmentId;
+        option.textContent = `${item.equipmentName}（${item.equipmentCode}） / ${equipmentStatusText(item.equipmentStatus)}`;
+        select.appendChild(option);
+    }
+    select.value = equipment.some(item => String(item.equipmentId) === currentValue) ? currentValue : (equipment[0]?.equipmentId || "");
 }
 
 async function approveRepair(id) {

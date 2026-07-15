@@ -422,14 +422,14 @@ function hideSystemMaintenanceDetail() {
 
 function sessionActions() {
     return [
-        { name: "revoke-session", label: "强制下线", idKey: "sessionId", permission: "system.health.read", visible: row => Number(row.userId) !== Number(getCurrentSession()?.user?.userId), handler: revokeSession }
+        { name: "revoke-session", label: "下线并锁定", idKey: "sessionId", permission: "system.health.read", visible: row => Number(row.userId) !== Number(getCurrentSession()?.user?.userId), handler: revokeSession }
     ];
 }
 
 function lockedUserActions() {
     return [
         { name: "unlock-user", label: "解除锁定", idKey: "userId", permission: "system.health.read", handler: unlockUser },
-        { name: "revoke-user-sessions", label: "撤销会话", idKey: "userId", permission: "system.health.read", visible: row => Number(row.userId) !== Number(getCurrentSession()?.user?.userId), handler: revokeUserSessions }
+        { name: "revoke-user-sessions", label: "撤销并锁定", idKey: "userId", permission: "system.health.read", visible: row => Number(row.userId) !== Number(getCurrentSession()?.user?.userId), handler: revokeUserSessions }
     ];
 }
 
@@ -442,7 +442,7 @@ function syncLogActions() {
 function failedLoginActions() {
     return [
         { name: "unlock-login-user", label: "解除锁定", idKey: "actorUserId", permission: "system.health.read", visible: row => Boolean(row.actorUserId), handler: unlockUser },
-        { name: "revoke-login-user-sessions", label: "撤销会话", idKey: "actorUserId", permission: "system.health.read", visible: row => Boolean(row.actorUserId) && Number(row.actorUserId) !== Number(getCurrentSession()?.user?.userId), handler: revokeUserSessions }
+        { name: "revoke-login-user-sessions", label: "撤销并锁定", idKey: "actorUserId", permission: "system.health.read", visible: row => Boolean(row.actorUserId) && Number(row.actorUserId) !== Number(getCurrentSession()?.user?.userId), handler: revokeUserSessions }
     ];
 }
 
@@ -464,13 +464,13 @@ async function runSystemMaintenanceAction(path, message) {
 }
 
 async function revokeSession(sessionId) {
-    if (!window.confirm("确定要强制下线这个会话吗？")) return;
-    await runSystemMaintenanceAction(`/access/system-maintenance/sessions/${sessionId}/revoke`, "登录会话已强制下线");
+    if (!window.confirm("确定要强制下线并锁定这个账号吗？锁定后需要管理员解除锁定才能再次登录。")) return;
+    await runSystemMaintenanceAction(`/access/system-maintenance/sessions/${sessionId}/revoke`, "登录会话已强制下线，账号已锁定");
 }
 
 async function revokeUserSessions(userId) {
-    if (!window.confirm("确定要撤销该用户的所有有效会话吗？")) return;
-    await runSystemMaintenanceAction(`/access/system-maintenance/users/${userId}/revoke-sessions`, "用户有效会话已撤销");
+    if (!window.confirm("确定要撤销该用户的所有有效会话并锁定账号吗？锁定后需要管理员解除锁定才能再次登录。")) return;
+    await runSystemMaintenanceAction(`/access/system-maintenance/users/${userId}/revoke-sessions`, "用户有效会话已撤销，账号已锁定");
 }
 
 async function cleanupExpiredSessions() {
