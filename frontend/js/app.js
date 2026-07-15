@@ -25,12 +25,15 @@ function bindNavigation() {
 function switchTab(tab, anchorId = null) {
     const button = document.querySelector(`.sidebar button[data-tab="${tab}"]`);
     const panel = document.getElementById(tab);
-    if (!button || !panel || button.classList.contains("permission-hidden")) return;
+    if (!button || !panel || button.classList.contains("permission-hidden") || button.classList.contains("module-hidden")) return;
     document.querySelectorAll(".sidebar button[data-tab]").forEach(item => item.classList.remove("active"));
     document.querySelectorAll(".panel").forEach(item => item.classList.remove("active"));
     button.classList.add("active");
     panel.classList.add("active");
     updateModuleWorkspace(panel);
+    if (["executiveOverview", "productionLive"].includes(tab) && typeof drawExecutiveCanvases === "function") {
+        window.requestAnimationFrame(() => drawExecutiveCanvases(performance.now()));
+    }
     if (anchorId) window.setTimeout(() => document.getElementById(anchorId)?.scrollIntoView({ behavior: "smooth", block: "center" }), 80);
 }
 
@@ -44,10 +47,12 @@ function setupModuleWorkspaces() {
 
         const forms = [...grid.querySelectorAll(":scope > form.tool")];
         const utilityForms = forms.filter(form => /(?:search|filter)/i.test(form.id));
-        const actionForms = panelId === "system" ? [] : forms.filter(form => !utilityForms.includes(form));
+        const tableActionModule = panelId === "system" || panelId === "planning";
+        const actionForms = tableActionModule ? [] : forms.filter(form => !utilityForms.includes(form));
+        const excludedForms = panelId === "planning" ? forms : actionForms;
         const visibleActionForms = actionForms.filter(form => !form.classList.contains("permission-hidden"));
         const detailPanels = [...grid.querySelectorAll(":scope > .detail-panel")];
-        const views = [...grid.children].filter(item => !actionForms.includes(item) && !detailPanels.includes(item) && !item.classList.contains("permission-hidden"));
+        const views = [...grid.children].filter(item => !excludedForms.includes(item) && !detailPanels.includes(item) && !item.classList.contains("permission-hidden"));
 
         const banner = document.createElement("section");
         banner.className = "module-overview";
@@ -105,6 +110,9 @@ function setupModuleWorkspaces() {
 function selectModuleView(panel, target) {
     panel.querySelectorAll("[data-workspace-view]").forEach(view => view.classList.toggle("workspace-view-active", view.dataset.workspaceView === target));
     panel.querySelectorAll("[data-workspace-target]").forEach(button => button.classList.toggle("active", button.dataset.workspaceTarget === target));
+    if (panel.id === "planning" && typeof updatePlanningViewAction === "function") {
+        updatePlanningViewAction(target);
+    }
 }
 
 function selectActionView(drawer, target) {
@@ -176,12 +184,17 @@ function initializeApp() {
     setupModuleWorkspaces();
     bindNavigation();
     if (typeof bindDashboardEvents === "function") bindDashboardEvents();
+    if (typeof bindExecutiveEvents === "function") bindExecutiveEvents();
     if (typeof bindQualityEvents === "function") bindQualityEvents();
     if (typeof bindEquipmentEvents === "function") bindEquipmentEvents();
     if (typeof bindProcessEvents === "function") bindProcessEvents();
     if (typeof bindProfileEvents === "function") bindProfileEvents();
     if (typeof loadDashboard === "function") loadDashboard();
     if (typeof loadProfile === "function") loadProfile();
+    if (hasRole("GENERAL_MANAGER")) {
+        if (typeof loadExecutiveDashboard === "function") loadExecutiveDashboard();
+        return;
+    }
     if ((hasPermission("planning.read") || hasPermission("planning.work_order.read")) && typeof refreshPlanning === "function") refreshPlanning();
     if (hasPermission("warehouse.read") && typeof refreshWarehouse === "function") refreshWarehouse();
     if (hasPermission("production.read") && typeof refreshProduction === "function") refreshProduction();

@@ -44,6 +44,11 @@
         <span class="nav-group">生产业务</span><button data-tab="planning" data-permission="planning.read|planning.work_order.read"><i>▤</i><span>计划与工单</span></button><button data-tab="warehouse" data-permission="warehouse.read|warehouse.requisition.create"><i>▦</i><span>仓储物流</span></button><button data-tab="production" data-permission="production.read"><i>◉</i><span>生产报工</span></button><button data-tab="quality" data-permission="quality.read"><i>◇</i><span>质量管理</span></button><button data-tab="equipment" data-permission="equipment.read|equipment.fault.report"><i>⚙</i><span>设备维护</span></button>
         <span class="nav-group">综合管理</span><button data-tab="process" data-permission="process.read"><i>⌘</i><span>工艺管理</span></button><button data-tab="trace" data-permission="trace.read"><i>⌁</i><span>产品追溯</span></button><button data-tab="feedback" data-permission="feedback.read|feedback.create"><i>✦</i><span>管理反馈</span></button>
         <span class="nav-group">系统管理</span><button data-tab="systemOps" data-permission="system.health.read"><i>⚙</i><span>系统运维</span></button><button data-tab="audit" data-permission="audit.read"><i>◎</i><span>审计日志</span></button><button data-tab="system" data-permission="user.read|role.read"><i>♙</i><span>用户与权限</span></button>
+        <span class="nav-group general-manager-nav module-hidden">管理驾驶舱</span>
+        <button data-tab="executiveOverview" data-permission="dashboard.read" class="general-manager-nav module-hidden"><i>◉</i><span>公司总体运营</span></button>
+        <button data-tab="productionLive" data-permission="dashboard.read" class="general-manager-nav module-hidden"><i>⌁</i><span>现场生产实况</span></button>
+        <button data-tab="departmentReports" data-permission="dashboard.read" class="general-manager-nav module-hidden"><i>▤</i><span>主管年度报告</span></button>
+        <button data-tab="managementAudit" data-permission="dashboard.read" class="general-manager-nav module-hidden"><i>◇</i><span>经营审计</span></button>
     </nav>
     <div class="sidebar-account"><div id="current-user" class="current-user"></div><button id="logout-button" type="button" class="secondary">退出</button></div>
 </aside>
@@ -117,16 +122,59 @@
         </div>
     </section>
 
+    <section id="executiveOverview" class="panel executive-panel">
+        <header><h2>公司总体运营</h2><button id="refresh-executive-overview" class="secondary">刷新数据</button></header>
+        <div class="executive-board executive-overview-board">
+            <section class="executive-command-bar">
+                <div><span class="executive-eyebrow">EXECUTIVE CONTROL</span><h3>公司总体运营</h3><p>订单、产出、质量、设备与风险的只读经营视图</p></div>
+                <div class="executive-command-meta"><span><i class="executive-live-dot"></i>数据实时汇总</span><strong id="executive-generated-at">--:--:--</strong></div>
+            </section>
+            <div id="executive-kpi-grid" class="executive-kpi-grid"></div>
+            <div class="executive-overview-grid">
+                <section class="executive-surface executive-trend-surface"><div class="executive-surface-head"><div><span>七日经营趋势</span><strong>产出与质量走向</strong></div><small>数据口径：生产报工</small></div><canvas id="executive-trend-canvas" aria-label="七日生产趋势图"></canvas><div id="executive-trend-legend" class="executive-legend"></div></section>
+                <section class="executive-surface executive-factory-surface"><div class="executive-surface-head"><div><span>生产全景</span><strong>工厂运行态势</strong></div><small id="executive-factory-caption">正在汇聚产线状态</small></div><canvas id="executive-factory-canvas" aria-label="工厂运行态势"></canvas><div class="executive-factory-labels"><span>原料保障</span><span>生产执行</span><span>质量放行</span><span>成品入库</span></div></section>
+                <section class="executive-surface executive-alert-surface"><div class="executive-surface-head"><div><span>经营风险</span><strong>待管理层关注</strong></div><small id="executive-alert-count">0 项</small></div><div id="executive-alert-list" class="executive-alert-list"></div></section>
+            </div>
+        </div>
+    </section>
+
+    <section id="productionLive" class="panel executive-panel">
+        <header><h2>现场生产实况</h2><button id="refresh-production-live" class="secondary">刷新实况</button></header>
+        <div class="executive-board executive-live-board">
+            <section class="executive-command-bar"><div><span class="executive-eyebrow">LIVE FACTORY TWIN</span><h3>现场生产实况</h3><p>产线、设备与在制工单的实时只读映射</p></div><div class="executive-command-meta"><span><i class="executive-live-dot"></i>生产现场在线</span><strong id="production-live-clock">--:--:--</strong></div></section>
+            <div class="production-live-layout">
+                <section class="executive-surface production-twin-surface"><div class="executive-surface-head"><div><span>产线数字映射</span><strong>工序流转与设备态势</strong></div><small>每 20 秒自动刷新</small></div><canvas id="production-live-canvas" aria-label="现场生产实况图"></canvas><div id="production-live-key" class="production-live-key"></div></section>
+                <section class="executive-surface production-line-surface"><div class="executive-surface-head"><div><span>产线状态</span><strong>实时负荷</strong></div><small id="production-line-count">0 条产线</small></div><div id="production-line-list" class="production-line-list"></div></section>
+            </div>
+        </div>
+    </section>
+
+    <section id="departmentReports" class="panel executive-panel">
+        <header><h2>主管年度报告</h2><button id="refresh-department-reports" class="secondary">重新汇总</button></header>
+        <div class="executive-board executive-report-board">
+            <section class="executive-command-bar"><div><span class="executive-eyebrow">ANNUAL MANAGEMENT REVIEW</span><h3>主管年度报告</h3><p>仓储、车间、质量与设备主管的年度经营摘要，按系统真实业务数据自动归集</p></div><div class="executive-command-meta"><span>只读审阅</span><strong id="department-report-period">--</strong></div></section>
+            <div id="department-report-list" class="department-report-list"></div>
+        </div>
+    </section>
+
+    <section id="managementAudit" class="panel executive-panel">
+        <header><h2>经营审计</h2><button id="refresh-management-audit" class="secondary">刷新审计</button></header>
+        <div class="executive-board executive-audit-board">
+            <section class="executive-command-bar"><div><span class="executive-eyebrow">MANAGEMENT ASSURANCE</span><h3>经营审计</h3><p>基于当前系统数据的年度审阅要点，用于管理层督办而非替代业务主管审批</p></div><div class="executive-command-meta"><span>自动审阅</span><strong id="management-audit-state">数据校验中</strong></div></section>
+            <div id="management-audit-list" class="management-audit-list"></div>
+        </div>
+    </section>
+
     <section id="planning" class="panel">
         <header>
             <h2>计划工单</h2>
-            <div class="actions">
-                <button id="seedPlanning" data-permission="demo.seed">初始化演示流程</button>
-                <button id="refreshPlanning">刷新</button>
-            </div>
-        </header>
-        <div class="grid">
-            <form id="orderForm" class="tool" data-permission="planning.order.create">
+           <div class="actions">
+                <button id="createPlanningOrder">创建客户订单</button>
+               <button id="refreshPlanning">刷新</button>
+           </div>
+       </header>
+       <div id="planningFormHost" hidden>
+            <form id="orderForm" class="tool" data-permission="planning.order.create" hidden>
                 <h3>接收并创建生产订单</h3>
                 <p class="form-help">录入业务员通过外部接口同步的客户需求，作为 PMC 排产的唯一订单来源。</p>
                 <label>客户名称 <input name="customerName" value="双星演示客户" required></label>
@@ -136,7 +184,7 @@
                 <label>优先级 <select name="priorityLevel"><option value="1">一级（最高）</option><option value="2">二级</option><option value="3" selected>三级（常规）</option><option value="4">四级</option><option value="5">五级</option></select></label>
                 <button type="submit">确认创建生产订单</button>
             </form>
-            <form id="taskForm" class="tool" data-permission="planning.task.create">
+            <form id="taskForm" class="tool" data-permission="planning.task.create" hidden>
                 <h3>制定生产任务</h3>
                 <p class="form-help">从生产订单拆分任务并明确计划数量与完成期限；产线与工序在下一步制定工单时由 PMC 确认。</p>
                 <label>生产订单 <input name="orderId" type="number" value="1" min="1" required></label>
@@ -145,7 +193,7 @@
                 <label>计划完成期限 <input name="plannedEndTime" type="datetime-local" required></label>
                 <button type="submit">确认制定生产任务</button>
             </form>
-            <form id="workOrderForm" class="tool" data-permission="planning.work_order.create">
+            <form id="workOrderForm" class="tool" data-permission="planning.work_order.create" hidden>
                 <h3>制定生产工单</h3>
                 <p class="form-help">仅齐套通过的任务可进入此步骤。先获取 AI 总体建议与排产方式，再由 PMC 人工确认产线和工序。</p>
                 <div id="workOrderWorkflow" class="planning-workflow" aria-label="生产工单制定流程"></div>
@@ -158,6 +206,8 @@
                 <p class="form-help">点击确认后，系统将以当前选定的产线和完整工艺路线生成工单并发布生产任务。</p>
                 <button type="submit">确认排产并生成生产工单</button>
             </form>
+       </div>
+       <div class="grid">
             <div class="tool"><h3>客户订单</h3><div id="orderTable"></div></div>
             <div class="tool"><h3>生产任务</h3><div id="taskTable"></div></div>
             <div class="tool wide"><h3>缺料协同预警</h3><div id="planningShortageAlertTable"></div></div>
@@ -586,6 +636,7 @@
 <script src="js/planning.js"></script>
 <script src="js/warehouse.js"></script>
 <script src="js/production.js"></script>
+<script src="js/executive.js"></script>
 <script src="js/dashboard.js"></script>
 <script src="js/process-feedback.js"></script>
 <script src="js/process.js"></script>

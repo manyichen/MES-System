@@ -1,6 +1,7 @@
 let lastWorkOrderId = null;
 let aiPlanningConfirmedTaskId = null;
 let planningCache = { orders: [], tasks: [], workOrders: [], products: [], lines: [], routes: [], operators: [], shortageAlerts: [] };
+let planningViewAction = null;
 
 const TXT = {
     refreshPlanning: "\u8ba1\u5212\u5de5\u5355\u6570\u636e\u5df2\u5237\u65b0",
@@ -131,7 +132,8 @@ function replaceInputWithSelect(formId, name, rows, valueKey, labelFn, allowEmpt
 }
 
 function renderPlanningTables() {
-    renderPlanningFocus();
+    const activeView = document.querySelector("#planning .module-view-tabs button.active")?.dataset.workspaceTarget || "0";
+    updatePlanningViewAction(activeView);
     renderWorkOrderAiPanel();
     renderTable("orderTable", planningCache.orders, [
         { title: "ID", key: "orderId" },
@@ -139,7 +141,7 @@ function renderPlanningTables() {
         { title: "\u5ba2\u6237", key: "customerName" },
         { title: "\u4ea7\u54c1", key: "productCode", render: renderOrderProduct },
         { title: "\u6570\u91cf", key: "orderQty" },
-        { title: "\u72b6\u6001", key: "orderStatus" }
+        { title: "状态", key: "orderStatus" }
     ]);
     renderTable("taskTable", planningCache.tasks, [
         { title: "ID", key: "taskId" },
@@ -147,7 +149,7 @@ function renderPlanningTables() {
         { title: "\u8ba2\u5355", key: "orderId" },
         { title: "\u6570\u91cf", key: "planQty" },
         { title: "\u9f50\u5957", key: "kittingStatus" },
-        { title: "\u72b6\u6001", key: "taskStatus" },
+        { title: "\u72b6\u6001", key: "taskStatus", render: renderTaskStatus },
         { title: "\u64cd\u4f5c", render: renderTaskActions }
     ]);
     renderTable("planningShortageAlertTable", planningCache.shortageAlerts, [
@@ -177,6 +179,17 @@ function renderOrderProduct(row) {
     return escapeHtml(label || `ID ${row.productId ?? "-"}`);
 }
 
+function renderTaskStatus(row) {
+    const status = String(row.taskStatus || "");
+    const label = {
+        CREATED: "\u5f85\u9f50\u5957\u5206\u6790",
+        READY: "\u5f85\u5236\u5b9a\u5de5\u5355",
+        SHORTAGE: "\u5f85\u8865\u6599",
+        RELEASED: "\u5df2\u8f6c\u5de5\u5355"
+    }[status] || displayText(status);
+    return `<span class="status status-${escapeHtml(status.toLowerCase().replaceAll("_", "-"))}">${escapeHtml(label)}</span>`;
+}
+
 function renderWorkOrderRoute(row) {
     const task = planningCache.tasks.find(item => Number(item.taskId) === Number(row.taskId));
     const route = buildProcessRouteOptions(task?.productId).find(item => Number(item.processId) === Number(row.processId));
@@ -202,7 +215,7 @@ function renderPlanningFocus() {
         <p class="focus-hint">\u5148\u5904\u7406\u4e0b\u9762\u6570\u91cf\u5927\u4e8e 0 \u7684\u4efb\u52a1\uff0c\u518d\u67e5\u770b\u660e\u7ec6\u8868\u3002</p>
         <div class="workflow-steps">
             <button type="button" onclick="scrollBSection('taskTable')"><strong>${pendingTasks}</strong><span>\u5f85\u9f50\u5957/\u53d1\u5e03\u4efb\u52a1</span></button>
-            <button type="button" onclick="scrollBSection('workOrderForm')"><strong>${releasedTasks}</strong><span>\u53ef\u521b\u5efa\u5de5\u5355\u4efb\u52a1</span></button>
+            <button type="button" onclick="scrollBSection('taskTable')"><strong>${releasedTasks}</strong><span>可制定工单任务</span></button>
             <button type="button" onclick="scrollBSection('workOrderTable')"><strong>${createdWorkOrders}</strong><span>\u5f85\u6d3e\u53d1\u5de5\u5355</span></button>
             <button type="button" onclick="scrollBSection('workOrderTable')"><strong>${dispatchedWorkOrders}</strong><span>\u5df2\u6d3e\u53d1\u5f85\u63a5\u6536</span></button>
         </div>`;
@@ -238,17 +251,11 @@ function jumpPlanningWorkbench(id) {
 }
 
 function renderTaskActions(row) {
-    const actions = hasPermission("planning.task.release") ? [`<button onclick="analyzeTask(${row.taskId})">齐套分析</button>`] : [];
-    if (row.kittingStatus === "SHORTAGE" && hasPermission("planning.task.release")) {
-        const published = planningCache.shortageAlerts.some(alert => Number(alert.taskId) === Number(row.taskId) && ["OPEN", "ACCEPTED"].includes(alert.alertStatus));
-        actions.push(published ? `<button type="button" disabled>缺料预警已发布</button>` : `<button onclick="publishShortageAlerts(${row.taskId})">发布缺料预警</button>`);
-    }
-    if (row.taskStatus === "READY" && row.kittingStatus === "READY" && hasPermission("planning.work_order.create")) {
-        actions.push(`<button onclick="openWorkOrderPlanning(${row.taskId})">制定工单</button>`);
-    } else if (hasPermission("planning.work_order.create")) {
-        actions.push(`<button type="button" disabled>${row.kittingStatus === "SHORTAGE" ? "缺料待处理" : "待齐套通过"}</button>`);
-    }
-    return actions.join("");
+    if (row.kittingStatus !== "SHORTAGE" || !hasPermission("planning.task.release")) return "";
+    const published = planningCache.shortageAlerts.some(alert =>
+        Number(alert.taskId) === Number(row.taskId) && ["OPEN", "ACCEPTED"].includes(alert.alertStatus)
+    );
+    return published ? "" : `<button onclick="publishShortageAlerts(${row.taskId})">发布缺料预警</button>`;
 }
 
 function getSelectedWorkOrderTask() {
@@ -295,17 +302,92 @@ function renderWorkOrderAiPanel() {
     panel.querySelector("#aiPlanningRun")?.addEventListener("click", requestAiPlanningAdvice);
 }
 
-function openWorkOrderPlanning(taskId) {
-    const form = document.getElementById("workOrderForm");
-    const drawer = form?.closest(".module-drawer");
-    if (!form || !drawer) return;
-    if (typeof selectActionView === "function") selectActionView(drawer, form.dataset.actionView);
-    if (typeof openModuleDrawer === "function") openModuleDrawer(drawer);
-    form.elements.taskId.value = String(taskId);
-    resetAiPlanningState();
-    renderPlanningSelectors();
-    renderWorkOrderAiPanel();
-    window.setTimeout(() => form.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+let planningActionMask = null;
+
+function openPlanningForm(formId, onOpen) {
+    const form = document.getElementById(formId);
+    if (!form) return;
+    planningActionMask?.remove();
+    const placeholder = document.createComment(`planning-form:${formId}`);
+    form.parentNode.insertBefore(placeholder, form);
+    const mask = document.createElement("div");
+    mask.className = "modal-mask planning-action-mask";
+    mask.innerHTML = `<div class="modal-card planning-action-card"><div class="planning-action-modal-head"><span>PMC 计划操作</span><button type="button" aria-label="关闭">×</button></div></div>`;
+    document.body.appendChild(mask);
+    mask.querySelector(".planning-action-card").appendChild(form);
+    form.hidden = false;
+    planningActionMask = mask;
+    const close = () => {
+        form.hidden = true;
+        placeholder.replaceWith(form);
+        mask.remove();
+        if (planningActionMask === mask) planningActionMask = null;
+    };
+    mask.querySelector(".planning-action-modal-head button").addEventListener("click", close);
+    mask.addEventListener("click", event => { if (event.target === mask) close(); });
+    mask.dataset.closePlanningForm = "true";
+    if (typeof onOpen === "function") onOpen(form);
+}
+
+function closePlanningForm() {
+    planningActionMask?.querySelector(".planning-action-modal-head button")?.click();
+}
+
+function openOrderCreation() {
+    openPlanningForm("orderForm", form => {
+        form.reset();
+        setDefaultPlanningDates();
+        renderPlanningSelectors();
+    });
+}
+
+function updatePlanningViewAction(target) {
+    const button = document.getElementById("createPlanningOrder");
+    if (!button) return;
+
+    const actions = {
+        "0": { label: "创建客户订单", permission: "planning.order.create", handler: () => openOrderCreation() },
+        "1": { label: "制定生产任务", permission: "planning.task.create", handler: () => openTaskPlanning() },
+        "3": { label: "制定生产工单", permission: "planning.work_order.create", handler: () => openWorkOrderPlanning() }
+    };
+    const action = actions[String(target)];
+    const allowed = Boolean(action && hasPermission(action.permission));
+    button.hidden = !allowed;
+    button.disabled = !allowed;
+    button.classList.remove("permission-hidden");
+    button.textContent = action?.label || "";
+    planningViewAction = allowed ? action.handler : null;
+}
+
+function openTaskPlanning(orderId = null) {
+    if (!planningCache.orders.length) {
+        showMessage("请先创建客户订单，再制定生产任务", "error");
+        return;
+    }
+    openPlanningForm("taskForm", form => {
+        form.reset();
+        setDefaultPlanningDates();
+        renderPlanningSelectors();
+        if (orderId) form.elements.orderId.value = String(orderId);
+        const order = planningCache.orders.find(item => Number(item.orderId) === Number(orderId));
+        if (order?.orderQty) form.elements.planQty.value = order.orderQty;
+    });
+}
+
+function openWorkOrderPlanning(taskId = null) {
+    const readyTasks = planningCache.tasks.filter(item => item.taskStatus === "READY" && item.kittingStatus === "READY");
+    if (!readyTasks.length) {
+        showMessage("暂无齐套通过的生产任务，不能制定生产工单", "error");
+        return;
+    }
+    openPlanningForm("workOrderForm", form => {
+        form.reset();
+        resetAiPlanningState();
+        renderPlanningSelectors();
+        if (taskId) form.elements.taskId.value = String(taskId);
+        renderPlanningSelectors();
+        renderWorkOrderAiPanel();
+    });
 }
 
 function renderAiPlanningPanel() {
@@ -667,6 +749,7 @@ async function receiveWorkOrder(id) {
 }
 
 document.getElementById("seedPlanning")?.addEventListener("click", seedPlanning);
+document.getElementById("createPlanningOrder")?.addEventListener("click", () => planningViewAction?.());
 document.getElementById("refreshPlanning")?.addEventListener("click", () => refreshPlanning({ notify: true }));
 document.getElementById("orderForm")?.addEventListener("submit", async event => {
     event.preventDefault();
@@ -674,6 +757,7 @@ document.getElementById("orderForm")?.addEventListener("submit", async event => 
     try {
         await postJson("/orders", { customerName: form.get("customerName"), productId: Number(form.get("productId")), orderQty: Number(form.get("orderQty")), deliveryDate: form.get("deliveryDate"), priorityLevel: Number(form.get("priorityLevel")), sourceSystem: "SALES_API" });
         showMessage(TXT.orderCreated, "ok");
+        closePlanningForm();
         await refreshPlanning();
     } catch (error) {
         showMessage(toChineseError(error), "error");
@@ -685,6 +769,7 @@ document.getElementById("taskForm")?.addEventListener("submit", async event => {
     try {
         await postJson("/production-tasks", { orderId: Number(form.get("orderId")), planQty: Number(form.get("planQty")) || null, plannedStartTime: form.get("plannedStartTime"), plannedEndTime: form.get("plannedEndTime") });
         showMessage(TXT.taskCreated, "ok");
+        closePlanningForm();
         await refreshPlanning();
     } catch (error) {
         showMessage(toChineseError(error), "error");
@@ -710,6 +795,7 @@ document.getElementById("workOrderForm")?.addEventListener("submit", async event
         await postJson("/work-orders", { taskId, lineId: Number(form.get("lineId")), processId: Number(form.get("processId")) });
         showMessage(TXT.workOrderCreated, "ok");
         aiPlanningConfirmedTaskId = null;
+        closePlanningForm();
         await refreshPlanning();
     } catch (error) {
         showMessage(toChineseError(error), "error");
@@ -720,12 +806,18 @@ function relabelPlanningStaticText() {
     const panel = document.getElementById("planning");
     if (!panel) return;
     panel.querySelector("h2").textContent = "PMC 计划与工单";
-    document.getElementById("seedPlanning").textContent = "\u751f\u6210\u6f14\u793a\u4e3b\u7ebf";
+    const seedButton = document.getElementById("seedPlanning");
+    if (seedButton) seedButton.textContent = "\u751f\u6210\u6f14\u793a\u4e3b\u7ebf";
     document.getElementById("refreshPlanning").textContent = "\u5237\u65b0";
     const titles = panel.querySelectorAll(".tool > h3");
     const names = ["接收并创建生产订单", "制定生产任务", "制定生产工单", "客户订单", "生产任务", "生产工单", "工单操作日志"];
     titles.forEach((title, index) => {
         if (names[index]) title.textContent = names[index];
+    });
+    const tableTitles = panel.querySelectorAll(".grid > .tool > h3");
+    const tableNames = ["客户订单", "生产任务", "缺料协同预警", "生产工单"];
+    tableTitles.forEach((title, index) => {
+        if (tableNames[index]) title.textContent = tableNames[index];
     });
     document.querySelector("#orderForm button[type='submit']").textContent = "确认创建生产订单";
     document.querySelector("#taskForm button[type='submit']").textContent = "确认制定生产任务";

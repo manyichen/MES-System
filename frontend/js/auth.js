@@ -35,6 +35,10 @@ function applyPermissionVisibility() {
             document.querySelector(`.sidebar button[data-tab="${tab}"]`)?.classList.add("permission-hidden");
         });
     }
+    refreshNavigationGroupVisibility();
+}
+
+function refreshNavigationGroupVisibility() {
     document.querySelectorAll(".sidebar .nav-group").forEach(group => {
         let hasVisibleItem = false;
         for (let item = group.nextElementSibling; item && !item.classList.contains("nav-group"); item = item.nextElementSibling) {

@@ -20,15 +20,26 @@ function applyDashboardProfile(dashboard) {
         <h4>权限边界</h4>
         <ul class="boundary-list">${(dashboard.prohibitedActions || []).map(item => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`;
 
-    const visibleModules = new Set(dashboard.visibleModules || ["dashboard"]);
+    const isGeneralManager = dashboard.primaryRole === "GENERAL_MANAGER" || hasRole("GENERAL_MANAGER");
+    const visibleModules = isGeneralManager
+        ? new Set(["executiveOverview", "productionLive", "departmentReports", "managementAudit"])
+        : new Set(dashboard.visibleModules || ["dashboard"]);
+    document.body.classList.toggle("executive-session", isGeneralManager);
     document.querySelectorAll(".sidebar button[data-tab]").forEach(button => {
         const visible = (button.dataset.tab === "profile" || visibleModules.has(button.dataset.tab))
             && !button.classList.contains("permission-hidden");
         button.classList.toggle("module-hidden", !visible);
     });
-    document.querySelectorAll(".panel").forEach(panel => {
-        if (panel.id !== "dashboard" && !visibleModules.has(panel.id)) panel.classList.remove("active");
+    document.querySelectorAll(".general-manager-nav.nav-group").forEach(group => {
+        group.classList.toggle("module-hidden", !isGeneralManager);
     });
+    document.querySelectorAll(".panel").forEach(panel => {
+        if (panel.id !== "profile" && !visibleModules.has(panel.id)) panel.classList.remove("active");
+    });
+    if (typeof refreshNavigationGroupVisibility === "function") refreshNavigationGroupVisibility();
+    if (isGeneralManager && !document.getElementById("executiveOverview")?.classList.contains("active")) {
+        window.requestAnimationFrame(() => switchTab("executiveOverview"));
+    }
 }
 
 function renderDashboardMetrics(metrics) {

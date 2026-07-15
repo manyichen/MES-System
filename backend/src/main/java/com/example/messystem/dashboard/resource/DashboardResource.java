@@ -3,9 +3,11 @@ package com.example.messystem.dashboard.resource;
 import com.example.messystem.common.ApiResponse;
 import com.example.messystem.common.BadRequestException;
 import com.example.messystem.auth.AuthFilter;
+import com.example.messystem.dashboard.entity.ExecutiveDashboard;
 import com.example.messystem.dashboard.entity.MesDashboardMetric;
 import com.example.messystem.dashboard.entity.RoleDashboard;
 import com.example.messystem.dashboard.service.DashboardService;
+import com.example.messystem.dashboard.service.ExecutiveDashboardService;
 import com.example.messystem.dashboard.service.RoleDashboardService;
 
 import jakarta.ws.rs.*;
@@ -21,12 +23,19 @@ import java.util.List;
 public class DashboardResource {
 
     private final DashboardService service = new DashboardService();
+    private final ExecutiveDashboardService executiveDashboardService = new ExecutiveDashboardService();
     private final RoleDashboardService roleDashboardService = new RoleDashboardService();
 
     @GET
     @Path("/my-summary")
     public ApiResponse<RoleDashboard> mySummary(@Context ContainerRequestContext context) {
         return ApiResponse.ok(roleDashboardService.build(AuthFilter.currentUser(context)));
+    }
+
+    @GET
+    @Path("/executive")
+    public ApiResponse<ExecutiveDashboard> executive(@Context ContainerRequestContext context) {
+        return ApiResponse.ok(executiveDashboardService.build(AuthFilter.currentUser(context)));
     }
 
     @GET

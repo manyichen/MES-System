@@ -228,7 +228,7 @@ public class RoleDashboardService {
             case "HR_MANAGER" -> profile(role, "人事经理", "组织与账号范围；角色变更只能申请，不能直接授权",
                     modules("dashboard", "system"), "不能直接修改用户角色", "不能查看工艺配方、质量判定和库存明细", "不能操作生产、仓储或设备流程");
             case "GENERAL_MANAGER" -> profile(role, "总经理/管理层", "全厂经营汇总和异常下钻，只读业务数据",
-                    modules("dashboard", "planning", "warehouse", "production", "quality", "equipment", "trace", "feedback"),
+                    modules("executiveOverview", "productionLive", "departmentReports", "managementAudit"),
                     "不能新增、修改或删除业务数据", "不能查看密码、权限配置和个人工资明细", "不能代替业务主管审批");
             case "PMC_PLANNER" -> profile(role, "PMC 计划员", "全厂订单、计划、齐套和相关工单范围",
                     modules("dashboard", "planning", "warehouse", "quality", "equipment", "trace", "feedback"),
