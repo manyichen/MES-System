@@ -19,6 +19,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Objects;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
@@ -32,6 +33,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class WarehouseProductionServiceTest {
     private WarehouseService warehouseService;
     private ProductionService productionService;
+
+    @BeforeAll
+    static void protectRemoteDatabase() {
+        RemoteDatabaseTestGuard.requireExplicitOptInForRemoteDatabase();
+    }
 
     @BeforeEach
     void setUp() throws SQLException {
@@ -110,9 +116,9 @@ class WarehouseProductionServiceTest {
 
         assertEquals("APPROVED", productionService.getWorkReport(created.reportId).reportStatus);
         assertTrue(productionService.listWages().stream()
-                .anyMatch(wage -> wage.reportId == created.reportId));
+                .anyMatch(wage -> Objects.equals(wage.reportId, created.reportId)));
         assertEquals(new BigDecimal("240.00"), productionService.listWages().stream()
-                .filter(wage -> wage.reportId == created.reportId)
+                .filter(wage -> Objects.equals(wage.reportId, created.reportId))
                 .findFirst()
                 .orElseThrow()
                 .wageAmount);

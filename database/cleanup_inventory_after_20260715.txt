@@ -1,0 +1,306 @@
+MES 数据库盘点时间: 2026-07-16T08:54:54.939119200+08:00
+数据库: pgm-bp19u2yg5x7l2g22wo.pg.rds.aliyuncs.com:5432/MESSystem
+只读状态: false
+
+表数量: 62
+
+[mes_account_apply] rows=0 pk=[apply_id]
+  columns: [apply_id:bigint, apply_no:character varying, applicant_id:bigint, username:character varying, real_name:character varying, role_code:character varying, department:character varying, phone:character varying, password_hash:character varying, apply_reason:character varying, apply_status:character varying, reviewer_id:bigint, reviewed_at:timestamp without time zone, review_comment:character varying, created_user_id:bigint, created_at:timestamp without time zone, updated_at:timestamp without time zone]
+  apply_status: []
+
+[mes_api_client] rows=0 pk=[client_id]
+  columns: [client_id:bigint, client_code:character varying, client_name:character varying, client_type:character varying, token_hash:character varying, allowed_scopes:character varying, enabled:smallint, created_at:timestamp without time zone, updated_at:timestamp without time zone]
+  client_type: []
+  enabled: []
+
+[mes_approval_record] rows=0 pk=[approval_id]
+  columns: [approval_id:bigint, business_type:character varying, business_id:bigint, approval_node:character varying, approver_id:bigint, approval_result:character varying, approval_comment:character varying, approved_at:timestamp without time zone]
+  business_type: []
+  approval_result: []
+
+[mes_audit_log] rows=10 pk=[audit_id]
+  columns: [audit_id:bigint, event_type:character varying, module_code:character varying, action_code:character varying, resource_type:character varying, resource_id:character varying, user_id:bigint, username:character varying, role_code:character varying, request_method:character varying, request_path:character varying, client_ip:character varying, before_data:jsonb, after_data:jsonb, result:character varying, message:character varying, created_at:timestamp without time zone]
+  event_type: [LOGIN=4, LOGOUT=2, ROLE_CHANGE=2, SYSTEM_MAINTENANCE=2]
+  resource_type: [session=6, user=4]
+  result: [FAILED=2, SUCCESS=8]
+
+[mes_customer_order] rows=10 pk=[order_id]
+  columns: [order_id:bigint, order_no:character varying, customer_name:character varying, product_id:bigint, product_code:character varying, product_model:character varying, order_qty:integer, unit:character varying, delivery_date:date, priority_level:smallint, order_status:character varying, source_system:character varying, remark:character varying, created_at:timestamp without time zone, updated_at:timestamp without time zone, created_by:bigint, updated_by:bigint]
+  order_status: [COMPLETED=2, IN_PROGRESS=2, PENDING_PLAN=2, PLANNED=2, RELEASED=2]
+
+[mes_dashboard_metric] rows=0 pk=[metric_id]
+  columns: [metric_id:bigint, metric_date:date, metric_type:character varying, metric_name:character varying, metric_value:numeric, metric_unit:character varying, dimension_key:character varying, generated_at:timestamp without time zone]
+  metric_type: []
+
+[mes_defect_reason] rows=0 pk=[reason_id]
+  columns: [reason_id:bigint, reason_code:character varying, reason_name:character varying, process_id:bigint, defect_type:character varying, severity_level:character varying, enabled:smallint, created_at:timestamp without time zone]
+  defect_type: []
+  enabled: []
+
+[mes_demo_user] rows=0 pk=[username]
+  columns: [username:character varying, password:character varying]
+
+[mes_department] rows=9 pk=[dept_id]
+  columns: [dept_id:bigint, dept_code:character varying, dept_name:character varying, parent_dept_id:bigint, dept_type:character varying, manager_user_id:bigint, enabled:smallint, created_at:timestamp without time zone, updated_at:timestamp without time zone]
+  dept_type: [EQUIPMENT=1, HR=1, MANAGEMENT=1, PLANNING=1, PROCESS=1, QUALITY=1, SYSTEM=1, WAREHOUSE=1, WORKSHOP=1]
+  enabled: [1=9]
+
+[mes_equipment] rows=6 pk=[equipment_id]
+  columns: [equipment_id:bigint, equipment_code:character varying, equipment_name:character varying, equipment_type:character varying, line_id:bigint, equipment_status:character varying, last_maintenance_time:timestamp without time zone, enabled:smallint]
+  equipment_type: [BUILDING_MACHINE=1, CALENDER=1, EXTRUDER=1, INSPECTION=1, MIXER=2]
+  equipment_status: [FAULT=2, MAINTENANCE=2, RUNNING=2]
+  enabled: [0=4, 1=2]
+
+[mes_equipment_repair_report] rows=4 pk=[repair_report_id]
+  columns: [repair_report_id:bigint, repair_report_no:character varying, equipment_id:bigint, work_order_id:bigint, fault_level:character varying, fault_desc:character varying, reporter_id:bigint, report_time:timestamp without time zone, repair_status:character varying, reviewed_by:bigint, reviewed_at:timestamp without time zone]
+  repair_status: [CONVERTED=2, REPORTED=2]
+
+[mes_equipment_status_log] rows=0 pk=[status_log_id]
+  columns: [status_log_id:bigint, equipment_id:bigint, old_status:character varying, new_status:character varying, changed_by:bigint, changed_reason:character varying, changed_at:timestamp without time zone]
+  status_log_id: []
+  old_status: []
+  new_status: []
+
+[mes_inventory] rows=6 pk=[inventory_id]
+  columns: [inventory_id:bigint, material_id:bigint, warehouse_id:bigint, location_id:bigint, batch_no:character varying, available_qty:numeric, reserved_qty:numeric, frozen_qty:numeric, quality_status:character varying, last_check_time:timestamp without time zone]
+  quality_status: [FROZEN=2, PASS=2, QUALIFIED=2]
+
+[mes_inventory_transaction] rows=3 pk=[transaction_id]
+  columns: [transaction_id:bigint, transaction_no:character varying, material_id:bigint, inventory_id:bigint, transaction_type:character varying, qty:numeric, source_doc_type:character varying, source_doc_id:bigint, operator_id:bigint, created_at:timestamp without time zone]
+  transaction_type: [OUT=1, PURCHASE_IN=2]
+  source_doc_type: [EXTERNAL_PURCHASE=2, PICKING_TASK=1]
+
+[mes_kitting_analysis] rows=4 pk=[analysis_id]
+  columns: [analysis_id:bigint, analysis_no:character varying, task_id:bigint, analysis_scope:character varying, result_status:character varying, snapshot_time:timestamp without time zone, material_ok:smallint, line_ok:smallint, equipment_ok:smallint, process_ok:smallint, created_by:bigint, created_at:timestamp without time zone]
+  result_status: [READY=2, SHORTAGE=2]
+
+[mes_kitting_shortage_item] rows=2 pk=[shortage_item_id]
+  columns: [shortage_item_id:bigint, analysis_id:bigint, task_id:bigint, shortage_type:character varying, resource_id:bigint, resource_code:character varying, resource_name:character varying, required_qty:numeric, available_qty:numeric, shortage_qty:numeric, impact_desc:character varying, suggestion:character varying, created_at:timestamp without time zone]
+  shortage_type: [MATERIAL=2]
+
+[mes_label_print_task] rows=0 pk=[print_task_id]
+  columns: [print_task_id:bigint, tire_id:bigint, printed_by:bigint, print_status:character varying, print_time:timestamp without time zone, remark:character varying]
+  print_status: []
+
+[mes_maintenance_order] rows=3 pk=[maintenance_order_id]
+  columns: [maintenance_order_id:bigint, maintenance_order_no:character varying, repair_report_id:bigint, equipment_id:bigint, maintainer_id:bigint, maintenance_status:character varying, dispatch_time:timestamp without time zone, finish_time:timestamp without time zone, result_desc:character varying, accepted_by:bigint, accepted_at:timestamp without time zone, verified_by:bigint, verified_at:timestamp without time zone]
+  maintenance_status: [ASSIGNED=1, CREATED=2]
+  result_desc: [设备异常停机=3]
+
+[mes_maintenance_plan] rows=2 pk=[maintenance_plan_id]
+  columns: [maintenance_plan_id:bigint, equipment_id:bigint, plan_cycle:character varying, next_plan_time:timestamp without time zone, plan_status:character varying, created_at:timestamp without time zone]
+  plan_status: [SCHEDULED=2]
+
+[mes_management_feedback] rows=2 pk=[feedback_id]
+  columns: [feedback_id:bigint, feedback_no:character varying, feedback_type:character varying, related_doc_type:character varying, related_doc_id:bigint, feedback_content:character varying, decision_action:character varying, feedback_status:character varying, created_by:bigint, created_at:timestamp without time zone, handled_by:bigint, handled_at:timestamp without time zone]
+  feedback_type: [QUALITY=1, QUALITY_RISK=1]
+  related_doc_type: [WORK_ORDER=2]
+  decision_action: [=1, 质量主管复核后通知工艺工程师调整压延张力，仓库暂冻结相关批次待复检。=1]
+  feedback_status: [OPEN=2]
+
+[mes_material] rows=5 pk=[material_id]
+  columns: [material_id:bigint, material_code:character varying, material_name:character varying, material_type:character varying, specification:character varying, unit:character varying, shelf_life_days:integer, enabled:smallint, created_at:timestamp without time zone]
+  material_type: [AUX=2, RAW=2, SPARE=1]
+  enabled: [1=5]
+
+[mes_material_requisition] rows=10 pk=[requisition_id]
+  columns: [requisition_id:bigint, requisition_no:character varying, work_order_id:bigint, requested_by:bigint, request_status:character varying, request_time:timestamp without time zone, approved_by:bigint, approved_time:timestamp without time zone, remark:character varying, approved_at:timestamp without time zone, warehouse_id:bigint]
+  request_status: [APPROVED=2, COMPLETED=2, CREATED=2, RECEIVED=2, REJECTED=2]
+
+[mes_material_requisition_item] rows=4 pk=[requisition_item_id]
+  columns: [requisition_item_id:bigint, requisition_id:bigint, material_id:bigint, required_qty:numeric, issued_qty:numeric, unit:character varying, batch_no:character varying, item_status:character varying]
+  item_status: [COMPLETED=2, CREATED=2]
+
+[mes_notification] rows=0 pk=[notification_id]
+  columns: [notification_id:bigint, receiver_user_id:bigint, receiver_role_code:character varying, title:character varying, content:character varying, business_type:character varying, business_id:bigint, read_status:character varying, created_at:timestamp without time zone, read_at:timestamp without time zone]
+  business_type: []
+  read_status: []
+
+[mes_permission] rows=64 pk=[permission_id]
+  columns: [permission_id:bigint, permission_code:character varying, permission_name:character varying, module_code:character varying, resource_type:character varying, action_code:character varying, risk_level:character varying, description:character varying, enabled:smallint, created_at:timestamp without time zone]
+  resource_type: [audit_log=1, business_data=1, customer_order=1, dashboard=1, data_scope=1, delivery_task=1, demo_data=1, equipment=1, equipment_business=1, health=1, inspection=2, inventory=1, maintenance_order=4, management_feedback=3, master_data=2, permission_apply=2, picking_task=1, piecework_wage=3, plan=1, planning=1, process_standard=2, product_trace=1, production_task=2, quality_business=1, quality_inspection=2, repair_report=2, requisition=2, rework_order=1, role=2, system_dashboard=1, tire_instance=1, tire_label=1, trace=1, user=3, warehouse=1, warehouse_business=1, warehouse_master=1, work_order=4, work_report=5]
+  enabled: [1=64]
+
+[mes_permission_apply] rows=4 pk=[apply_id]
+  columns: [apply_id:bigint, apply_no:character varying, applicant_id:bigint, target_user_id:bigint, from_role_code:character varying, to_role_code:character varying, apply_reason:character varying, apply_status:character varying, reviewer_id:bigint, reviewed_at:timestamp without time zone, review_comment:character varying, created_at:timestamp without time zone, updated_at:timestamp without time zone]
+  apply_status: [APPLIED=1, REJECTED=1, SUBMITTED=2]
+
+[mes_picking_task] rows=4 pk=[picking_task_id]
+  columns: [picking_task_id:bigint, picking_task_no:character varying, requisition_id:bigint, warehouse_id:bigint, task_status:character varying, assigned_to:bigint, start_time:timestamp without time zone, finish_time:timestamp without time zone]
+  task_status: [COMPLETED=2, CREATED=2]
+
+[mes_piecework_wage] rows=2 pk=[wage_id]
+  columns: [wage_id:bigint, report_id:bigint, operator_id:bigint, piece_rate:numeric, qualified_qty:integer, wage_amount:numeric, settlement_status:character varying, created_at:timestamp without time zone]
+  settlement_status: [PENDING=2]
+
+[mes_process_parameter] rows=0 pk=[parameter_id]
+  columns: [parameter_id:bigint, parameter_code:character varying, parameter_name:character varying, product_id:bigint, process_id:bigint, standard_value:character varying, upper_limit:numeric, lower_limit:numeric, unit:character varying, version_no:character varying, enabled:smallint, created_at:timestamp without time zone, updated_at:timestamp without time zone]
+  enabled: []
+
+[mes_process_route] rows=11 pk=[process_id]
+  columns: [process_id:bigint, product_id:bigint, process_code:character varying, process_name:character varying, process_seq:integer, standard_hours:numeric, required_equipment_type:character varying, enabled:smallint]
+  required_equipment_type: [<NULL>=1, BEAD_MACHINE=1, BUILDING_MACHINE=1, CALENDER_EXTRUDER=1, CURING_PRESS=1, CUTTING_MACHINE=1, FINAL_INSPECTION=1, INSPECTION=1, MIXER=1, WEIGHING=1, XRAY_INSPECTION=1]
+  enabled: [1=11]
+
+[mes_product] rows=2 pk=[product_id]
+  columns: [product_id:bigint, product_code:character varying, product_name:character varying, product_model:character varying, specification:character varying, enabled:smallint]
+  enabled: [1=2]
+
+[mes_product_bom] rows=2 pk=[bom_id]
+  columns: [bom_id:bigint, product_id:bigint, material_id:bigint, usage_qty:numeric, unit:character varying, process_id:bigint, enabled:smallint]
+  enabled: [1=2]
+
+[mes_product_trace] rows=1 pk=[product_trace_id]
+  columns: [product_trace_id:bigint, trace_code:character varying, order_id:bigint, task_id:bigint, work_order_id:bigint, product_id:bigint, batch_no:character varying, trace_status:character varying, created_at:timestamp without time zone]
+  trace_status: [NORMAL=1]
+
+[mes_production_line] rows=6 pk=[line_id]
+  columns: [line_id:bigint, line_code:character varying, line_name:character varying, line_type:character varying, daily_capacity:integer, line_status:character varying, enabled:smallint]
+  line_type: [CALENDERING=1, CURING=2, CUTTING=1, MIXING=2]
+  line_status: [IDLE=2, MAINTENANCE=2, RUNNING=2]
+  enabled: [1=6]
+
+[mes_production_task] rows=4 pk=[task_id]
+  columns: [task_id:bigint, task_no:character varying, order_id:bigint, planner_id:bigint, plan_qty:integer, planned_start_time:timestamp without time zone, planned_end_time:timestamp without time zone, target_line_id:bigint, task_status:character varying, kitting_status:character varying, release_time:timestamp without time zone, close_time:timestamp without time zone, remark:character varying, created_at:timestamp without time zone, updated_at:timestamp without time zone, created_by:bigint, updated_by:bigint]
+  task_status: [CREATED=1, READY=1, RELEASED=1, SHORTAGE=1]
+  kitting_status: [PENDING=1, READY=2, SHORTAGE=1]
+
+[mes_quality_inspection] rows=5 pk=[inspection_id]
+  columns: [inspection_id:bigint, inspection_no:character varying, work_order_id:bigint, sample_qty:integer, inspection_status:character varying, inspector_id:bigint, inspection_time:timestamp without time zone, judgement_result:character varying, work_report_id:bigint, assigned_to:bigint, reviewed_by:bigint, reviewed_at:timestamp without time zone, submitted_by:bigint, submitted_at:timestamp without time zone, submitted_result:character varying, result_note:text]
+  inspection_status: [APPROVED=2, CREATED=2, REWORK_REQUIRED=1]
+  judgement_result: [<NULL>=2, PASS=2, REWORK=1]
+  submitted_result: [<NULL>=3, PASS=2]
+  result_note: [=2, <NULL>=3]
+
+[mes_quality_inspection_item] rows=2 pk=[inspection_item_id]
+  columns: [inspection_item_id:bigint, inspection_id:bigint, item_code:character varying, item_name:character varying, standard_value:character varying, actual_value:character varying, item_result:character varying, remark:character varying]
+  item_result: [PASS=2]
+
+[mes_quality_standard] rows=2 pk=[standard_id]
+  columns: [standard_id:bigint, standard_code:character varying, standard_name:character varying, product_id:bigint, process_id:bigint, inspection_type:character varying, version_no:character varying, standard_status:character varying, created_by:bigint, approved_by:bigint, approved_at:timestamp without time zone, created_at:timestamp without time zone, updated_at:timestamp without time zone]
+  inspection_type: [成品检验=2]
+  standard_status: [APPROVED=2]
+
+[mes_quality_standard_item] rows=2 pk=[standard_item_id]
+  columns: [standard_item_id:bigint, standard_id:bigint, item_code:character varying, item_name:character varying, standard_value:character varying, upper_limit:numeric, lower_limit:numeric, unit:character varying, sampling_rule:character varying, required:smallint]
+
+[mes_quality_trace] rows=3 pk=[trace_id]
+  columns: [trace_id:bigint, trace_no:character varying, order_id:bigint, task_id:bigint, work_order_id:bigint, batch_no:character varying, inspection_id:bigint, rework_order_id:bigint, trace_status:character varying, created_at:timestamp without time zone]
+  trace_status: [NORMAL=2, REWORKED=1]
+
+[mes_rework_order] rows=4 pk=[rework_order_id]
+  columns: [rework_order_id:bigint, rework_order_no:character varying, source_work_order_id:bigint, inspection_id:bigint, rework_reason:character varying, rework_status:character varying, assigned_line_id:bigint, created_at:timestamp without time zone, closed_at:timestamp without time zone, approved_by:bigint, approved_at:timestamp without time zone]
+  rework_status: [CREATED=2, FINISHED=2]
+
+[mes_robot] rows=4 pk=[robot_id]
+  columns: [robot_id:bigint, robot_code:character varying, robot_name:character varying, robot_status:character varying, battery_level:numeric, current_location:character varying, enabled:smallint, warehouse_id:bigint]
+  robot_status: [CHARGING=1, IDLE=1, WORKING=2]
+  enabled: [1=4]
+
+[mes_robot_delivery_task] rows=3 pk=[delivery_task_id]
+  columns: [delivery_task_id:bigint, delivery_task_no:character varying, picking_task_id:bigint, robot_id:bigint, from_location_id:bigint, to_line_id:bigint, delivery_status:character varying, load_time:timestamp without time zone, handover_time:timestamp without time zone]
+  delivery_status: [ARRIVED=2, RECEIVED=1]
+
+[mes_role] rows=12 pk=[role_id]
+  columns: [role_id:bigint, role_code:character varying, role_name:character varying, role_type:character varying, role_level:integer, data_scope:character varying, description:character varying, builtin:smallint, enabled:smallint, created_at:timestamp without time zone, updated_at:timestamp without time zone]
+  role_type: [BUSINESS=10, MANAGEMENT=1, SYSTEM=1]
+  enabled: [1=12]
+
+[mes_role_data_scope] rows=0 pk=[scope_id]
+  columns: [scope_id:bigint, role_id:bigint, scope_type:character varying, scope_value:character varying, description:character varying, created_at:timestamp without time zone]
+  scope_type: []
+
+[mes_role_permission] rows=187 pk=[role_id, permission_id]
+  columns: [role_id:bigint, permission_id:bigint, granted_by:bigint, granted_at:timestamp without time zone]
+
+[mes_shortage_alert] rows=4 pk=[alert_id]
+  columns: [alert_id:bigint, alert_no:character varying, task_id:bigint, analysis_id:bigint, alert_type:character varying, severity:character varying, alert_status:character varying, receiver_role:character varying, alert_content:character varying, resolved_at:timestamp without time zone, created_at:timestamp without time zone, material_id:bigint, material_code:character varying, material_name:character varying, required_qty:numeric, available_qty:numeric, shortage_qty:numeric, accepted_by:bigint, accepted_at:timestamp without time zone]
+  alert_type: [MATERIAL=4]
+  alert_status: [ACCEPTED=2, OPEN=2]
+
+[mes_sop] rows=0 pk=[sop_id]
+  columns: [sop_id:bigint, sop_code:character varying, sop_name:character varying, product_id:bigint, process_id:bigint, version_no:character varying, sop_status:character varying, content:text, attachment_url:character varying, created_by:bigint, approved_by:bigint, approved_at:timestamp without time zone, created_at:timestamp without time zone, updated_at:timestamp without time zone]
+  sop_status: []
+
+[mes_sync_log] rows=0 pk=[sync_log_id]
+  columns: [sync_log_id:bigint, source_system:character varying, sync_object:character varying, business_key:character varying, sync_status:character varying, error_message:character varying, sync_time:timestamp without time zone]
+  sync_status: []
+
+[mes_tire_instance] rows=2 pk=[tire_id]
+  columns: [tire_id:bigint, serial_no:character varying, trace_code:character varying, work_order_id:bigint, inspection_id:bigint, work_report_id:bigint, product_id:bigint, warehouse_id:bigint, location_id:bigint, batch_no:character varying, tire_status:character varying, qualified_at:timestamp without time zone, inbound_at:timestamp without time zone, created_by:bigint, created_at:timestamp without time zone]
+  tire_status: [IN_STOCK=2]
+
+[mes_tire_qrcode] rows=2 pk=[qrcode_id]
+  columns: [qrcode_id:bigint, tire_id:bigint, access_token:character varying, target_url:character varying, storage_path:character varying, qrcode_status:character varying, print_count:integer, generated_at:timestamp without time zone, last_printed_at:timestamp without time zone]
+  qrcode_status: [ACTIVE=2]
+
+[mes_trace_document] rows=4 pk=[document_id]
+  columns: [document_id:bigint, tire_id:bigint, document_type:character varying, file_name:character varying, storage_path:character varying, file_hash:character varying, version_no:integer, generated_at:timestamp without time zone]
+  document_type: [LABEL_PNG=2, PDF=2]
+
+[mes_user] rows=12 pk=[user_id]
+  columns: [user_id:bigint, username:character varying, real_name:character varying, role_code:character varying, department:character varying, phone:character varying, enabled:smallint, created_at:timestamp without time zone, password_hash:character varying, updated_at:timestamp without time zone, last_login_at:timestamp without time zone, employee_no:character varying, dept_id:bigint, position_name:character varying, account_type:character varying, password_updated_at:timestamp without time zone, failed_login_count:integer, locked_until:timestamp without time zone, created_by:bigint, updated_by:bigint, email:character varying, avatar_url:character varying, profile_bio:character varying]
+  enabled: [1=12]
+  account_type: [EMPLOYEE=12]
+
+[mes_user_line_scope] rows=1 pk=[user_id, line_id]
+  columns: [user_id:bigint, line_id:bigint, assigned_by:bigint, assigned_at:timestamp without time zone]
+
+[mes_user_role] rows=12 pk=[user_id, role_id]
+  columns: [user_id:bigint, role_id:bigint, assigned_by:bigint, assigned_at:timestamp without time zone, expires_at:timestamp without time zone]
+
+[mes_user_session] rows=0 pk=[session_id]
+  columns: [session_id:bigint, user_id:bigint, token_hash:character varying, login_ip:character varying, user_agent:character varying, issued_at:timestamp without time zone, expires_at:timestamp without time zone, revoked_at:timestamp without time zone]
+
+[mes_user_warehouse_scope] rows=1 pk=[user_id, warehouse_id]
+  columns: [user_id:bigint, warehouse_id:bigint, assigned_by:bigint, assigned_at:timestamp without time zone]
+
+[mes_warehouse] rows=8 pk=[warehouse_id]
+  columns: [warehouse_id:bigint, warehouse_code:character varying, warehouse_name:character varying, warehouse_type:character varying, enabled:smallint]
+  warehouse_type: [FG=2, QA=2, RAW=2, WIP=2]
+  enabled: [1=8]
+
+[mes_warehouse_location] rows=8 pk=[location_id]
+  columns: [location_id:bigint, warehouse_id:bigint, location_code:character varying, location_name:character varying, enabled:smallint]
+  enabled: [1=8]
+
+[mes_work_order] rows=8 pk=[work_order_id]
+  columns: [work_order_id:bigint, work_order_no:character varying, task_id:bigint, line_id:bigint, process_id:bigint, planned_qty:integer, actual_qty:integer, priority_level:smallint, work_order_status:character varying, dispatch_time:timestamp without time zone, receive_time:timestamp without time zone, completed_time:timestamp without time zone, created_at:timestamp without time zone, updated_at:timestamp without time zone, product_id:bigint, batch_no:character varying, assigned_to:bigint, accepted_by:bigint, accepted_at:timestamp without time zone, updated_by:bigint]
+  work_order_status: [CREATED=2, DISPATCHED=2, RECEIVED=2, REJECTED=2]
+
+[mes_work_order_operation_log] rows=8 pk=[operation_log_id]
+  columns: [operation_log_id:bigint, work_order_id:bigint, operation_type:character varying, before_status:character varying, after_status:character varying, operator_id:bigint, operation_reason:character varying, operation_time:timestamp without time zone, undoable:smallint]
+  operation_type: [CREATE=2, DISPATCH=2, RECEIVE=2, REJECT=2]
+  before_status: [<NULL>=2, CREATED=2, DISPATCHED=4]
+  after_status: [CREATED=2, DISPATCHED=2, RECEIVED=2, REJECTED=2]
+
+[mes_work_report] rows=4 pk=[report_id]
+  columns: [report_id:bigint, report_no:character varying, work_order_id:bigint, operator_id:bigint, report_qty:integer, qualified_qty:integer, defect_qty:integer, work_hours:numeric, report_time:timestamp without time zone, report_status:character varying, batch_no:character varying, approved_by:bigint, approved_at:timestamp without time zone, remark:character varying, reject_reason:character varying]
+  report_status: [APPROVED=2, SUBMITTED=2]
+
+[外键关系]
+  mes_label_print_task.printed_by -> mes_user.user_id on delete NO ACTION
+  mes_label_print_task.tire_id -> mes_tire_instance.tire_id on delete NO ACTION
+  mes_tire_instance.created_by -> mes_user.user_id on delete NO ACTION
+  mes_tire_instance.inspection_id -> mes_quality_inspection.inspection_id on delete NO ACTION
+  mes_tire_instance.location_id -> mes_warehouse_location.location_id on delete NO ACTION
+  mes_tire_instance.product_id -> mes_product.product_id on delete NO ACTION
+  mes_tire_instance.warehouse_id -> mes_warehouse.warehouse_id on delete NO ACTION
+  mes_tire_instance.work_order_id -> mes_work_order.work_order_id on delete NO ACTION
+  mes_tire_instance.work_report_id -> mes_work_report.report_id on delete NO ACTION
+  mes_tire_qrcode.tire_id -> mes_tire_instance.tire_id on delete CASCADE
+  mes_trace_document.tire_id -> mes_tire_instance.tire_id on delete CASCADE
+
+[角色账号]
+  EQUIPMENT_ADMIN=1 [mes_equipment_mgr]
+  EQUIPMENT_MAINTAINER=1 [mes_maintainer]
+  GENERAL_MANAGER=1 [mes_general]
+  HR_MANAGER=1 [mes_hr]
+  PMC_PLANNER=1 [mes_pmc]
+  PROCESS_ENGINEER=1 [mes_process]
+  PRODUCTION_OPERATOR=1 [mes_operator]
+  QUALITY_INSPECTOR=1 [mes_inspector]
+  QUALITY_MANAGER=1 [mes_quality_mgr]
+  SYSTEM_ADMIN=1 [admin]
+  WAREHOUSE_ADMIN=1 [mes_warehouse]
+  WORKSHOP_MANAGER=1 [mes_workshop]

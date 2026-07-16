@@ -69,8 +69,8 @@ public class MesBackendApplication {
     private static Path findWebRoot() {
         Path current = Path.of("").toAbsolutePath().normalize();
         Path[] candidates = {
-                current.resolve("../frontend"),
-                current.resolve("frontend"),
+                current.resolve("../frontend/dist"),
+                current.resolve("frontend/dist"),
                 current.resolve("src/main/webapp")
         };
         for (Path candidate : candidates) {
@@ -78,7 +78,7 @@ public class MesBackendApplication {
                 return candidate.normalize();
             }
         }
-        throw new IllegalStateException("Cannot find src/main/webapp/index.html from " + current);
+        throw new IllegalStateException("Cannot find the built Vue frontend. Run npm run build in frontend/: " + current);
     }
 
     private static int intEnv(String name, int fallback) {
@@ -114,7 +114,7 @@ public class MesBackendApplication {
                 Desktop.getDesktop().browse(URI.create(url));
             }
         } catch (Exception ignored) {
-            // The URL is printed above for environments that cannot open a browser.
+            // 无法自动打开浏览器时，可使用上方打印的地址手动访问。
         }
     }
 
@@ -132,6 +132,10 @@ public class MesBackendApplication {
                 requestPath = "/index.html";
             }
             Path file = webRoot.resolve(requestPath.substring(1)).normalize();
+            // Vue Router 使用 history 模式，前端应用路由统一回退到 index.html。
+            if (!Files.isRegularFile(file) && !requestPath.substring(requestPath.lastIndexOf('/') + 1).contains(".")) {
+                file = webRoot.resolve("index.html");
+            }
             if (!file.startsWith(webRoot) || !Files.isRegularFile(file)) {
                 response.sendError(HttpServletResponse.SC_NOT_FOUND);
                 return;

@@ -33,6 +33,28 @@ public class TireTraceDao {
             left join mes_tire_qrcode qr on qr.tire_id = ti.tire_id
             """;
 
+    /** 统一管理批量生成轮胎追溯数据所需的 JDBC 事务。 */
+    public <T> T inTransaction(TransactionWork<T> work) throws SQLException {
+        try (Connection connection = Db.getConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                T result = work.execute(new TraceTransaction(connection));
+                connection.commit();
+                return result;
+            } catch (SQLException | RuntimeException ex) {
+                connection.rollback();
+                throw ex;
+            } finally {
+                connection.setAutoCommit(true);
+            }
+        }
+    }
+
+    public TireGenerationContext lockGenerationContext(TraceTransaction transaction, long workOrderId,
+            long inspectionId, long warehouseId, Long locationId) throws SQLException {
+        return lockGenerationContext(transaction.connection, workOrderId, inspectionId, warehouseId, locationId);
+    }
+
     public TireGenerationContext lockGenerationContext(Connection connection, long workOrderId,
             long inspectionId, long warehouseId, Long locationId) throws SQLException {
         String sql = """
@@ -116,6 +138,11 @@ public class TireTraceDao {
         }
     }
 
+    public TireTraceItem insertTire(TraceTransaction transaction, TireGenerationContext context, String serialNo,
+            String traceCode, long createdBy) throws SQLException {
+        return insertTire(transaction.connection, context, serialNo, traceCode, createdBy);
+    }
+
     public void insertQrCode(Connection connection, long tireId, String token, String targetUrl,
             String storagePath) throws SQLException {
         String sql = """
@@ -129,6 +156,11 @@ public class TireTraceDao {
             statement.setString(4, storagePath);
             statement.executeUpdate();
         }
+    }
+
+    public void insertQrCode(TraceTransaction transaction, long tireId, String token, String targetUrl,
+            String storagePath) throws SQLException {
+        insertQrCode(transaction.connection, tireId, token, targetUrl, storagePath);
     }
 
     public void insertDocument(Connection connection, long tireId, String type, String fileName,
@@ -145,6 +177,11 @@ public class TireTraceDao {
             statement.setString(5, hash);
             statement.executeUpdate();
         }
+    }
+
+    public void insertDocument(TraceTransaction transaction, long tireId, String type, String fileName,
+            String storagePath, String hash) throws SQLException {
+        insertDocument(transaction.connection, tireId, type, fileName, storagePath, hash);
     }
 
     public List<TireTraceItem> findAll() throws SQLException {
@@ -274,6 +311,19 @@ public class TireTraceDao {
 
     private static LocalDateTime toLocalDateTime(Timestamp value) {
         return value == null ? null : value.toLocalDateTime();
+    }
+
+    public static final class TraceTransaction {
+        private final Connection connection;
+
+        private TraceTransaction(Connection connection) {
+            this.connection = connection;
+        }
+    }
+
+    @FunctionalInterface
+    public interface TransactionWork<T> {
+        T execute(TraceTransaction transaction) throws SQLException;
     }
 
     private record Location(Long id, String name) { }

@@ -3,7 +3,7 @@ package com.example.messystem.dashboard.entity;
 import java.time.LocalDateTime;
 import java.util.List;
 
-/** Read-only aggregate used by the general manager's executive dashboard. */
+/** 总经理经营看板使用的只读聚合模型。 */
 public record ExecutiveDashboard(
         LocalDateTime generatedAt,
         List<Metric> metrics,

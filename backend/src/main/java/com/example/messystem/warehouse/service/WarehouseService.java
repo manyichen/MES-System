@@ -186,6 +186,32 @@ public class WarehouseService {
     }
 
     public MesMaterialRequisition createRequisition(MesMaterialRequisition requisition) {
+        validateRequisition(requisition);
+        return database(() -> dao.insertRequisition(requisition));
+    }
+
+    /** 仅当操作工拥有相关生产工单时才允许创建领料申请。 */
+    public MesMaterialRequisition createOperatorRequisition(MesMaterialRequisition requisition, long operatorId) {
+        requireId(operatorId, "operatorId is required");
+        validateRequisition(requisition);
+        requireOperatorWorkOrderAccess(requisition.workOrderId, operatorId);
+        requisition.requestedBy = operatorId;
+        return database(() -> dao.insertRequisition(requisition));
+    }
+
+    /** 在读取或修改领料申请前校验操作工的工单归属边界。 */
+    public void requireOperatorWorkOrderAccess(long workOrderId, long operatorId) {
+        requireId(workOrderId, "workOrderId is required");
+        requireId(operatorId, "operatorId is required");
+        if (!database(() -> dao.isWorkOrderAssignedTo(workOrderId, operatorId))) {
+            throw new BadRequestException("只能访问本人被派或已接收工单的领料信息");
+        }
+    }
+
+    private static void validateRequisition(MesMaterialRequisition requisition) {
+        if (requisition == null) {
+            throw new BadRequestException("requisition body is required");
+        }
         requireId(requisition.workOrderId, "workOrderId is required");
         requireId(requisition.warehouseId, "warehouseId is required");
         if (requisition.items == null || requisition.items.isEmpty()) {
@@ -200,7 +226,6 @@ public class WarehouseService {
                 throw new BadRequestException("requiredQty must be positive");
             }
         }
-        return database(() -> dao.insertRequisition(requisition));
     }
 
     public MesMaterialRequisition receiveRequisition(long requisitionId, Long receivedBy) {

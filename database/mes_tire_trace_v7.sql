@@ -77,9 +77,7 @@ ON CONFLICT (permission_code) DO UPDATE SET
 WITH grants(role_code, permission_code) AS (
     VALUES
         ('WAREHOUSE_ADMIN', 'trace.tire.generate'),
-        ('WAREHOUSE_ADMIN', 'trace.tire.print'),
-        ('WAREHOUSE_KEEPER', 'trace.tire.generate'),
-        ('WAREHOUSE_KEEPER', 'trace.tire.print')
+        ('WAREHOUSE_ADMIN', 'trace.tire.print')
 )
 INSERT INTO mes_role_permission(role_id, permission_id)
 SELECT r.role_id, p.permission_id

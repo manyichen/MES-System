@@ -1,5 +1,7 @@
 package com.example.messystem.auth;
 
+import com.example.messystem.auth.service.AuthService;
+
 import com.example.messystem.common.ApiResponse;
 import jakarta.annotation.Priority;
 import jakarta.ws.rs.Priorities;

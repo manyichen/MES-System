@@ -8,14 +8,13 @@ final class AuthorizationPolicy {
     private static final List<Rule> RULES = List.of(
             rule("GET", "db/ping", "system.health.read"),
 
-            rule("GET", "dashboard/.*", "dashboard.read"),
-            rule("POST", "dashboard/.*", "dashboard.system.read"),
+            rule("GET", "dashboard/(?:my-summary|executive)", "dashboard.read"),
 
             rule("GET", "orders(?:/.*)?", "planning.read"),
             rule("POST", "orders", "planning.order.create"),
             rule("GET", "production-tasks(?:/.*)?", "planning.read"),
             rule("POST", "production-tasks", "planning.task.create"),
-            rule("POST", "production-tasks/\\d+/(?:kitting|release|shortage-alerts)", "planning.task.release"),
+            rule("POST", "production-tasks/\\d+/(?:kitting|shortage-alerts)", "planning.task.release"),
             any("GET", "shortage-alerts(?:/.*)?", "planning.read", "warehouse.read"),
             rule("POST", "shortage-alerts/\\d+/accept", "warehouse.inventory.adjust"),
             rule("POST", "ai/planning/advice", "planning.work_order.create"),
@@ -27,12 +26,12 @@ final class AuthorizationPolicy {
 
             any("GET", "materials(?:/.*)?", "warehouse.read", "warehouse.requisition.create", "master.read"),
             any("GET", "warehouses(?:/\\d+)?", "warehouse.read", "warehouse.requisition.create"),
-            rule("GET", "(?:warehouses|warehouse-locations|picking-tasks|robots|robot-delivery-tasks)(?:/.*)?", "warehouse.read"),
+            rule("GET", "(?:warehouses|picking-tasks|robots|robot-delivery-tasks)(?:/.*)?", "warehouse.read"),
             any("GET", "inventory(?:/.*)?", "warehouse.read", "warehouse.requisition.create"),
             any("GET", "requisitions(?:/.*)?", "warehouse.read", "warehouse.requisition.create"),
-            rule("POST|PUT|DELETE", "(?:materials|warehouses|warehouse-locations|robots)(?:/.*)?", "warehouse.master.manage"),
+            rule("POST|PUT|DELETE", "(?:materials|warehouses|robots)(?:/.*)?", "warehouse.master.manage"),
             rule("POST|PUT|DELETE", "warehouses/locations(?:/.*)?", "warehouse.master.manage"),
-            any("POST", "inventory/external-purchase", "warehouse.purchase.request", "warehouse.requisition.create", "warehouse.inventory.adjust"),
+            rule("POST", "inventory/external-purchase", "warehouse.inventory.adjust"),
             rule("POST|PUT|DELETE", "inventory(?:/.*)?", "warehouse.inventory.adjust"),
             rule("POST", "requisitions", "warehouse.requisition.create"),
             rule("POST", "requisitions/\\d+/receive", "warehouse.requisition.approve"),
@@ -59,7 +58,7 @@ final class AuthorizationPolicy {
 
             rule("GET", "equipment(?:/.*)?", "equipment.read"),
             rule("POST", "equipment", "equipment.manage"),
-            rule("PUT|POST", "equipment/\\d+/status", "equipment.manage"),
+            rule("PUT", "equipment/\\d+/status", "equipment.manage"),
             rule("POST", "equipment/\\d+/repair-reports", "equipment.fault.report"),
             rule("POST", "equipment/\\d+/maintenance-orders", "equipment.maintenance.assign"),
             rule("POST", "equipment/maintenance-plans", "equipment.manage"),

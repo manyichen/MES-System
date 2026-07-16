@@ -19,6 +19,7 @@ import com.example.messystem.warehouse.entity.MesWarehouse;
 import com.example.messystem.warehouse.entity.MesWarehouseLocation;
 import com.example.messystem.warehouse.service.WarehouseService;
 import java.math.BigDecimal;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -33,6 +34,11 @@ class PlanningServiceTest {
     private KittingService kittingService;
     private WorkOrderService workOrderService;
     private WarehouseService warehouseService;
+
+    @BeforeAll
+    static void protectRemoteDatabase() {
+        RemoteDatabaseTestGuard.requireExplicitOptInForRemoteDatabase();
+    }
 
     @BeforeEach
     void setUp() {
@@ -67,7 +73,6 @@ class PlanningServiceTest {
         task = taskService.createTask(task);
 
         MesKittingAnalysis analysis = kittingService.analyze(task.taskId);
-        taskService.releaseTask(task.taskId);
 
         MesWorkOrder workOrder = new MesWorkOrder();
         workOrder.taskId = task.taskId;
@@ -100,6 +105,7 @@ class PlanningServiceTest {
         task = taskService.createTask(task);
 
         MesKittingAnalysis analysis = kittingService.analyze(task.taskId);
+        kittingService.publishShortageAlerts(task.taskId);
 
         assertEquals("SHORTAGE", analysis.kittingStatus);
         assertFalse(kittingService.listAlerts().isEmpty());

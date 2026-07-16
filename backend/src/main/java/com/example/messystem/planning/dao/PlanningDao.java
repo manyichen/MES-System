@@ -444,25 +444,6 @@ public class PlanningDao {
         }
     }
 
-    public Optional<MesProductionTask> releaseTask(long taskId) throws SQLException {
-        String sql = """
-                update mes_production_task
-                set task_status = 'RELEASED', release_time = current_timestamp, updated_at = current_timestamp
-                where task_id = ?
-                returning task_id, task_no, order_id, planner_id, plan_qty, planned_start_time,
-                          planned_end_time, target_line_id, task_status, kitting_status, release_time,
-                          close_time, remark, created_at, updated_at,
-                          (select o.product_id from mes_customer_order o where o.order_id = mes_production_task.order_id) as product_id
-                """;
-        try (Connection connection = Db.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setLong(1, taskId);
-            try (ResultSet rs = statement.executeQuery()) {
-                return rs.next() ? Optional.of(mapTask(rs)) : Optional.empty();
-            }
-        }
-    }
-
     public long firstLineId() throws SQLException {
         String sql = "select line_id from mes_production_line where enabled = 1 order by line_id limit 1";
         try (Connection connection = Db.getConnection();
@@ -714,7 +695,7 @@ public class PlanningDao {
                 insert into mes_shortage_alert
                     (alert_no, task_id, analysis_id, material_id, material_code, material_name, required_qty, available_qty, shortage_qty,
                      alert_type, severity, alert_status, receiver_role, alert_content)
-                select ?, ?, ?, ?, ?, ?, ?, ?, ?, 'MATERIAL', ?, 'OPEN', 'WAREHOUSE_KEEPER', ?
+                select ?, ?, ?, ?, ?, ?, ?, ?, ?, 'MATERIAL', ?, 'OPEN', 'WAREHOUSE_ADMIN', ?
                 where not exists (select 1 from mes_shortage_alert where task_id = ? and material_id = ? and alert_status in ('OPEN', 'ACCEPTED'))
                 """;
         try (PreparedStatement statement = connection.prepareStatement(sql)) {

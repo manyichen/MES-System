@@ -25,7 +25,7 @@ class TraceFileServiceTest {
 
     @Test
     void shouldGenerateWechatReadableQrLabelAndPdfWithoutOnlineService() throws Exception {
-        String targetUrl = "https://trace.example.com/trace-public.html?token=offline-test-token";
+        String targetUrl = "https://trace.example.com/trace-public?token=offline-test-token";
         TireTraceItem tire = new TireTraceItem(
                 1L, "TIRE-20260712-WO001-000001", "TRACE-TIRE-20260712-WO001-000001",
                 10L, "WO-001", 20L, "QI-001", 30L, 40L, "TYRE-2055516",

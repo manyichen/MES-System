@@ -135,7 +135,7 @@
                 <artifactId>maven-war-plugin</artifactId>
                 <version>3.4.0</version>
                 <configuration>
-                    <warSourceDirectory>../frontend</warSourceDirectory>
+                    <warSourceDirectory>../frontend/dist</warSourceDirectory>
                     <webResources>
                         <resource>
                             <directory>webapp-WEB-INF</directory>

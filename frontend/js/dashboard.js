@@ -1,6 +1,3 @@
-let tireLabelRows = [];
-let tirePreviewUrls = [];
-
 async function loadDashboard(options = {}) {
     try {
         const dashboard = await getJson("/dashboard/my-summary");
@@ -20,27 +17,15 @@ function applyDashboardProfile(dashboard) {
         <h4>权限边界</h4>
         <ul class="boundary-list">${(dashboard.prohibitedActions || []).map(item => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`;
 
-    const isGeneralManager = dashboard.primaryRole === "GENERAL_MANAGER" || hasRole("GENERAL_MANAGER");
-    const visibleModules = isGeneralManager
-        ? new Set(["executiveOverview", "productionLive", "departmentReports", "managementAudit"])
-        : new Set(dashboard.visibleModules || ["dashboard"]);
-    document.body.classList.toggle("executive-session", isGeneralManager);
-    if (hasPermission("warehouse.requisition.create")) visibleModules.add("requisition");
+    const visibleModules = new Set(dashboard.visibleModules || ["dashboard"]);
     document.querySelectorAll(".sidebar button[data-tab]").forEach(button => {
         const visible = (button.dataset.tab === "profile" || visibleModules.has(button.dataset.tab))
             && !button.classList.contains("permission-hidden");
         button.classList.toggle("module-hidden", !visible);
     });
-    document.querySelectorAll(".general-manager-nav.nav-group").forEach(group => {
-        group.classList.toggle("module-hidden", !isGeneralManager);
-    });
     document.querySelectorAll(".panel").forEach(panel => {
-        if (panel.id !== "profile" && !visibleModules.has(panel.id)) panel.classList.remove("active");
+        if (panel.id !== "dashboard" && !visibleModules.has(panel.id)) panel.classList.remove("active");
     });
-    if (typeof refreshNavigationGroupVisibility === "function") refreshNavigationGroupVisibility();
-    if (isGeneralManager && !document.getElementById("executiveOverview")?.classList.contains("active")) {
-        window.requestAnimationFrame(() => switchTab("executiveOverview"));
-    }
 }
 
 function renderDashboardMetrics(metrics) {
@@ -88,7 +73,7 @@ function renderDashboardTodos(todos) {
 
 async function loadTraces(options = {}) {
     try {
-        const [rows] = await Promise.all([getJson("/product-traces"), loadTireLabels()]);
+        const rows = await getJson("/product-traces");
         renderTable("trace-table", rows, [
             { key: "traceId", label: "ID" },
             { key: "traceCode", label: "追溯码" },
@@ -102,25 +87,6 @@ async function loadTraces(options = {}) {
     } catch (error) {
         showMessage(toChineseError(error), "error");
     }
-}
-
-async function loadTireLabels() {
-    tireLabelRows = await getJson("/tire-labels");
-    renderTable("tire-label-table", tireLabelRows, [
-        { key: "tireId", label: "ID" },
-        { key: "serialNo", label: "轮胎序列号" },
-        { key: "productName", label: "产品" },
-        { key: "productModel", label: "规格" },
-        { key: "batchNo", label: "批次" },
-        { key: "warehouseName", label: "入库仓库" },
-        { key: "tireStatus", label: "状态" },
-        { key: "printCount", label: "打印次数" }
-    ], [
-        { name: "preview-tire-label", label: "预览", idKey: "tireId", handler: previewTireLabel },
-        { name: "open-tire-pdf", label: "PDF", idKey: "tireId", handler: openTirePdf },
-        { name: "open-public-trace", label: "扫码页", idKey: "tireId", handler: openPublicTrace },
-        { name: "print-tire-label", label: "模拟打印", idKey: "tireId", permission: "trace.tire.print", handler: printTireLabel }
-    ]);
 }
 
 async function loadFeedback(workOrderId = 1, options = {}) {
@@ -174,36 +140,12 @@ function bindDashboardEvents() {
             showMessage(toChineseError(error), "error");
         }
     });
-    document.getElementById("tire-label-form")?.addEventListener("submit", async event => {
-        event.preventDefault();
-        const status = document.getElementById("tire-label-form-status");
-        if (status) status.textContent = "正在读取质检与入库信息并生成文件…";
-        try {
-            const result = await postJson("/tire-labels/generate", { ...formToObject(event.target), publicBaseUrl: window.location.origin });
-            if (status) status.textContent = `已生成 ${result.generatedQuantity} 条轮胎二维码，剩余可生成 ${result.remainingQuantity} 条。`;
-            showMessage(`已为 ${result.generatedQuantity} 条轮胎生成独立二维码`, "ok");
-            await loadTireLabels();
-            if (result.tires?.length) await previewTireLabel(result.tires[0].tireId);
-        } catch (error) {
-            const message = toChineseError(error);
-            if (status) status.textContent = `生成失败：${message}`;
-            showMessage(message, "error");
-        }
-    });
     document.getElementById("trace-search-form")?.addEventListener("submit", async event => {
         event.preventDefault();
-        try {
-            const traceCode = event.target.traceCode.value.trim();
-            if (!traceCode) {
-                showMessage("请输入追溯码或ID", "error");
-                return;
-            }
-            const chain = await getJson(`/product-traces/${encodeURIComponent(traceCode)}`);
-            renderTraceChain(chain);
-            showMessage("追溯链路已加载", "ok");
-        } catch (error) {
-            showMessage(toChineseError(error), "error");
-        }
+        const traceCode = event.target.traceCode.value.trim();
+        if (!traceCode) return;
+        const trace = await getJson(`/product-traces/${encodeURIComponent(traceCode)}`);
+        document.getElementById("trace-detail").innerHTML = `<div class="detail"><strong>${escapeHtml(trace.traceCode)}</strong><div>订单：${escapeHtml(trace.orderId)}，任务：${escapeHtml(trace.taskId)}，工单：${escapeHtml(trace.workOrderId)}</div><div>批次：${escapeHtml(trace.batchNo)}，状态：${escapeHtml(displayText(trace.traceStatus))}</div></div>`;
     });
     document.getElementById("feedback-filter-form")?.addEventListener("submit", event => {
         event.preventDefault();
@@ -221,75 +163,6 @@ function bindDashboardEvents() {
             showMessage(toChineseError(error), "error");
         }
     });
-}
-
-async function previewTireLabel(id) {
-    try {
-        releaseTirePreviewUrls();
-        const row = tireLabelRows.find(item => String(item.tireId) === String(id));
-        const [qrBlob, labelBlob] = await Promise.all([
-            getBlob(`/tire-labels/${id}/qrcode`),
-            getBlob(`/tire-labels/${id}/label`)
-        ]);
-        const qrUrl = URL.createObjectURL(qrBlob);
-        const labelUrl = URL.createObjectURL(labelBlob);
-        tirePreviewUrls = [qrUrl, labelUrl];
-        const container = document.getElementById("tire-label-preview");
-        container.innerHTML = `<div class="section-heading"><h3>二维码与标签预览</h3><span>${escapeHtml(row?.serialNo || id)}</span></div>
-            <div class="tire-preview-grid"><figure><img src="${qrUrl}" alt="轮胎二维码"><figcaption>二维码原图</figcaption></figure>
-            <figure class="label-preview"><img src="${labelUrl}" alt="轮胎打印标签"><figcaption>打印标签</figcaption></figure></div>
-            <div class="tire-preview-actions"><button type="button" data-preview-pdf>查看PDF</button><button type="button" class="secondary" data-preview-public>打开微信扫码页</button></div>`;
-        container.querySelector("[data-preview-pdf]")?.addEventListener("click", () => openTirePdf(id));
-        container.querySelector("[data-preview-public]")?.addEventListener("click", () => openPublicTrace(id));
-        container.scrollIntoView({ behavior: "smooth", block: "center" });
-    } catch (error) {
-        showMessage(toChineseError(error), "error");
-    }
-}
-
-async function openTirePdf(id) {
-    try {
-        const blob = await getBlob(`/tire-labels/${id}/document`);
-        openBlob(blob);
-    } catch (error) {
-        showMessage(toChineseError(error), "error");
-    }
-}
-
-function openPublicTrace(id) {
-    const row = tireLabelRows.find(item => String(item.tireId) === String(id));
-    if (!row?.targetUrl) return showMessage("该轮胎尚未生成扫码地址", "error");
-    window.open(row.targetUrl, "_blank", "noopener");
-}
-
-async function printTireLabel(id) {
-    const printWindow = window.open("", "_blank", "width=520,height=760");
-    if (!printWindow) return showMessage("浏览器已拦截打印窗口，请允许弹出窗口后重试", "error");
-    printWindow.document.write("<p style='font-family:sans-serif;padding:24px'>正在准备轮胎标签…</p>");
-    try {
-        const blob = await getBlob(`/tire-labels/${id}/label`);
-        await postJson(`/tire-labels/${id}/print`, { remark: "MES 页面模拟打印" });
-        const url = URL.createObjectURL(blob);
-        printWindow.document.open();
-        printWindow.document.write(`<!doctype html><html><head><title>轮胎标签打印</title><style>html,body{margin:0;background:#fff}body{display:grid;place-items:center;min-height:100vh}img{width:40mm;height:auto}@media print{@page{size:45mm 65mm;margin:2mm}body{min-height:0}img{width:40mm}}</style></head><body><img src="${url}" onload="setTimeout(()=>window.print(),200)"></body></html>`);
-        printWindow.document.close();
-        showMessage("已打开模拟打印窗口并记录打印任务", "ok");
-        await loadTireLabels();
-    } catch (error) {
-        printWindow.close();
-        showMessage(toChineseError(error), "error");
-    }
-}
-
-function openBlob(blob) {
-    const url = URL.createObjectURL(blob);
-    window.open(url, "_blank", "noopener");
-    window.setTimeout(() => URL.revokeObjectURL(url), 60000);
-}
-
-function releaseTirePreviewUrls() {
-    tirePreviewUrls.forEach(url => URL.revokeObjectURL(url));
-    tirePreviewUrls = [];
 }
 
 function renderTraceChain(chain) {

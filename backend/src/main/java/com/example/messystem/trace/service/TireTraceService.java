@@ -1,7 +1,6 @@
 package com.example.messystem.trace.service;
 
 import com.example.messystem.common.BadRequestException;
-import com.example.messystem.common.Db;
 import com.example.messystem.common.NotFoundException;
 import com.example.messystem.trace.dao.TireTraceDao;
 import com.example.messystem.trace.entity.TireGenerationContext;
@@ -13,7 +12,6 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.security.SecureRandom;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -39,13 +37,16 @@ public class TireTraceService {
         this.fileService = fileService;
     }
 
+    /**
+     * 将轮胎身份、二维码和产品文档作为一个逻辑批次生成。
+     * 数据库事务由 DAO 管理，任一持久化步骤失败时由本服务删除已生成文件。
+     */
     public TireGenerationResult generate(TireGenerationRequest request, long createdBy) {
         validate(request);
         List<TraceFileBundle> generatedFiles = new ArrayList<>();
-        try (Connection connection = Db.getConnection()) {
-            connection.setAutoCommit(false);
-            try {
-                TireGenerationContext context = dao.lockGenerationContext(connection, request.workOrderId(),
+        try {
+            return dao.inTransaction(transaction -> {
+                TireGenerationContext context = dao.lockGenerationContext(transaction, request.workOrderId(),
                         request.inspectionId(), request.warehouseId(), request.locationId());
                 int available = context.qualifiedQuantity() - context.generatedQuantity();
                 if (available <= 0) throw new BadRequestException("该工单的合格轮胎已经全部生成二维码");
@@ -59,31 +60,28 @@ public class TireTraceService {
                     String serialNo = buildSerialNo(context, sequence);
                     String traceCode = "TRACE-" + serialNo;
                     String token = nextToken();
-                    String targetUrl = TraceRuntimeConfig.publicBaseUrl(request.publicBaseUrl()) + "/trace-public.html?token="
+                    String targetUrl = TraceRuntimeConfig.publicBaseUrl(request.publicBaseUrl()) + "/trace-public?token="
                             + URLEncoder.encode(token, StandardCharsets.UTF_8);
-                    TireTraceItem inserted = dao.insertTire(connection, context, serialNo, traceCode, createdBy);
+                    TireTraceItem inserted = dao.insertTire(transaction, context, serialNo, traceCode, createdBy);
                     TireTraceItem tire = withQrCode(inserted, token, targetUrl);
                     TraceFileBundle files = fileService.generate(tire);
                     generatedFiles.add(files);
-                    dao.insertQrCode(connection, tire.tireId(), token, targetUrl, fileService.relative(files.qrCode()));
-                    dao.insertDocument(connection, tire.tireId(), "LABEL_PNG", "label.png",
+                    dao.insertQrCode(transaction, tire.tireId(), token, targetUrl, fileService.relative(files.qrCode()));
+                    dao.insertDocument(transaction, tire.tireId(), "LABEL_PNG", "label.png",
                             fileService.relative(files.labelImage()), fileService.sha256(files.labelImage()));
-                    dao.insertDocument(connection, tire.tireId(), "PDF", "product-info.pdf",
+                    dao.insertDocument(transaction, tire.tireId(), "PDF", "product-info.pdf",
                             fileService.relative(files.pdfDocument()), fileService.sha256(files.pdfDocument()));
                     tires.add(tire);
                 }
-                connection.commit();
                 int remaining = available - request.quantity();
                 return new TireGenerationResult(request.quantity(), tires.size(), context.qualifiedQuantity(), remaining, tires);
-            } catch (SQLException | RuntimeException exception) {
-                connection.rollback();
-                generatedFiles.forEach(fileService::deleteQuietly);
-                throw exception;
-            } finally {
-                connection.setAutoCommit(true);
-            }
+            });
         } catch (SQLException exception) {
+            generatedFiles.forEach(fileService::deleteQuietly);
             throw new IllegalStateException("数据库操作失败：" + exception.getMessage(), exception);
+        } catch (RuntimeException exception) {
+            generatedFiles.forEach(fileService::deleteQuietly);
+            throw exception;
         }
     }
 

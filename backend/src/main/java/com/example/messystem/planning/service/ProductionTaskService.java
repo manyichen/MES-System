@@ -46,10 +46,6 @@ public class ProductionTaskService {
         return created;
     }
 
-    public MesProductionTask releaseTask(long taskId) {
-        throw new BadRequestException("请在制定生产工单时完成产线、工序的人工确认后发布生产任务");
-    }
-
     private static void requireId(Long id, String message) {
         if (id == null || id <= 0) {
             throw new BadRequestException(message);

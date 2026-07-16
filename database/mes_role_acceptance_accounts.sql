@@ -4,7 +4,6 @@
 WITH accounts(username, real_name, role_code, department, password_hash) AS (
     VALUES
     ('admin', '系统管理员', 'SYSTEM_ADMIN', '信息技术部', 'pbkdf2_sha256$120000$SJwp/esDPi+QeXO5mzSm8g==$4jC2gVqoKr905JSM9t4KRahNrTicPNMYRWHvZ6jTGR8='),
-    ('mes_sysmaint', '系统维护员验收员', 'SYSTEM_MAINTAINER', '信息技术部', 'pbkdf2_sha256$120000$SJwp/esDPi+QeXO5mzSm8g==$4jC2gVqoKr905JSM9t4KRahNrTicPNMYRWHvZ6jTGR8='),
     ('mes_hr', '人事经理验收员', 'HR_MANAGER', '人事部', 'pbkdf2_sha256$120000$SJwp/esDPi+QeXO5mzSm8g==$4jC2gVqoKr905JSM9t4KRahNrTicPNMYRWHvZ6jTGR8='),
     ('mes_general', '总经理验收员', 'GENERAL_MANAGER', '经营管理层', 'pbkdf2_sha256$120000$SJwp/esDPi+QeXO5mzSm8g==$4jC2gVqoKr905JSM9t4KRahNrTicPNMYRWHvZ6jTGR8='),
     ('mes_pmc', 'PMC计划验收员', 'PMC_PLANNER', '生产计划部', 'pbkdf2_sha256$120000$SJwp/esDPi+QeXO5mzSm8g==$4jC2gVqoKr905JSM9t4KRahNrTicPNMYRWHvZ6jTGR8='),

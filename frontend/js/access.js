@@ -1,35 +1,19 @@
 let accessRoles = [];
-let accessUsers = [];
-let accessMaintenanceSummary = {};
 
 async function loadAccessManagement() {
-    const canViewUsers = hasPermission("user.read");
-    const canViewRoles = hasPermission("role.read");
-    const canViewApplications = hasPermission("permission.apply") || hasPermission("permission.review") || hasPermission("role.manage");
-    const canViewMaintenance = hasPermission("system.health.read") || hasPermission("audit.read");
-    if (!canViewUsers && !canViewRoles && !canViewApplications && !canViewMaintenance) return;
+    if (!hasPermission("user.read")) return;
     try {
-        const results = await Promise.allSettled([
-            canViewUsers ? getJson("/users") : Promise.resolve([]),
-            canViewRoles ? getJson("/access/roles") : Promise.resolve([]),
-            canViewApplications ? getJson("/access/permission-applications") : Promise.resolve([]),
-            canViewMaintenance ? getJson("/access/system-maintenance") : Promise.resolve(null)
+        const canViewApplications = hasPermission("permission.apply") || hasPermission("permission.review") || hasPermission("role.manage");
+        const [users, roles, applications] = await Promise.all([
+            getJson("/users"),
+            hasPermission("role.read") ? getJson("/access/roles") : Promise.resolve([]),
+            canViewApplications ? getJson("/access/permission-applications") : Promise.resolve([])
         ]);
-        const [usersResult, rolesResult, applicationsResult, maintenanceResult] = results;
-        const users = usersResult.status === "fulfilled" && Array.isArray(usersResult.value) ? usersResult.value : [];
-        const roles = rolesResult.status === "fulfilled" && Array.isArray(rolesResult.value) ? rolesResult.value : [];
-        const applications = applicationsResult.status === "fulfilled" && Array.isArray(applicationsResult.value) ? applicationsResult.value : [];
-        const maintenance = maintenanceResult.status === "fulfilled" ? maintenanceResult.value : {};
-        results
-            .filter(result => result.status === "rejected")
-            .forEach(result => showMessage(result.reason?.message || "数据加载失败", "error"));
         accessRoles = roles;
-        accessUsers = users;
-        accessMaintenanceSummary = maintenance;
-        renderSystemMaintenance(maintenance);
-        if (canViewUsers) renderUserRoleTable(users, roles);
-        if (canViewApplications) renderPermissionApplications(applications);
-        if (canViewRoles) renderTable("role-table", roles, [
+        renderPermissionApplyRoleOptions(roles);
+        renderPermissionApplications(applications);
+        renderUserRoleTable(users, roles);
+        renderTable("role-table", roles, [
             { key: "roleCode", label: "角色代码", render: row => roleText(row.roleCode, row.roleName) },
             { key: "roleName", label: "角色名称" },
             { key: "dataScope", label: "数据范围", render: row => dataScopeText(row.dataScope) },
@@ -39,597 +23,129 @@ async function loadAccessManagement() {
         ], [
             { name: "view-role-permissions", label: "查看权限", idKey: "roleCode", permission: "role.read", handler: loadRolePermissions }
         ]);
+        if (roles.length) await loadRolePermissions(roles[0].roleCode);
     } catch (error) {
         showMessage(error.message, "error");
     }
 }
 
-function renderUserRoleTable(users, roles) {
-    const container = document.getElementById("user-table");
-    if (!container) return;
-    const canUpdate = hasPermission("user.update_role") && !hasRole("SYSTEM_ADMIN");
-    const canApply = hasPermission("permission.apply");
-    const canAdjust = canUpdate || canApply;
-    container.innerHTML = `
-        <table>
-            <thead><tr><th>ID</th><th>用户名</th><th>姓名</th><th>部门</th><th>当前角色</th><th>状态</th>${canAdjust ? "<th>操作</th>" : ""}</tr></thead>
-            <tbody>${users.map(user => `
-                <tr>
-                    <td>${escapeHtml(user.userId)}</td>
-                    <td>${escapeHtml(user.username)}</td>
-                    <td>${escapeHtml(user.realName)}</td>
-                    <td>${escapeHtml(user.department || "")}</td>
-                    <td>${escapeHtml(roleText(user.roleCode))}</td>
-                    <td>${user.enabled === 1 ? "启用" : "停用"}</td>
-                    ${canAdjust ? `<td><button type="button" data-adjust-user="${escapeHtml(user.userId)}">调整角色</button></td>` : ""}
-                </tr>`).join("")}
-            </tbody>
-        </table>`;
-    container.querySelectorAll("[data-adjust-user]").forEach(button => {
-        button.addEventListener("click", () => {
-            const user = users.find(item => String(item.userId) === String(button.dataset.adjustUser));
-            if (user) showRoleAdjustmentDialog(user, roles);
-        });
-    });
+function renderPermissionApplyRoleOptions(roles) {
+    const select = document.getElementById("permission-apply-role");
+    if (!select) return;
+    select.innerHTML = roles.map(role => `<option value="${escapeHtml(role.roleCode)}">${escapeHtml(role.roleName || displayText(role.roleCode))}</option>`).join("");
 }
 
 function renderPermissionApplications(rows) {
     renderTable("permission-apply-table", rows, [
-        { key: "applyNo", label: "申请单" },
-        { key: "applicantId", label: "申请人ID" },
-        { key: "targetUserId", label: "目标用户ID" },
-        { key: "fromRoleCode", label: "原角色", render: row => roleText(row.fromRoleCode) },
-        { key: "toRoleCode", label: "申请角色", render: row => roleText(row.toRoleCode) },
-        { key: "applyReason", label: "申请说明", render: row => `<span class="multiline-cell">${escapeHtml(row.applyReason || "")}</span>` },
-        { key: "applyStatus", label: "状态", render: row => permissionApplyStatusText(row.applyStatus) },
-        { key: "reviewComment", label: "审批意见" }
+        { key: "applyNo", label: "申请单" }, { key: "applicantId", label: "申请人ID" },
+        { key: "targetUserId", label: "目标用户ID" }, { key: "fromRoleCode", label: "原角色", render: row => roleText(row.fromRoleCode) },
+        { key: "toRoleCode", label: "申请角色", render: row => roleText(row.toRoleCode) }, { key: "applyReason", label: "原因" },
+        { key: "applyStatus", label: "状态" }, { key: "reviewComment", label: "复核意见" }
     ], [
-        { name: "review-application", label: "审批通过", idKey: "applyId", permission: "permission.review", visible: row => row.applyStatus === "SUBMITTED", handler: id => reviewPermissionApplication(id, "REVIEWED") },
-        { name: "reject-application", label: "驳回", idKey: "applyId", permission: "permission.review", visible: row => row.applyStatus === "SUBMITTED", handler: id => reviewPermissionApplication(id, "REJECTED") },
-        { name: "apply-application", label: "执行变更", idKey: "applyId", permission: "role.manage", visible: row => ["SUBMITTED", "REVIEWED"].includes(row.applyStatus), handler: applyPermissionApplication }
+        { name: "review-application", label: "复核通过", idKey: "applyId", permission: "permission.review", handler: id => reviewPermissionApplication(id, "REVIEWED") },
+        { name: "reject-application", label: "驳回", idKey: "applyId", permission: "permission.review", handler: id => reviewPermissionApplication(id, "REJECTED") },
+        { name: "apply-application", label: "执行变更", idKey: "applyId", permission: "role.manage", handler: applyPermissionApplication }
     ]);
 }
 
 async function reviewPermissionApplication(id, decision) {
-    const comment = window.prompt(decision === "REJECTED" ? "请输入驳回原因" : "请输入审批意见") || "";
+    const comment = window.prompt(decision === "REJECTED" ? "请输入驳回原因" : "请输入复核意见") || "";
     await postJson(`/access/permission-applications/${id}/review`, { decision, comment });
-    showMessage(decision === "REJECTED" ? "申请已驳回" : "审批通过，等待执行变更", "ok");
+    showMessage(decision === "REJECTED" ? "申请已驳回" : "复核完成，等待系统管理员执行变更", "ok");
     await loadAccessManagement();
     await loadDashboard();
 }
 
 async function applyPermissionApplication(id) {
-    if (!window.confirm("确定执行这条权限变更申请吗？执行后目标用户原登录会话会失效。")) return;
     await postJson(`/access/permission-applications/${id}/apply`);
     showMessage("申请角色已应用，目标用户需要重新登录", "ok");
     await loadAccessManagement();
     await loadDashboard();
 }
 
-const ROLE_DEPARTMENT_BY_CODE = {
-    SYSTEM_ADMIN: "信息技术部",
-    GENERAL_MANAGER: "经营管理层",
-    HR_MANAGER: "人事部",
-    PMC_PLANNER: "生产计划部",
-    WORKSHOP_MANAGER: "生产车间",
-    WORKSHOP_OPERATOR: "生产车间",
-    PRODUCTION_OPERATOR: "生产车间",
-    QUALITY_MANAGER: "质量部",
-    QUALITY_INSPECTOR: "质量部",
-    PROCESS_ENGINEER: "工艺部",
-    WAREHOUSE_ADMIN: "仓储物流部",
-    WAREHOUSE_KEEPER: "仓储物流部",
-    EQUIPMENT_ADMIN: "设备部",
-    EQUIPMENT_MAINTAINER: "设备部"
-};
-
-const ROLE_ADJUSTMENT_EXCLUDED_CODES = new Set(["SYSTEM_MAINTAINER", "VIEWER"]);
-
-function roleAdjustmentOptions(roles) {
-    return roles.filter(role => !ROLE_ADJUSTMENT_EXCLUDED_CODES.has(role.roleCode));
-}
-
-function roleDepartment(role) {
-    return ROLE_DEPARTMENT_BY_CODE[role.roleCode] || role.department || "";
-}
-
-function roleNeedsLineScope(role) {
-    const code = String(role?.roleCode || "");
-    const scope = String(role?.dataScope || "").toUpperCase();
-    return scope === "LINE" || scope === "CUSTOM" || code.includes("WORKSHOP") || code.includes("PRODUCTION");
-}
-
-function roleNeedsWarehouseScope(role) {
-    const code = String(role?.roleCode || "");
-    const scope = String(role?.dataScope || "").toUpperCase();
-    if (code === "WORKSHOP_MANAGER") return false;
-    return scope === "WAREHOUSE" || scope === "CUSTOM" || code.includes("WAREHOUSE");
-}
-
-function shouldCreateRoleChangeApplication() {
-    const session = typeof getCurrentSession === "function" ? getCurrentSession() : null;
-    const roles = session?.roles || [];
-    return hasPermission("permission.apply") && roles.includes("HR_MANAGER");
-}
-
-async function showRoleAdjustmentDialog(user, roles) {
-    const mask = document.createElement("div");
-    mask.className = "modal-mask";
-    mask.innerHTML = `
-        <div class="modal-card role-adjustment-modal">
-            <h3>调整角色</h3>
-            <p class="modal-subtitle">${escapeHtml(user.username)} · ${escapeHtml(user.realName || "")}</p>
-            <div class="role-adjustment-grid">
-                <label>部门
-                    <select id="role-adjust-department">
-                        <option value="">请选择部门</option>
-                    </select>
-                </label>
-                <label>具体角色
-                    <select id="role-adjust-role" disabled>
-                        <option value="">请先选择部门</option>
-                    </select>
-                </label>
-            </div>
-            <div class="role-scope-section hidden">
-                <h4>选择产线</h4>
-                <p class="scope-hint">当前角色需要产线范围时选择。</p>
-                <div id="role-adjust-lines" class="scope-checkbox-grid"></div>
-            </div>
-            <div class="role-scope-section hidden">
-                <h4>选择仓库</h4>
-                <p class="scope-hint">当前角色需要仓库范围时选择。</p>
-                <div id="role-adjust-warehouses" class="scope-checkbox-grid"></div>
-            </div>
-            <div class="modal-actions">
-                <button type="button" id="roleAdjustCancel">取消</button>
-                <button type="button" id="roleAdjustSave">${shouldCreateRoleChangeApplication() ? "发起权限变更申请" : "保存调整"}</button>
-            </div>
-        </div>`;
-    document.body.appendChild(mask);
-
-    const departmentSelect = mask.querySelector("#role-adjust-department");
-    const roleSelect = mask.querySelector("#role-adjust-role");
-    const lineSection = mask.querySelector("#role-adjust-lines")?.closest(".role-scope-section");
-    const warehouseSection = mask.querySelector("#role-adjust-warehouses")?.closest(".role-scope-section");
-    const availableRoles = roleAdjustmentOptions(roles);
-    const departments = [...new Set(availableRoles.map(roleDepartment).filter(Boolean))].sort((a, b) => a.localeCompare(b, "zh-CN"));
-    departmentSelect.innerHTML += departments.map(dept => `<option value="${escapeHtml(dept)}">${escapeHtml(dept)}</option>`).join("");
-
-    const updateScopeVisibility = () => {
-        const selectedRole = availableRoles.find(role => role.roleCode === roleSelect.value);
-        const hasDepartment = Boolean(departmentSelect.value);
-        const hasRole = Boolean(selectedRole);
-        const needsLine = hasDepartment && hasRole && roleNeedsLineScope(selectedRole);
-        const needsWarehouse = hasDepartment && hasRole && roleNeedsWarehouseScope(selectedRole);
-        lineSection?.classList.toggle("hidden", !needsLine);
-        warehouseSection?.classList.toggle("hidden", !needsWarehouse);
-        if (!needsLine) mask.querySelectorAll(`[data-scope-type="line"]`).forEach(input => { input.checked = false; });
-        if (!needsWarehouse) mask.querySelectorAll(`[data-scope-type="warehouse"]`).forEach(input => { input.checked = false; });
-    };
-    updateScopeVisibility();
-
-    departmentSelect.addEventListener("change", () => {
-        const dept = departmentSelect.value;
-        const departmentRoles = availableRoles.filter(role => roleDepartment(role) === dept);
-        roleSelect.disabled = !dept;
-        roleSelect.innerHTML = dept
-            ? `<option value="">请选择角色</option>${departmentRoles.map(role => `<option value="${escapeHtml(role.roleCode)}">${escapeHtml(roleText(role.roleCode, role.roleName))}</option>`).join("")}`
-            : `<option value="">请先选择部门</option>`;
-        updateScopeVisibility();
-    });
-    roleSelect.addEventListener("change", updateScopeVisibility);
-
-    await renderRoleScopeOptions(mask, user.userId);
-    updateScopeVisibility();
-
-    mask.querySelector("#roleAdjustCancel").addEventListener("click", () => mask.remove());
-    mask.addEventListener("click", event => {
-        if (event.target === mask) mask.remove();
-    });
-    mask.querySelector("#roleAdjustSave").addEventListener("click", async () => {
-        const department = departmentSelect.value;
-        const roleCode = roleSelect.value;
-        const selectedRole = availableRoles.find(role => role.roleCode === roleCode);
-        if (!department) {
-            showMessage("请先选择部门", "error");
-            return;
-        }
-        if (!roleCode) {
-            showMessage("请选择具体角色", "error");
-            return;
-        }
-        const lineIds = checkedScopeIds(mask, "line");
-        const warehouseIds = checkedScopeIds(mask, "warehouse");
-        if (roleNeedsLineScope(selectedRole) && !lineIds.length) {
-            showMessage("请选择产线", "error");
-            return;
-        }
-        if (roleNeedsWarehouseScope(selectedRole) && !warehouseIds.length) {
-            showMessage("请选择仓库", "error");
-            return;
-        }
-        try {
-            if (shouldCreateRoleChangeApplication()) {
-                await postJson("/access/permission-applications", {
-                    targetUserId: Number(user.userId),
-                    toRoleCode: roleCode,
-                    reason: roleAdjustmentReason(department, selectedRole, lineIds, warehouseIds)
-                });
-                showMessage("权限变更申请已提交", "ok");
-            } else if (hasPermission("user.update_role")) {
-                await putJson(`/access/users/${user.userId}/roles`, { roleCodes: [roleCode] });
-                if (hasPermission("data_scope.manage")) {
-                    await putJson(`/access/users/${user.userId}/data-scopes`, { lineIds, warehouseIds });
-                }
-                showMessage("用户角色与数据范围已更新", "ok");
-            } else {
-                showMessage("当前账号没有发起或执行角色调整的权限", "error");
-                return;
-            }
-            mask.remove();
-            await loadAccessManagement();
-            await loadDashboard();
-        } catch (error) {
-            showMessage(error.message, "error");
-        }
-    });
-}
-
-function roleAdjustmentReason(department, role, lineIds, warehouseIds) {
-    const parts = [`申请部门：${department}`, `申请角色：${roleText(role?.roleCode, role?.roleName)}`];
-    if (lineIds.length) parts.push(`产线范围：${lineIds.join(",")}`);
-    if (warehouseIds.length) parts.push(`仓库范围：${warehouseIds.join(",")}`);
-    return parts.join("；");
-}
-
-async function renderRoleScopeOptions(mask, userId) {
-    const [current, lines, warehouses] = await Promise.all([
-        hasPermission("data_scope.manage") ? getJson(`/access/users/${userId}/data-scopes`).catch(() => ({ lineIds: [], warehouseIds: [] })) : Promise.resolve({ lineIds: [], warehouseIds: [] }),
-        getJson("/production-lines").catch(() => []),
-        getJson("/warehouses").catch(() => [])
-    ]);
-    const currentLineIds = new Set((current.lineIds || []).map(String));
-    const currentWarehouseIds = new Set((current.warehouseIds || []).map(String));
-    renderScopeCheckboxes(mask.querySelector("#role-adjust-lines"), lines, "line", "lineId",
-        item => `${item.lineName || item.lineCode || "产线"} / ID ${item.lineId}`, currentLineIds);
-    renderScopeCheckboxes(mask.querySelector("#role-adjust-warehouses"), warehouses, "warehouse", "warehouseId",
-        item => `${item.warehouseName || item.warehouseCode || "仓库"} / ID ${item.warehouseId}`, currentWarehouseIds);
-}
-
-function renderScopeCheckboxes(container, rows, type, valueKey, labelFn, selectedIds) {
+function renderUserRoleTable(users, roles) {
+    const container = document.getElementById("user-table");
     if (!container) return;
-    if (!rows.length) {
-        container.innerHTML = `<span class="scope-empty">暂无可选数据</span>`;
-        return;
-    }
-    container.innerHTML = rows.map(row => {
-        const value = String(row[valueKey]);
-        return `<label class="scope-check"><input type="checkbox" data-scope-type="${type}" value="${escapeHtml(value)}" ${selectedIds.has(value) ? "checked" : ""}>${escapeHtml(labelFn(row))}</label>`;
-    }).join("");
+    const roleOptions = roles.map(role => `<option value="${escapeHtml(role.roleCode)}">${escapeHtml(role.roleName || displayText(role.roleCode))}</option>`).join("");
+    const canUpdate = hasPermission("user.update_role");
+    const canScope = hasPermission("data_scope.manage");
+    container.innerHTML = `
+        <table>
+            <thead><tr><th>ID</th><th>用户名</th><th>姓名</th><th>部门</th><th>当前角色</th><th>状态</th>${canUpdate ? "<th>角色调整</th>" : ""}${canScope ? "<th>数据范围</th>" : ""}</tr></thead>
+            <tbody>${users.map(user => `
+                <tr>
+                    <td>${escapeHtml(user.userId)}</td>
+                    <td>${escapeHtml(user.username)}</td>
+                    <td>${escapeHtml(user.realName)}</td>
+                    <td>${escapeHtml(user.department || "")}</td>
+                    <td>${escapeHtml(displayText(user.roleCode))}</td>
+                    <td>${user.enabled === 1 ? "启用" : "停用"}</td>
+                    ${canUpdate ? `<td><div class="role-editor"><select data-role-user="${escapeHtml(user.userId)}">${roleOptions}</select><button type="button" data-save-role="${escapeHtml(user.userId)}">保存</button></div></td>` : ""}
+                    ${canScope ? `<td><button type="button" data-edit-scope="${escapeHtml(user.userId)}">分配产线/仓库</button></td>` : ""}
+                </tr>`).join("")}
+            </tbody>
+        </table>`;
+    users.forEach(user => {
+        const select = container.querySelector(`[data-role-user="${user.userId}"]`);
+        if (select) select.value = user.roleCode;
+    });
+    container.querySelectorAll("[data-save-role]").forEach(button => {
+        button.addEventListener("click", async () => {
+            const userId = button.dataset.saveRole;
+            const roleCode = container.querySelector(`[data-role-user="${userId}"]`)?.value;
+            try {
+                await putJson(`/access/users/${userId}/roles`, { roleCodes: [roleCode] });
+                showMessage("用户角色已更新，该用户需要重新登录", "ok");
+                await loadAccessManagement();
+            } catch (error) {
+                showMessage(error.message, "error");
+            }
+        });
+    });
+    container.querySelectorAll("[data-edit-scope]").forEach(button => {
+        button.addEventListener("click", () => editUserDataScopes(button.dataset.editScope));
+    });
 }
 
-function checkedScopeIds(root, type) {
-    return [...root.querySelectorAll(`[data-scope-type="${type}"]:checked`)]
-        .map(input => Number(input.value))
-        .filter(value => Number.isInteger(value) && value > 0);
+async function editUserDataScopes(userId) {
+    try {
+        const current = await getJson(`/access/users/${userId}/data-scopes`);
+        const lineText = window.prompt("请输入允许访问的产线 ID，多个用英文逗号分隔；留空表示无产线权限。",
+                (current.lineIds || []).join(","));
+        if (lineText === null) return;
+        const warehouseText = window.prompt("请输入允许访问的仓库 ID，多个用英文逗号分隔；留空表示无仓库权限。",
+                (current.warehouseIds || []).join(","));
+        if (warehouseText === null) return;
+        const parseIds = value => value.split(",").map(item => Number(item.trim())).filter(item => Number.isInteger(item) && item > 0);
+        await putJson(`/access/users/${userId}/data-scopes`, {
+            lineIds: parseIds(lineText),
+            warehouseIds: parseIds(warehouseText)
+        });
+        showMessage("用户数据范围已更新，重新登录后生效", "ok");
+    } catch (error) {
+        showMessage(error.message, "error");
+    }
 }
 
 async function loadRolePermissions(roleCode) {
     try {
         const permissions = await getJson(`/access/permissions?roleCode=${encodeURIComponent(roleCode)}`);
-        const grantedPermissions = permissions.filter(item => item.granted);
-        showRolePermissionDialog(roleCode, grantedPermissions);
+        renderTable("permission-table", permissions.filter(item => item.granted), [
+            { key: "moduleCode", label: "模块", render: row => moduleText(row.moduleCode) },
+            { key: "permissionCode", label: "权限项", render: row => permissionCodeText(row.permissionCode, row.permissionName) },
+            { key: "permissionName", label: "权限名称" },
+            { key: "actionCode", label: "动作", render: row => actionText(row.actionCode) },
+            { key: "riskLevel", label: "风险级别", render: row => levelText(row.riskLevel) }
+        ]);
     } catch (error) {
         showMessage(error.message, "error");
     }
-}
-
-function renderSystemMaintenance(summary) {
-    summary = summary || {};
-    const metrics = document.getElementById("system-maintenance-metrics");
-    if (metrics) {
-        const visibleMetrics = (summary.metrics || []).filter(item => item.code !== "pendingApplications");
-        metrics.innerHTML = visibleMetrics.map(item => `
-            <button type="button" class="system-maintenance-card level-${escapeHtml(item.level || "normal")}" data-maintenance-metric="${escapeHtml(item.code)}">
-                <span>${escapeHtml(item.label)}</span>
-                <strong>${escapeHtml(item.value ?? 0)}<small>${escapeHtml(item.unit || "")}</small></strong>
-            </button>
-        `).join("") + `<button type="button" class="system-maintenance-card" data-cleanup-expired-sessions>
-                <span>运维操作</span>
-                <strong>清理<small>过期会话</small></strong>
-            </button>`;
-        metrics.querySelectorAll("[data-maintenance-metric]").forEach(card => {
-            card.addEventListener("click", () => showSystemMaintenanceDetail(card.dataset.maintenanceMetric));
-        });
-        metrics.querySelector("[data-cleanup-expired-sessions]")?.addEventListener("click", cleanupExpiredSessions);
-        hideSystemMaintenanceDetail();
-    }
-    renderTable("session-table", summary.sessions || [], [
-        { key: "sessionId", label: "会话ID" },
-        { key: "userId", label: "用户ID" },
-        { key: "username", label: "账号" },
-        { key: "realName", label: "姓名" },
-        { key: "roleCode", label: "角色", render: row => roleText(row.roleCode) },
-        { key: "loginIp", label: "登录IP" },
-        { key: "createdAt", label: "登录时间", render: row => formatDateTime(row.createdAt) },
-        { key: "expiresAt", label: "过期时间", render: row => formatDateTime(row.expiresAt) }
-    ], sessionActions());
-    renderTable("locked-user-table", summary.lockedUsers || [], [
-        { key: "userId", label: "用户ID" },
-        { key: "username", label: "账号" },
-        { key: "realName", label: "姓名" },
-        { key: "roleCode", label: "角色", render: row => roleText(row.roleCode) },
-        { key: "failedLoginCount", label: "失败次数" },
-        { key: "lockedUntil", label: "锁定至", render: row => formatDateTime(row.lockedUntil) }
-    ], lockedUserActions());
-    renderTable("audit-log-table", summary.auditLogs || [], [
-        { key: "auditId", label: "审计ID" },
-        { key: "eventType", label: "事件" },
-        { key: "actionCode", label: "动作", render: row => actionText(row.actionCode) },
-        { key: "resourceType", label: "资源" },
-        { key: "actorUsername", label: "操作人" },
-        { key: "actorRoleCode", label: "角色", render: row => roleText(row.actorRoleCode) },
-        { key: "result", label: "结果" },
-        { key: "createdAt", label: "时间", render: row => formatDateTime(row.createdAt) }
-    ]);
-    renderTable("sync-log-table", summary.syncLogs || [], [
-        { key: "syncLogId", label: "日志ID" },
-        { key: "syncType", label: "类型" },
-        { key: "sourceSystem", label: "来源系统" },
-        { key: "targetTable", label: "目标表" },
-        { key: "syncStatus", label: "状态" },
-        { key: "message", label: "消息" },
-        { key: "createdAt", label: "时间", render: row => formatDateTime(row.createdAt) }
-    ], syncLogActions());
-}
-
-function showSystemMaintenanceDetail(metricCode) {
-    const detail = getSystemMaintenanceDetail(metricCode);
-    const panel = ensureSystemMaintenanceDetailPanel();
-    const tableId = "system-maintenance-detail-table";
-    panel.innerHTML = `
-        <div class="system-maintenance-detail-head">
-            <div>
-                <span>${escapeHtml(detail.kicker)}</span>
-                <h3>${escapeHtml(detail.title)}</h3>
-            </div>
-            <p class="modal-subtitle">${escapeHtml(detail.description)}</p>
-        </div>
-        <div id="${tableId}"></div>`;
-    panel.classList.remove("hidden");
-    document.querySelectorAll("[data-maintenance-metric]").forEach(card => {
-        card.classList.toggle("active", card.dataset.maintenanceMetric === metricCode);
-    });
-    renderTable(tableId, detail.rows, detail.columns, detail.actions || []);
-    if (typeof updateModuleWorkspace === "function") updateModuleWorkspace(panel);
-}
-
-function ensureSystemMaintenanceDetailPanel() {
-    let panel = document.getElementById("system-maintenance-detail-panel");
-    if (panel) return panel;
-    const metrics = document.getElementById("system-maintenance-metrics");
-    panel = document.createElement("div");
-    panel.id = "system-maintenance-detail-panel";
-    panel.className = "system-maintenance-detail-panel hidden";
-    metrics?.after(panel);
-    return panel;
-}
-
-function hideSystemMaintenanceDetail() {
-    const panel = ensureSystemMaintenanceDetailPanel();
-    panel.classList.add("hidden");
-    panel.innerHTML = "";
-    document.querySelectorAll("[data-maintenance-metric]").forEach(card => card.classList.remove("active"));
-}
-
-function sessionActions() {
-    return [
-        { name: "revoke-session", label: "下线并锁定", idKey: "sessionId", permission: "system.health.read", visible: row => Number(row.userId) !== Number(getCurrentSession()?.user?.userId), handler: revokeSession }
-    ];
-}
-
-function lockedUserActions() {
-    return [
-        { name: "unlock-user", label: "解除锁定", idKey: "userId", permission: "system.health.read", handler: unlockUser },
-        { name: "revoke-user-sessions", label: "撤销并锁定", idKey: "userId", permission: "system.health.read", visible: row => Number(row.userId) !== Number(getCurrentSession()?.user?.userId), handler: revokeUserSessions }
-    ];
-}
-
-function syncLogActions() {
-    return [
-        { name: "mark-sync-handled", label: "标记已处理", idKey: "syncLogId", permission: "system.health.read", visible: row => ["FAILED", "ERROR"].includes(String(row.syncStatus || "").toUpperCase()), handler: markSyncLogHandled }
-    ];
-}
-
-function failedLoginActions() {
-    return [
-        { name: "unlock-login-user", label: "解除锁定", idKey: "actorUserId", permission: "system.health.read", visible: row => Boolean(row.actorUserId), handler: unlockUser },
-        { name: "revoke-login-user-sessions", label: "撤销并锁定", idKey: "actorUserId", permission: "system.health.read", visible: row => Boolean(row.actorUserId) && Number(row.actorUserId) !== Number(getCurrentSession()?.user?.userId), handler: revokeUserSessions }
-    ];
-}
-
-function enabledUserActions() {
-    return [
-        { name: "disable-user", label: "删除账号", idKey: "userId", permission: "system.health.read", visible: row => Number(row.userId) !== Number(getCurrentSession()?.user?.userId), handler: disableUser }
-    ];
-}
-
-async function runSystemMaintenanceAction(path, message) {
-    try {
-        await postJson(path);
-        showMessage(message, "ok");
-        await loadAccessManagement();
-        await loadDashboard();
-    } catch (error) {
-        showMessage(error.message, "error");
-    }
-}
-
-async function revokeSession(sessionId) {
-    if (!window.confirm("确定要强制下线并锁定这个账号吗？锁定后需要管理员解除锁定才能再次登录。")) return;
-    await runSystemMaintenanceAction(`/access/system-maintenance/sessions/${sessionId}/revoke`, "登录会话已强制下线，账号已锁定");
-}
-
-async function revokeUserSessions(userId) {
-    if (!window.confirm("确定要撤销该用户的所有有效会话并锁定账号吗？锁定后需要管理员解除锁定才能再次登录。")) return;
-    await runSystemMaintenanceAction(`/access/system-maintenance/users/${userId}/revoke-sessions`, "用户有效会话已撤销，账号已锁定");
-}
-
-async function cleanupExpiredSessions() {
-    await runSystemMaintenanceAction("/access/system-maintenance/sessions/cleanup-expired", "过期会话已清理");
-}
-
-async function unlockUser(userId) {
-    await runSystemMaintenanceAction(`/access/system-maintenance/users/${userId}/unlock`, "账号锁定已解除");
-}
-
-async function disableUser(userId) {
-    if (!window.confirm("确定要删除这个账号吗？删除后该用户将无法登录系统。")) return;
-    await runSystemMaintenanceAction(`/access/system-maintenance/users/${userId}/disable`, "账号已删除，用户无法再登录");
-}
-
-async function markSyncLogHandled(syncLogId) {
-    await runSystemMaintenanceAction(`/access/system-maintenance/sync-logs/${syncLogId}/mark-handled`, "同步异常已标记处理");
-}
-
-function getSystemMaintenanceDetail(metricCode) {
-    const summary = accessMaintenanceSummary || {};
-    const failedAuditLogs = (summary.failedLoginLogs || summary.auditLogs || []).filter(row =>
-        String(row.eventType || "").toUpperCase() === "LOGIN" && String(row.result || "").toUpperCase() === "FAILED");
-    const syncFailures = (summary.syncFailures || summary.syncLogs || []).filter(row =>
-        ["FAILED", "ERROR"].includes(String(row.syncStatus || "").toUpperCase()));
-    const enabledUsers = accessUsers.filter(user => user.enabled === 1 || user.enabled === true);
-
-    const userColumns = [
-        { key: "userId", label: "用户ID" },
-        { key: "username", label: "账号" },
-        { key: "realName", label: "姓名" },
-        { key: "department", label: "部门" },
-        { key: "roleCode", label: "角色", render: row => roleText(row.roleCode) },
-        { key: "lastLoginAt", label: "最近登录", render: row => formatDateTime(row.lastLoginAt) }
-    ];
-    const sessionColumns = [
-        { key: "sessionId", label: "会话ID" },
-        { key: "userId", label: "用户ID" },
-        { key: "username", label: "账号" },
-        { key: "realName", label: "姓名" },
-        { key: "roleCode", label: "角色", render: row => roleText(row.roleCode) },
-        { key: "loginIp", label: "登录IP" },
-        { key: "createdAt", label: "登录时间", render: row => formatDateTime(row.createdAt) },
-        { key: "expiresAt", label: "过期时间", render: row => formatDateTime(row.expiresAt) }
-    ];
-    const lockedColumns = [
-        { key: "userId", label: "用户ID" },
-        { key: "username", label: "账号" },
-        { key: "realName", label: "姓名" },
-        { key: "roleCode", label: "角色", render: row => roleText(row.roleCode) },
-        { key: "failedLoginCount", label: "失败次数" },
-        { key: "lockedUntil", label: "锁定至", render: row => formatDateTime(row.lockedUntil) }
-    ];
-    const auditColumns = [
-        { key: "auditId", label: "审计ID" },
-        { key: "actorUsername", label: "账号" },
-        { key: "actorRoleCode", label: "角色", render: row => roleText(row.actorRoleCode) },
-        { key: "actionCode", label: "动作", render: row => actionText(row.actionCode) },
-        { key: "resourceType", label: "资源" },
-        { key: "result", label: "结果" },
-        { key: "createdAt", label: "时间", render: row => formatDateTime(row.createdAt) }
-    ];
-    const syncColumns = [
-        { key: "syncLogId", label: "日志ID" },
-        { key: "syncType", label: "类型" },
-        { key: "sourceSystem", label: "来源系统" },
-        { key: "targetTable", label: "目标表" },
-        { key: "syncStatus", label: "状态" },
-        { key: "message", label: "消息" },
-        { key: "createdAt", label: "时间", render: row => formatDateTime(row.createdAt) }
-    ];
-
-    return {
-        enabledUsers: {
-            title: "启用账号明细",
-            kicker: "系统账号",
-            description: "当前处于启用状态的账号。若当前角色无用户读取权限，此处可能为空。",
-            rows: enabledUsers,
-            columns: userColumns,
-            actions: enabledUserActions()
-        },
-        lockedUsers: {
-            title: "锁定账号明细",
-            kicker: "登录安全",
-            description: "因登录失败或安全策略被临时锁定的账号。",
-            rows: summary.lockedUsers || [],
-            columns: lockedColumns,
-            actions: lockedUserActions()
-        },
-        activeSessions: {
-            title: "有效会话明细",
-            kicker: "在线会话",
-            description: "当前未注销且未过期的登录会话。",
-            rows: summary.sessions || [],
-            columns: sessionColumns,
-            actions: sessionActions()
-        },
-        failedLogins: {
-            title: "失败登录明细",
-            kicker: "24小时登录风险",
-            description: "最近审计日志中登录失败的记录。",
-            rows: failedAuditLogs,
-            columns: auditColumns,
-            actions: failedLoginActions()
-        },
-        syncFailures: {
-            title: "同步异常明细",
-            kicker: "数据同步",
-            description: "同步状态为 FAILED 或 ERROR 的数据同步日志。",
-            rows: syncFailures,
-            columns: syncColumns,
-            actions: syncLogActions()
-        }
-    }[metricCode] || {
-        title: "系统运维明细",
-        kicker: "系统运行",
-        description: "该指标暂无可展示的明细。",
-        rows: [],
-        columns: [],
-        actions: []
-    };
-}
-
-function formatDateTime(value) {
-    if (!value) return "";
-    return String(value).replace("T", " ").slice(0, 19);
-}
-
-function showRolePermissionDialog(roleCode, permissions) {
-    const role = accessRoles.find(item => item.roleCode === roleCode);
-    const modalId = `rolePermissionModalTable-${Date.now()}`;
-    const mask = document.createElement("div");
-    mask.className = "modal-mask";
-    mask.innerHTML = `
-        <div class="modal-card role-permission-modal">
-            <h3>${escapeHtml(roleText(roleCode, role?.roleName))} 权限明细</h3>
-            <p class="modal-subtitle">${escapeHtml(roleCode)} · 共 ${permissions.length} 个权限点</p>
-            <div id="${modalId}"></div>
-            <div class="modal-actions">
-                <button type="button" id="rolePermissionClose">关闭</button>
-            </div>
-        </div>`;
-    document.body.appendChild(mask);
-    renderTable(modalId, permissions, [
-        { key: "moduleCode", label: "模块", render: row => moduleText(row.moduleCode) },
-        { key: "permissionCode", label: "权限项", render: row => permissionCodeText(row.permissionCode, row.permissionName) },
-        { key: "permissionName", label: "权限名称" },
-        { key: "actionCode", label: "动作", render: row => actionText(row.actionCode) },
-        { key: "riskLevel", label: "风险级别", render: row => levelText(row.riskLevel) }
-    ]);
-    mask.querySelector("#rolePermissionClose").addEventListener("click", () => mask.remove());
 }
 
 function roleText(roleCode, fallbackName = "") {
     return {
         SYSTEM_ADMIN: "系统管理员",
+        SYSTEM_MAINTAINER: "系统维护员",
         GENERAL_MANAGER: "总经理/管理层",
         HR_MANAGER: "人事经理",
         PMC_PLANNER: "PMC计划员",
@@ -642,7 +158,8 @@ function roleText(roleCode, fallbackName = "") {
         WAREHOUSE_ADMIN: "仓库管理员",
         WAREHOUSE_KEEPER: "仓储人员",
         EQUIPMENT_ADMIN: "设备管理员",
-        EQUIPMENT_MAINTAINER: "设备维护员"
+        EQUIPMENT_MAINTAINER: "设备维护员",
+        VIEWER: "只读访客"
     }[roleCode] || fallbackName || roleCode || "";
 }
 
@@ -656,18 +173,6 @@ function dataScopeText(scope) {
         LINE: "指定产线",
         WAREHOUSE: "指定仓库"
     }[key] || scope || "";
-}
-
-function permissionApplyStatusText(status) {
-    const key = String(status || "").toUpperCase();
-    return {
-        DRAFT: "草稿",
-        SUBMITTED: "待审批",
-        REVIEWED: "审批通过",
-        REJECTED: "已驳回",
-        RETURNED: "已退回",
-        APPLIED: "已执行"
-    }[key] || status || "";
 }
 
 function moduleText(moduleCode) {
@@ -770,5 +275,16 @@ function permissionPartText(part) {
 }
 
 document.getElementById("refresh-access")?.addEventListener("click", loadAccessManagement);
-document.getElementById("refresh-system-ops")?.addEventListener("click", loadAccessManagement);
-document.getElementById("refresh-audit")?.addEventListener("click", loadAccessManagement);
+document.getElementById("permission-apply-form")?.addEventListener("submit", async event => {
+    event.preventDefault();
+    try {
+        const payload = formToObject(event.target);
+        await postJson("/access/permission-applications", payload);
+        showMessage("权限申请已提交", "ok");
+        event.target.reset();
+        await loadAccessManagement();
+        await loadDashboard();
+    } catch (error) {
+        showMessage(error.message, "error");
+    }
+});

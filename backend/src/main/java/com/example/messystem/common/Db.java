@@ -27,7 +27,7 @@ public final class Db {
 
     public static void initializeDatabase() throws SQLException {
         try (Connection ignored = getConnection()) {
-            // Verifies the configured database connection.
+            // 启动时验证配置的数据库连接是否可用。
         }
     }
 

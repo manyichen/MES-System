@@ -13,7 +13,6 @@ CREATE INDEX IF NOT EXISTS idx_mes_quality_inspection_status_assigned
 INSERT INTO mes_permission
     (permission_code, permission_name, module_code, resource_type, action_code, risk_level)
 VALUES
-    ('dashboard.system.read', '查看系统运行看板', 'dashboard', 'system_dashboard', 'read', 'HIGH'),
     ('system.health.read', '查看系统健康状�?, 'system', 'health', 'read', 'MEDIUM'),
     ('role.read', '查看角色和权限清�?, 'system', 'role', 'read', 'MEDIUM'),
     ('role.manage', '维护角色权限', 'system', 'role', 'manage', 'HIGH'),
@@ -92,7 +91,7 @@ WHERE rp.role_id = r.role_id AND rp.permission_id = p.permission_id
 
 WITH grants(role_code, permission_code) AS (
     VALUES
-    ('SYSTEM_ADMIN','dashboard.read'), ('SYSTEM_ADMIN','dashboard.system.read'),
+    ('SYSTEM_ADMIN','dashboard.read'),
     ('SYSTEM_ADMIN','system.health.read'), ('SYSTEM_ADMIN','user.read'),
     ('SYSTEM_ADMIN','user.create'),
     ('SYSTEM_ADMIN','role.read'), ('SYSTEM_ADMIN','role.manage'),

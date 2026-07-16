@@ -668,6 +668,28 @@ public class WarehouseDao {
         }
     }
 
+    /**
+     * 检查生产操作工是否为工单的被派工人或接收人。
+     * 归属查询放在 DAO 中，避免控制器直接执行 SQL。
+     */
+    public boolean isWorkOrderAssignedTo(long workOrderId, long userId) throws SQLException {
+        String sql = """
+                select 1
+                from mes_work_order
+                where work_order_id = ?
+                  and (assigned_to = ? or accepted_by = ?)
+                """;
+        try (Connection connection = Db.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, workOrderId);
+            statement.setLong(2, userId);
+            statement.setLong(3, userId);
+            try (ResultSet rs = statement.executeQuery()) {
+                return rs.next();
+            }
+        }
+    }
+
     public MesMaterialRequisition insertRequisition(MesMaterialRequisition requisition) throws SQLException {
         String requisitionSql = """
                 insert into mes_material_requisition
@@ -689,7 +711,6 @@ public class WarehouseDao {
             try {
                 MesMaterialRequisition created;
                 ensureWorkOrderExecutable(connection, requisition.workOrderId);
-                ensureInventoryEnoughForRequest(connection, requisition.warehouseId, requisition.items);
                 try (PreparedStatement statement = connection.prepareStatement(requisitionSql)) {
                     statement.setString(1, defaultCode(requisition.requisitionNo, "REQ"));
                     statement.setLong(2, requisition.workOrderId);
@@ -872,54 +893,6 @@ public class WarehouseDao {
                 if (!hasItems) {
                     throw new BadRequestException("requisition items are required");
                 }
-            }
-        }
-    }
-
-    private void ensureInventoryEnoughForRequest(
-            Connection connection,
-            Long warehouseId,
-            List<MesMaterialRequisitionItem> items
-    ) throws SQLException {
-        if (warehouseId == null || warehouseId <= 0) {
-            throw new BadRequestException("warehouseId is required");
-        }
-        if (items == null || items.isEmpty()) {
-            throw new BadRequestException("requisition items are required");
-        }
-        String sql = """
-                select coalesce(sum(available_qty), 0) as available_qty
-                from mes_inventory
-                where warehouse_id = ?
-                  and material_id = ?
-                  and available_qty > 0
-                  and (? is null or batch_no = ?)
-                """;
-        try (PreparedStatement statement = connection.prepareStatement(sql)) {
-            for (MesMaterialRequisitionItem item : items) {
-                if (item == null) {
-                    throw new BadRequestException("requisition items are required");
-                }
-                if (item.materialId == null || item.materialId <= 0) {
-                    throw new BadRequestException("materialId is required");
-                }
-                BigDecimal requiredQty = nvl(item.requiredQty);
-                if (requiredQty.signum() <= 0) {
-                    throw new BadRequestException("requiredQty must be positive");
-                }
-                String batchNo = item.batchNo == null || item.batchNo.isBlank() ? null : item.batchNo;
-                statement.setLong(1, warehouseId);
-                statement.setLong(2, item.materialId);
-                statement.setString(3, batchNo);
-                statement.setString(4, batchNo);
-                try (ResultSet rs = statement.executeQuery()) {
-                    rs.next();
-                    BigDecimal availableQty = rs.getBigDecimal("available_qty");
-                    if (availableQty.compareTo(requiredQty) < 0) {
-                        throw new BadRequestException("target warehouse inventory is not enough for materialId " + item.materialId);
-                    }
-                }
-                statement.clearParameters();
             }
         }
     }

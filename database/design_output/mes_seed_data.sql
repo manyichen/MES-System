@@ -1,7 +1,7 @@
 ﻿USE mes_db;
 INSERT INTO mes_user(username, real_name, role_code, department) VALUES
 ('pmc001','PMC计划员','PMC_PLANNER','计划部'),
-('wh001','仓储人员','WAREHOUSE_KEEPER','仓储部'),
+('wh001','仓库管理员','WAREHOUSE_ADMIN','仓储部'),
 ('op001','生产操作工','WORKSHOP_OPERATOR','生产车间'),
 ('qc001','质检员','QUALITY_INSPECTOR','质量部'),
 ('eq001','设备管理员','EQUIPMENT_ADMIN','设备部');
