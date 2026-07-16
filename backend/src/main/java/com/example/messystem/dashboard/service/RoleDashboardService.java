@@ -20,6 +20,7 @@ public class RoleDashboardService {
 
     /** 多角色账号优先按系统管理员处理，否则使用认证结果中的主角色。 */
     private static String primaryRole(AuthenticatedUser user) {
+        if (user.roles.contains(AuthenticatedUser.SUPER_ADMIN_ROLE)) return AuthenticatedUser.SUPER_ADMIN_ROLE;
         if (user.roles.contains("SYSTEM_ADMIN")) return "SYSTEM_ADMIN";
         return user.roles.stream().findFirst().orElse("UNASSIGNED");
     }
@@ -27,6 +28,12 @@ public class RoleDashboardService {
     /** 集中定义每个正式角色的数据范围、可见模块和禁止操作。 */
     private static Profile profileFor(String role) {
         return switch (role) {
+            case "SUPER_ADMIN" -> profile(role, "\u8d85\u7ea7\u7ba1\u7406\u5458",
+                    "\u5168\u7cfb\u7edf\u3001\u5168\u4e1a\u52a1\u6a21\u5757\u4e0e\u5168\u6570\u636e\u8303\u56f4",
+                    modules("dashboard", "executiveOverview", "productionLive", "departmentReports",
+                            "managementAudit", "planning", "production", "requisition", "warehouse",
+                            "quality", "equipment", "process", "trace", "feedback", "systemOps",
+                            "audit", "system"));
             case "SYSTEM_ADMIN" -> profile(role, "系统管理员", "系统账号、角色权限、数据范围、会话与运行健康；不参与具体生产业务",
                     modules("dashboard", "systemOps", "audit", "system"),
                     "不能查看任何用户的明文密码", "不能绕过审计日志执行高风险操作", "不能排产、报工、改库存、审核质检或处理设备维修");
@@ -35,8 +42,8 @@ public class RoleDashboardService {
             case "GENERAL_MANAGER" -> profile(role, "总经理/管理层", "全厂经营汇总和异常下钻，只读业务数据",
                     modules("executiveOverview", "productionLive", "departmentReports", "managementAudit"),
                     "不能新增、修改或删除业务数据", "不能查看密码、权限配置和个人工资明细", "不能代替业务主管审批");
-            case "PMC_PLANNER" -> profile(role, "PMC 计划员", "全厂订单、计划、齐套和相关工单范围",
-                    modules("dashboard", "planning", "warehouse", "quality", "equipment", "trace", "feedback"),
+            case "PMC_PLANNER" -> profile(role, "PMC 计划员", "全厂订单、计划、齐套、相关工单和已确认返工需求范围",
+                    modules("dashboard", "planning", "trace", "feedback"),
                     "不能提交或审核生产报工", "不能修改库存", "不能审核质检结论或维修结果", "不能管理用户");
             case "WORKSHOP_MANAGER" -> profile(role, "车间管理员", "仅明确分配的产线，以及这些产线关联的工单、报工和设备数据",
                     modules("dashboard", "planning", "production", "equipment", "trace", "feedback"),

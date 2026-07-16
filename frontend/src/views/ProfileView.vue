@@ -3,6 +3,7 @@ import { onMounted, reactive, ref } from 'vue'
 import { Save } from 'lucide-vue-next'
 import { api } from '../api/http'
 import { useSessionStore } from '../stores/session'
+import { codeLabel, localizeMessage } from '../utils/display.js'
 
 const session = useSessionStore()
 const form = reactive({ realName: '', phone: '', email: '', avatarUrl: '', profileBio: '' })
@@ -18,7 +19,7 @@ function assign(value) {
 }
 
 async function load() {
-  try { assign(await api.get('/profile')) } catch (cause) { error.value = cause.message }
+  try { assign(await api.get('/profile')) } catch (cause) { error.value = `个人资料加载未完成：${localizeMessage(cause.message)}` }
 }
 
 async function save() {
@@ -28,7 +29,7 @@ async function save() {
     assign(value)
     if (session.session) session.session.user = { ...session.session.user, ...value }
     notice.value = '个人资料已更新'
-  } catch (cause) { error.value = cause.message } finally { busy.value = false }
+  } catch (cause) { error.value = `个人资料保存未完成：${localizeMessage(cause.message)}` } finally { busy.value = false }
 }
 
 onMounted(load)
@@ -38,7 +39,7 @@ onMounted(load)
   <main class="workspace-page">
     <header class="page-header"><div><span>个人中心</span><h1>个人资料</h1></div></header>
     <section class="profile-layout">
-      <aside class="profile-identity"><div class="profile-avatar">{{ form.realName?.slice(0, 1) || '用' }}</div><h2>{{ form.realName || session.user.username }}</h2><p>{{ session.user.roleCode }}</p><dl><div><dt>账号</dt><dd>{{ session.user.username }}</dd></div><div><dt>部门</dt><dd>{{ session.user.department || '-' }}</dd></div></dl></aside>
+      <aside class="profile-identity"><div class="profile-avatar">{{ form.realName?.slice(0, 1) || '用' }}</div><h2>{{ form.realName || session.user.username }}</h2><p>{{ codeLabel(session.user.roleCode, 'roleCode') }}</p><dl><div><dt>账号</dt><dd>{{ session.user.username }}</dd></div><div><dt>部门</dt><dd>{{ session.user.department || '-' }}</dd></div></dl></aside>
       <form class="profile-form" @submit.prevent="save">
         <label><span>姓名</span><input v-model="form.realName" required maxlength="100" /></label>
         <label><span>电话</span><input v-model="form.phone" maxlength="50" /></label>

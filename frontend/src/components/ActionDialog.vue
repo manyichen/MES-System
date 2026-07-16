@@ -1,25 +1,150 @@
 <script setup>
-import { reactive, watch } from 'vue'
-import { X } from 'lucide-vue-next'
+import { reactive, ref, watch } from 'vue'
+import { Plus, Trash2, X } from 'lucide-vue-next'
+import { api } from '../api/http'
+import { businessValue, localizeMessage, localizeText } from '../utils/display.js'
 
 const props = defineProps({ action: Object, row: Object, busy: Boolean })
 const emit = defineEmits(['close', 'submit'])
 const values = reactive({})
+const optionRows = reactive({})
+const optionLoading = reactive({})
+const optionsError = ref('')
+let loadVersion = 0
 
-watch(() => props.action, (action) => {
+function normalize(data) {
+  if (Array.isArray(data)) return data
+  if (Array.isArray(data?.items)) return data.items
+  if (Array.isArray(data?.records)) return data.records
+  return data ? [data] : []
+}
+
+function dataAtPath(data, path) {
+  return path ? path.split('.').reduce((value, key) => value?.[key], data) : data
+}
+
+function clone(value) {
+  return value == null ? value : JSON.parse(JSON.stringify(value))
+}
+
+async function initialize(action) {
+  const version = ++loadVersion
   for (const key of Object.keys(values)) delete values[key]
+  for (const key of Object.keys(optionRows)) delete optionRows[key]
+  for (const key of Object.keys(optionLoading)) delete optionLoading[key]
+  optionsError.value = ''
   for (const field of action?.fields || []) {
     const initial = action?.defaults?.[field.key] ?? props.row?.[field.key]
-    values[field.key] = initial ?? (field.type === 'json' ? JSON.stringify(field.example ?? [], null, 2) : '')
+    if (field.type === 'line-items') {
+      values[field.key] = clone(initial ?? field.example ?? [{ materialId: '', requiredQty: '', unit: '', batchNo: '' }])
+    } else if (field.type === 'multi-lookup') {
+      values[field.key] = clone(initial ?? [])
+    } else {
+      values[field.key] = initial ?? (field.type === 'json' ? JSON.stringify(field.example ?? [], null, 2) : '')
+    }
   }
-}, { immediate: true })
+
+  const fields = (action?.fields || []).filter(field => field.source)
+  const requests = new Map()
+  await Promise.all(fields.map(async field => {
+    optionLoading[field.key] = true
+    try {
+      let request = requests.get(field.source.endpoint)
+      if (!request) {
+        request = api.get(field.source.endpoint)
+        requests.set(field.source.endpoint, request)
+      }
+      const payload = await request
+      if (version !== loadVersion) return
+      optionRows[field.key] = normalize(dataAtPath(payload, field.source.dataPath))
+    } catch (cause) {
+      if (version !== loadVersion) return
+      optionRows[field.key] = []
+      optionsError.value = optionsError.value || `可选内容加载未完成：${localizeMessage(cause.message)}`
+    } finally {
+      if (version === loadVersion) optionLoading[field.key] = false
+    }
+  }))
+  if (version === loadVersion) reconcileDependentValues()
+}
+
+watch(() => props.action, initialize, { immediate: true })
+
+function availableOptions(field) {
+  const rows = optionRows[field.key] || []
+  return field.source?.filter
+    ? rows.filter(row => field.source.filter(row, values, optionRows))
+    : rows
+}
+
+function optionValue(field, row) {
+  return row?.[field.source.valueKey]
+}
+
+function optionLabel(field, row) {
+  const label = typeof field.source.optionLabel === 'function'
+    ? field.source.optionLabel(row)
+    : row?.[field.source.optionLabel || field.source.valueKey] ?? optionValue(field, row)
+  return localizeText(label)
+}
+
+function selectedOption(field, value = values[field.key]) {
+  return availableOptions(field).find(row => String(optionValue(field, row)) === String(value))
+}
+
+function onLookupChange(field) {
+  const selected = selectedOption(field)
+  for (const [targetKey, sourceKey] of Object.entries(field.source.assign || {})) {
+    values[targetKey] = selected?.[sourceKey] ?? ''
+  }
+  reconcileDependentValues(field.key)
+}
+
+function reconcileDependentValues(changedKey = null) {
+  for (const field of props.action?.fields || []) {
+    if (!field.source?.dependsOn || optionLoading[field.key]) continue
+    const dependencies = Array.isArray(field.source.dependsOn) ? field.source.dependsOn : [field.source.dependsOn]
+    if (changedKey && !dependencies.includes(changedKey)) continue
+    if (values[field.key] !== '' && values[field.key] != null && !selectedOption(field)) {
+      values[field.key] = field.type === 'multi-lookup' ? [] : ''
+      onLookupChange(field)
+    }
+  }
+}
+
+function addLine(field) {
+  values[field.key].push({ materialId: '', requiredQty: '', unit: '', batchNo: '' })
+}
+
+function removeLine(field, index) {
+  values[field.key].splice(index, 1)
+  if (!values[field.key].length) addLine(field)
+}
+
+function onLineMaterialChange(field, line) {
+  const material = availableOptions(field).find(row => String(optionValue(field, row)) === String(line.materialId))
+  line.unit = material?.unit || ''
+}
 
 function submit() {
   const output = {}
   for (const field of props.action?.fields || []) {
     let value = values[field.key]
+    if (field.type === 'hidden' && (value === '' || value == null) && !field.required) continue
     if (field.type === 'number' || field.type === 'decimal') {
       value = value === '' || value === null ? null : Number(value)
+    } else if (field.type === 'lookup') {
+      value = value === '' || value === null ? null : (field.valueType === 'string' ? String(value) : Number(value))
+    } else if (field.type === 'multi-lookup') {
+      value = (value || []).map(item => field.valueType === 'string' ? String(item) : Number(item))
+    } else if (field.type === 'line-items') {
+      const invalidIndex = (value || []).findIndex(line => !line.materialId || !line.requiredQty || Number(line.requiredQty) <= 0)
+      if (invalidIndex >= 0) {
+        return window.alert(`第 ${invalidIndex + 1} 条领料明细必须选择物料并填写大于 0 的数量`)
+      }
+      value = (value || []).map((line, index) => {
+        return { ...line, materialId: Number(line.materialId), requiredQty: Number(line.requiredQty) }
+      })
     } else if (field.type === 'json') {
       try { value = JSON.parse(value || 'null') } catch { return window.alert(`${field.label}必须是有效 JSON`) }
     }
@@ -40,15 +165,40 @@ function submit() {
         <button type="button" class="icon-button" title="关闭" @click="emit('close')"><X :size="20" /></button>
       </header>
       <form @submit.prevent="submit">
-        <label v-for="field in action.fields || []" :key="field.key">
+        <template v-for="field in action.fields || []" :key="field.key">
+          <input v-if="field.type === 'hidden'" v-model="values[field.key]" type="hidden" />
+          <div v-else-if="field.type === 'line-items'" class="dialog-field dialog-wide">
+            <div class="dialog-field-head"><span>{{ field.label }}</span><button type="button" @click="addLine(field)"><Plus :size="15" />添加物料</button></div>
+            <div class="line-item-head"><span>物料</span><span>数量</span><span>单位</span><span>批次</span><span></span></div>
+            <div v-for="(line, index) in values[field.key]" :key="index" class="line-item-row">
+              <select v-model="line.materialId" required :disabled="optionLoading[field.key]" @change="onLineMaterialChange(field, line)">
+                <option value="" disabled>{{ optionLoading[field.key] ? '加载中...' : '请选择物料' }}</option>
+                <option v-for="option in availableOptions(field)" :key="optionValue(field, option)" :value="optionValue(field, option)">{{ optionLabel(field, option) }}</option>
+              </select>
+              <input v-model.number="line.requiredQty" type="number" min="0.01" step="0.01" required />
+              <input v-model="line.unit" type="text" readonly />
+              <input v-model="line.batchNo" type="text" placeholder="可选" />
+              <button type="button" class="line-item-remove" title="删除该项" @click="removeLine(field, index)"><Trash2 :size="16" /></button>
+            </div>
+          </div>
+          <label v-else>
           <span>{{ field.label }}</span>
-          <select v-if="field.type === 'select'" v-model="values[field.key]" :required="field.required">
-            <option value="" disabled>请选择</option>
-            <option v-for="option in field.options" :key="option" :value="option">{{ option }}</option>
+          <select v-if="field.type === 'lookup'" v-model="values[field.key]" :required="field.required" :disabled="optionLoading[field.key]" @change="onLookupChange(field)">
+            <option value="" :disabled="field.required">{{ optionLoading[field.key] ? '正在加载...' : (availableOptions(field).length ? '请选择' : '当前无可选内容') }}</option>
+            <option v-for="option in availableOptions(field)" :key="optionValue(field, option)" :value="optionValue(field, option)">{{ optionLabel(field, option) }}</option>
+          </select>
+          <select v-else-if="field.type === 'multi-lookup'" v-model="values[field.key]" multiple :required="field.required" :disabled="optionLoading[field.key]">
+            <option v-for="option in availableOptions(field)" :key="optionValue(field, option)" :value="optionValue(field, option)">{{ optionLabel(field, option) }}</option>
+          </select>
+          <select v-else-if="field.type === 'select'" v-model="values[field.key]" :required="field.required">
+            <option value="" :disabled="field.required">请选择</option>
+            <option v-for="option in field.options" :key="option" :value="option">{{ businessValue(field.key, option) }}</option>
           </select>
           <textarea v-else-if="field.type === 'json'" v-model="values[field.key]" rows="7" :required="field.required" />
           <input v-else v-model="values[field.key]" :type="field.type === 'decimal' ? 'number' : field.type" :step="field.type === 'decimal' ? '0.01' : undefined" :required="field.required" />
-        </label>
+          </label>
+        </template>
+        <p v-if="optionsError" class="dialog-options-error">{{ optionsError }}</p>
         <footer>
           <button type="button" class="secondary" @click="emit('close')">取消</button>
           <button type="submit" :disabled="busy">{{ busy ? '处理中...' : '确认' }}</button>

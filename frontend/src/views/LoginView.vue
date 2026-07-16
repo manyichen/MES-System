@@ -3,14 +3,15 @@ import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ArrowRight, LockKeyhole, UserRound } from 'lucide-vue-next'
 import { useSessionStore } from '../stores/session'
+import { localizeMessage } from '../utils/display.js'
 
 const accounts = [
-  ['admin', '系统管理员'], ['mes_hr', '人事经理'], ['mes_general', '总经理'],
+  ['superadmin', '超级管理员'], ['admin', '系统管理员'], ['mes_hr', '人事经理'], ['mes_general', '总经理'],
   ['mes_pmc', 'PMC 计划员'], ['mes_workshop', '车间管理员'], ['mes_operator', '生产操作工'],
   ['mes_warehouse', '仓库管理员'], ['mes_quality_mgr', '质量主管'], ['mes_inspector', '质检员'],
   ['mes_process', '工艺工程师'], ['mes_equipment_mgr', '设备管理员'], ['mes_maintainer', '设备维护员']
 ]
-const username = ref('admin')
+const username = ref('superadmin')
 const password = ref('')
 const error = ref('')
 const busy = ref(false)
@@ -25,7 +26,7 @@ async function submit() {
     await session.login(username.value, password.value)
     router.replace(String(route.query.redirect || '/'))
   } catch (cause) {
-    error.value = cause.message
+    error.value = `登录未完成：${localizeMessage(cause.message)}`
   } finally {
     busy.value = false
   }

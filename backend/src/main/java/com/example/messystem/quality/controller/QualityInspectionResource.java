@@ -2,16 +2,21 @@ package com.example.messystem.quality.controller;
 
 import com.example.messystem.common.ApiResponse;
 import com.example.messystem.common.BadRequestException;
+import com.example.messystem.common.UserRoleValidator;
 import com.example.messystem.auth.AuthFilter;
 import com.example.messystem.auth.AuthenticatedUser;
 import com.example.messystem.quality.entity.MesQualityInspection;
 import com.example.messystem.quality.entity.MesQualityInspectionItem;
 import com.example.messystem.quality.service.QualityInspectionService;
+import com.example.messystem.production.service.ProductionService;
 
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.Context;
 
@@ -22,6 +27,35 @@ import jakarta.ws.rs.core.Context;
 public class QualityInspectionResource {
 
     private final QualityInspectionService service = new QualityInspectionService();
+    private final ProductionService productionService = new ProductionService();
+
+    @GET
+    @Path("/create-options")
+    public ApiResponse<Map<String, Object>> createOptions() {
+        try {
+            Set<Long> inspectedReportIds = service.listInspections().stream()
+                    .map(MesQualityInspection::workReportId)
+                    .filter(java.util.Objects::nonNull)
+                    .collect(Collectors.toSet());
+            var reports = productionService.listWorkReports().stream()
+                    .filter(report -> "APPROVED".equals(report.reportStatus))
+                    .filter(report -> report.reportId != null && !inspectedReportIds.contains(report.reportId))
+                    .toList();
+            return ApiResponse.ok(Map.of("workReports", reports));
+        } catch (SQLException e) {
+            throw new BadRequestException(e.getMessage());
+        }
+    }
+
+    @GET
+    @Path("/inspectors")
+    public ApiResponse<List<UserRoleValidator.AssignableUser>> inspectors() {
+        try {
+            return ApiResponse.ok(UserRoleValidator.listEnabledUsers("QUALITY_INSPECTOR"));
+        } catch (SQLException e) {
+            throw new BadRequestException(e.getMessage());
+        }
+    }
 
     @GET
     public ApiResponse<List<MesQualityInspection>> list(@Context ContainerRequestContext context) {
@@ -58,8 +92,12 @@ public class QualityInspectionResource {
             if (inspection == null) {
                 throw new BadRequestException("质检单内容不能为空");
             }
+            Long workOrderId = inspection.workOrderId();
+            if (workOrderId == null && inspection.workReportId() != null) {
+                workOrderId = productionService.getWorkReport(inspection.workReportId()).workOrderId;
+            }
             MesQualityInspection payload = new MesQualityInspection(
-                    null, inspection.inspectionNo(), inspection.workOrderId(), inspection.workReportId(),
+                    null, inspection.inspectionNo(), workOrderId, inspection.workReportId(),
                     inspection.sampleQty(), "CREATED", null, null, null, null,
                     null, null, null, null, null, null);
             long id = service.createInspection(payload);
@@ -103,7 +141,7 @@ public class QualityInspectionResource {
                     item.itemResult(),
                     item.remark()
             );
-            long itemId = user.hasRole("SYSTEM_ADMIN")
+            long itemId = user.hasRole("SYSTEM_ADMIN") || user.isSuperAdmin()
                     ? service.addInspectionItem(payload)
                     : service.addAssignedInspectionItem(payload, user.user.userId);
             return ApiResponse.ok(itemId);

@@ -8,7 +8,7 @@
     "build": "vite build",
     "preview": "vite preview --host 127.0.0.1",
     "smoke": "node scripts/smoke.mjs",
-    "test": "node --check src/config/modules.js && node --check scripts/smoke.mjs"
+    "test": "node --check src/config/modules.js && node --check scripts/smoke.mjs && node scripts/form-options.test.mjs && node scripts/display.test.mjs"
   },
   "dependencies": {
     "lucide-vue-next": "^0.525.0",

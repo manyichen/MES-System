@@ -7,5 +7,6 @@ ALTER TABLE mes_shortage_alert ADD COLUMN IF NOT EXISTS available_qty NUMERIC(18
 ALTER TABLE mes_shortage_alert ADD COLUMN IF NOT EXISTS shortage_qty NUMERIC(18,4) DEFAULT 0;
 ALTER TABLE mes_shortage_alert ADD COLUMN IF NOT EXISTS accepted_by BIGINT;
 ALTER TABLE mes_shortage_alert ADD COLUMN IF NOT EXISTS accepted_at TIMESTAMP;
+ALTER TABLE mes_shortage_alert ADD COLUMN IF NOT EXISTS resolved_at TIMESTAMP;
 CREATE INDEX IF NOT EXISTS idx_mes_shortage_alert_task_material_status
     ON mes_shortage_alert (task_id, material_id, alert_status);

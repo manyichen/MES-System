@@ -46,7 +46,7 @@ public class AiPlanningDataService {
                 .filter(id -> id != null && id > 0)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
         List<MesWorkOrder> activeWorkOrders = workOrderService.listWorkOrders().stream()
-                .filter(row -> !"COMPLETED".equals(row.workOrderStatus) && !"CANCELLED".equals(row.workOrderStatus))
+                .filter(row -> !List.of("FINISHED", "COMPLETED", "CLOSED", "CANCELLED").contains(row.workOrderStatus))
                 .toList();
 
         Map<String, Object> snapshot = new LinkedHashMap<>();

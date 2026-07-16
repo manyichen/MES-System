@@ -109,7 +109,7 @@ public class MaterialRequisitionResource {
                 throw new BadRequestException("仓库ID不能为空");
             }
             var user = AuthFilter.currentUser(context);
-            if (user == null || !user.hasRole("PRODUCTION_OPERATOR")) {
+            if (user == null || !user.canActAs("PRODUCTION_OPERATOR")) {
                 throw new BadRequestException("只有生产操作工可以发起领料申请");
             }
             dataScopeService.snapshot(user).requireWorkOrder(requisition.workOrderId);
@@ -165,7 +165,7 @@ public class MaterialRequisitionResource {
     }
 
     private static void requireWarehouseAdmin(AuthenticatedUser user) {
-        if (user == null || !user.hasRole("WAREHOUSE_ADMIN")) {
+        if (user == null || !user.canActAs("WAREHOUSE_ADMIN")) {
             throw new BadRequestException("only warehouse admins can receive or approve requisitions");
         }
     }

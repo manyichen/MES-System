@@ -14,6 +14,8 @@ public class DatabaseMigrationRunner {
     private static final String DEFAULT_ADMIN_USERNAME = "admin";
     private static final String DEFAULT_ADMIN_PASSWORD = "123456";
     private static final String DEFAULT_ADMIN_ROLE = "SYSTEM_ADMIN";
+    private static final String DEFAULT_SUPER_ADMIN_USERNAME = "superadmin";
+    private static final String SUPER_ADMIN_ROLE = "SUPER_ADMIN";
 
     public static void main(String[] args) throws Exception {
         Path migrationFile = args.length > 0
@@ -41,6 +43,10 @@ public class DatabaseMigrationRunner {
                     + columnExists(connection, "mes_quality_inspection", "work_report_id"));
             if (migrationFile.getFileName().toString().contains("auth_user_migration")) {
                 ensureSystemAdmin(connection);
+                printUserTableSummary(connection);
+            }
+            if (migrationFile.getFileName().toString().contains("super_admin")) {
+                ensureSuperAdmin(connection);
                 printUserTableSummary(connection);
             }
         }
@@ -90,6 +96,70 @@ public class DatabaseMigrationRunner {
                 }
             }
         }
+    }
+
+    /** Provisions the all-access account without committing a plaintext password to source control. */
+    private static void ensureSuperAdmin(Connection connection) throws Exception {
+        String username = DbConfig.getValue("MES_SUPER_ADMIN_USERNAME", DEFAULT_SUPER_ADMIN_USERNAME).trim();
+        String password = DbConfig.getValue("MES_SUPER_ADMIN_PASSWORD", "");
+        if (password == null || password.isBlank()) {
+            throw new IllegalArgumentException(
+                    "MES_SUPER_ADMIN_PASSWORD is required when applying a super_admin migration");
+        }
+        if (password.length() < 12) {
+            throw new IllegalArgumentException("MES_SUPER_ADMIN_PASSWORD must contain at least 12 characters");
+        }
+
+        long userId;
+        try (PreparedStatement statement = connection.prepareStatement("""
+                insert into mes_user
+                    (username, real_name, role_code, department, account_type, position_name,
+                     enabled, password_hash, password_updated_at, failed_login_count, locked_until, updated_at)
+                values (?, ?, ?, ?, 'SYSTEM', ?, 1, ?, current_timestamp, 0, null, current_timestamp)
+                on conflict (username) do update
+                set real_name = excluded.real_name,
+                    role_code = excluded.role_code,
+                    department = excluded.department,
+                    account_type = excluded.account_type,
+                    position_name = excluded.position_name,
+                    enabled = 1,
+                    password_hash = excluded.password_hash,
+                    password_updated_at = current_timestamp,
+                    failed_login_count = 0,
+                    locked_until = null,
+                    updated_at = current_timestamp
+                returning user_id
+                """)) {
+            statement.setString(1, username);
+            statement.setString(2, "Super Administrator");
+            statement.setString(3, SUPER_ADMIN_ROLE);
+            statement.setString(4, "System Administration");
+            statement.setString(5, "Super Administrator");
+            statement.setString(6, PasswordHasher.hash(password));
+            try (ResultSet rs = statement.executeQuery()) {
+                rs.next();
+                userId = rs.getLong(1);
+            }
+        }
+
+        try (PreparedStatement delete = connection.prepareStatement(
+                "delete from mes_user_role where user_id = ?")) {
+            delete.setLong(1, userId);
+            delete.executeUpdate();
+        }
+        try (PreparedStatement insert = connection.prepareStatement("""
+                insert into mes_user_role (user_id, role_id, assigned_by, assigned_at)
+                select ?, role_id, ?, current_timestamp from mes_role
+                where role_code = ? and enabled = 1
+                """)) {
+            insert.setLong(1, userId);
+            insert.setLong(2, userId);
+            insert.setString(3, SUPER_ADMIN_ROLE);
+            if (insert.executeUpdate() != 1) {
+                throw new IllegalStateException("SUPER_ADMIN role was not created by the migration");
+            }
+        }
+        System.out.println("Super admin ensured: username=" + username + ", user_id=" + userId);
     }
 
     private static void printUserTableSummary(Connection connection) throws Exception {

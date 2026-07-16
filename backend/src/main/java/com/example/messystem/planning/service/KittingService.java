@@ -57,6 +57,7 @@ public class KittingService {
         MesKittingAnalysis created = database(() -> dao.insertAnalysis(analysis, shortages));
         database(() -> {
             dao.updateTaskKitting(task.taskId, shortages.isEmpty() ? "READY" : "SHORTAGE", created.kittingStatus);
+            dao.resolveRecoveredShortageAlerts(task.taskId);
             return null;
         });
         return created;

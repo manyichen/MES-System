@@ -600,6 +600,16 @@ COMMENT ON COLUMN mes_rework_order.closed_at IS '关闭时间';
 CREATE UNIQUE INDEX IF NOT EXISTS uk_mes_rework_order_rework_order_no ON mes_rework_order (rework_order_no);
 CREATE INDEX IF NOT EXISTS idx_mes_rework_order_rework_status ON mes_rework_order (rework_status);
 
+CREATE TABLE IF NOT EXISTS mes_rework_plan_link (
+    rework_order_id BIGINT,
+    production_task_id BIGINT NOT NULL,
+    planned_by BIGINT NOT NULL,
+    planned_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (rework_order_id)
+);
+COMMENT ON TABLE mes_rework_plan_link IS 'PMC返工排产关联表：关联质量返工需求与重新生成的生产任务。';
+CREATE UNIQUE INDEX IF NOT EXISTS uk_mes_rework_plan_link_task ON mes_rework_plan_link (production_task_id);
+
 CREATE TABLE IF NOT EXISTS mes_quality_trace (
     trace_id BIGSERIAL,
     trace_no VARCHAR(40) NOT NULL,

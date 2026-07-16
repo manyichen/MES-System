@@ -16,6 +16,8 @@ public class SystemMaintenanceDao {
         try (Connection connection = Db.getConnection()) {
             List<SessionRow> sessions = safeList(() -> listSessions(connection));
             List<LockedUserRow> lockedUsers = safeList(() -> listLockedUsers(connection));
+            List<DeletedUserRow> deletedUsers = safeList(() -> listDeletedUsers(connection));
+            List<LockedSessionRecordRow> lockedSessionRecords = safeList(() -> listLockedSessionRecords(connection));
             List<AuditRow> auditLogs = safeList(() -> listAuditLogs(connection));
             List<AuditRow> failedLoginLogs = safeList(() -> listFailedLoginLogs(connection));
             List<SyncLogRow> syncLogs = safeList(() -> listSyncLogs(connection));
@@ -24,10 +26,14 @@ public class SystemMaintenanceDao {
                     List.of(
                             metric("enabledUsers", "启用账号", count(connection,
                                     "select count(*) from mes_user where enabled = 1"), "个", "normal"),
-                            metric("lockedUsers", "锁定账号", count(connection,
-                                    "select count(*) from mes_user where locked_until > current_timestamp"), "个", "warning"),
+                            metric("accountApplications", "账号申请", count(connection,
+                                    "select count(*) from mes_account_apply where apply_status = 'SUBMITTED'"), "项", "normal"),
+                            metric("deletedUsers", "删除账号记录", count(connection,
+                                    "select count(*) from mes_user where enabled = 0"), "条", "warning"),
+                            metric("lockedSessionRecords", "下线锁定记录", count(connection,
+                                    "select count(*) from mes_user_session s join mes_user u on u.user_id = s.user_id where s.revoked_at is not null and u.locked_until > current_timestamp"), "条", "warning"),
                             metric("activeSessions", "有效会话", count(connection,
-                                    "select count(*) from mes_user_session where revoked_at is null and expires_at > current_timestamp"), "个", "normal"),
+                                    "select count(*) from mes_user_session s join mes_user u on u.user_id = s.user_id where s.revoked_at is null and s.expires_at > current_timestamp and u.enabled = 1 and (u.locked_until is null or u.locked_until <= current_timestamp)"), "个", "normal"),
                             metric("failedLogins", "24小时失败登录", count(connection,
                                     "select count(*) from mes_audit_log where event_type = 'LOGIN' and result = 'FAILED' and created_at >= current_timestamp - interval '24 hours'"), "次", "danger"),
                             metric("pendingApplications", "待处理权限申请", count(connection,
@@ -36,6 +42,8 @@ public class SystemMaintenanceDao {
                                     "select count(*) from mes_sync_log where sync_status in ('FAILED','ERROR')"), "条", "danger")),
                     sessions,
                     lockedUsers,
+                    deletedUsers,
+                    lockedSessionRecords,
                     auditLogs,
                     syncLogs,
                     failedLoginLogs,
@@ -73,6 +81,8 @@ public class SystemMaintenanceDao {
                 from mes_user_session s
                 left join mes_user u on u.user_id = s.user_id
                 where s.revoked_at is null and s.expires_at > current_timestamp
+                  and u.enabled = 1
+                  and (u.locked_until is null or u.locked_until <= current_timestamp)
                 order by s.issued_at desc
                 limit 500
                 """;
@@ -108,6 +118,7 @@ public class SystemMaintenanceDao {
                     updated = statement.executeUpdate();
                 }
                 lockUser(connection, userId);
+                writeMaintenanceAudit(connection, actorUserId, "revoke_session_lock_user", userId, "登录会话已强制下线，账号已锁定");
                 connection.commit();
                 return updated;
             } catch (SQLException | RuntimeException ex) {
@@ -139,6 +150,7 @@ public class SystemMaintenanceDao {
                     updated = statement.executeUpdate();
                 }
                 lockUser(connection, userId);
+                writeMaintenanceAudit(connection, actorUserId, "revoke_sessions_lock_user", userId, "用户有效会话已撤销，账号已锁定");
                 connection.commit();
                 return updated;
             } catch (SQLException | RuntimeException ex) {
@@ -239,6 +251,7 @@ public class SystemMaintenanceDao {
                     statement.setLong(1, userId);
                     statement.executeUpdate();
                 }
+                writeMaintenanceAudit(connection, actorUserId, "disable_user", userId, "账号已删除并禁止登录");
                 connection.commit();
                 return updated;
             } catch (SQLException | RuntimeException ex) {
@@ -284,6 +297,50 @@ public class SystemMaintenanceDao {
                 rows.add(new LockedUserRow(rs.getLong("user_id"), rs.getString("username"),
                         rs.getString("real_name"), rs.getString("role_code"),
                         rs.getInt("failed_login_count"), time(rs, "locked_until")));
+            }
+        }
+        return rows;
+    }
+
+    private static List<DeletedUserRow> listDeletedUsers(Connection connection) throws SQLException {
+        String sql = """
+                select user_id, username, real_name, role_code, department, updated_at, last_login_at
+                from mes_user
+                where enabled = 0
+                order by updated_at desc nulls last, user_id desc
+                limit 500
+                """;
+        List<DeletedUserRow> rows = new ArrayList<>();
+        try (PreparedStatement statement = connection.prepareStatement(sql);
+                ResultSet rs = statement.executeQuery()) {
+            while (rs.next()) {
+                rows.add(new DeletedUserRow(rs.getLong("user_id"), rs.getString("username"),
+                        rs.getString("real_name"), rs.getString("role_code"), rs.getString("department"),
+                        time(rs, "updated_at"), time(rs, "last_login_at")));
+            }
+        }
+        return rows;
+    }
+
+    private static List<LockedSessionRecordRow> listLockedSessionRecords(Connection connection) throws SQLException {
+        String sql = """
+                select s.session_id, s.user_id, u.username, u.real_name, u.role_code,
+                       s.login_ip, s.issued_at, s.expires_at, s.revoked_at, u.locked_until
+                from mes_user u
+                join mes_user_session s on s.user_id = u.user_id
+                where s.revoked_at is not null
+                  and u.locked_until > current_timestamp
+                order by s.revoked_at desc nulls last, s.session_id desc
+                limit 500
+                """;
+        List<LockedSessionRecordRow> rows = new ArrayList<>();
+        try (PreparedStatement statement = connection.prepareStatement(sql);
+                ResultSet rs = statement.executeQuery()) {
+            while (rs.next()) {
+                rows.add(new LockedSessionRecordRow(rs.getLong("session_id"), rs.getLong("user_id"),
+                        rs.getString("username"), rs.getString("real_name"), rs.getString("role_code"),
+                        rs.getString("login_ip"), time(rs, "issued_at"), time(rs, "expires_at"),
+                        time(rs, "revoked_at"), time(rs, "locked_until")));
             }
         }
         return rows;
@@ -380,8 +437,68 @@ public class SystemMaintenanceDao {
         return rs.wasNull() ? null : value;
     }
 
+    public int restoreUser(long userId, long actorUserId) {
+        if (userId <= 0) throw new BadRequestException("用户ID不正确");
+        try (Connection connection = Db.getConnection()) {
+            connection.setAutoCommit(false);
+            try (PreparedStatement statement = connection.prepareStatement("""
+                    update mes_user
+                    set enabled = 1,
+                        failed_login_count = 0,
+                        locked_until = null,
+                        updated_at = current_timestamp
+                    where user_id = ?
+                      and enabled = 0
+                    """)) {
+                statement.setLong(1, userId);
+                int updated = statement.executeUpdate();
+                if (updated == 0) throw new BadRequestException("只有已停用的账号可以恢复");
+                writeMaintenanceAudit(connection, actorUserId, "restore_user", userId, "账号已恢复启用");
+                connection.commit();
+                return updated;
+            } catch (SQLException | RuntimeException ex) {
+                connection.rollback();
+                throw ex;
+            } finally {
+                connection.setAutoCommit(true);
+            }
+        } catch (SQLException ex) {
+            throw new IllegalStateException("database operation failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    private static void writeMaintenanceAudit(Connection connection, long actorUserId, String actionCode,
+            long targetUserId, String message) throws SQLException {
+        try (PreparedStatement actor = connection.prepareStatement(
+                "select username, role_code from mes_user where user_id = ?")) {
+            actor.setLong(1, actorUserId);
+            try (ResultSet rs = actor.executeQuery();
+                    PreparedStatement statement = connection.prepareStatement("""
+                            insert into mes_audit_log
+                                (event_type, module_code, action_code, resource_type, resource_id, user_id,
+                                 username, role_code, result, message)
+                            values ('SYSTEM_MAINTENANCE', 'system', ?, 'user', ?, ?, ?, ?, 'SUCCESS', ?)
+                            """)) {
+                String username = null;
+                String roleCode = null;
+                if (rs.next()) {
+                    username = rs.getString("username");
+                    roleCode = rs.getString("role_code");
+                }
+                statement.setString(1, actionCode);
+                statement.setString(2, String.valueOf(targetUserId));
+                statement.setLong(3, actorUserId);
+                statement.setString(4, username);
+                statement.setString(5, roleCode);
+                statement.setString(6, message);
+                statement.executeUpdate();
+            }
+        }
+    }
+
     public record SystemMaintenanceSummary(List<SystemMetric> metrics, List<SessionRow> sessions,
-            List<LockedUserRow> lockedUsers, List<AuditRow> auditLogs, List<SyncLogRow> syncLogs,
+            List<LockedUserRow> lockedUsers, List<DeletedUserRow> deletedUsers,
+            List<LockedSessionRecordRow> lockedSessionRecords, List<AuditRow> auditLogs, List<SyncLogRow> syncLogs,
             List<AuditRow> failedLoginLogs, List<SyncLogRow> syncFailures) {
     }
 
@@ -394,6 +511,15 @@ public class SystemMaintenanceDao {
 
     public record LockedUserRow(long userId, String username, String realName, String roleCode,
             int failedLoginCount, LocalDateTime lockedUntil) {
+    }
+
+    public record DeletedUserRow(long userId, String username, String realName, String roleCode,
+            String department, LocalDateTime deletedAt, LocalDateTime lastLoginAt) {
+    }
+
+    public record LockedSessionRecordRow(long sessionId, long userId, String username, String realName,
+            String roleCode, String loginIp, LocalDateTime issuedAt, LocalDateTime expiresAt,
+            LocalDateTime revokedAt, LocalDateTime lockedUntil) {
     }
 
     public record AuditRow(long auditId, String eventType, String actionCode, String resourceType, Long actorUserId,

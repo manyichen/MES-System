@@ -27,6 +27,8 @@ VALUES
     ('planning.task.create', '创建生产任务', 'planning', 'production_task', 'create', 'HIGH'),
     ('planning.task.release', '齐套分析并发布生产任�?, 'planning', 'production_task', 'release', 'HIGH'),
     ('planning.work_order.create', '创建生产工单', 'planning', 'work_order', 'create', 'HIGH'),
+    ('planning.rework.read', '查看待排返工需求', 'planning', 'rework_plan', 'read', 'LOW'),
+    ('planning.rework.plan', '将返工需求纳入生产计划', 'planning', 'rework_plan', 'create', 'HIGH'),
     ('planning.work_order.dispatch', '派发制造工�?, 'planning', 'work_order', 'dispatch', 'HIGH'),
     ('planning.work_order.receive', '接收本人制造工�?, 'planning', 'work_order', 'receive', 'MEDIUM'),
 
@@ -112,8 +114,8 @@ WITH grants(role_code, permission_code) AS (
     ('PMC_PLANNER','dashboard.read'), ('PMC_PLANNER','planning.read'),
     ('PMC_PLANNER','planning.order.create'), ('PMC_PLANNER','planning.task.create'),
     ('PMC_PLANNER','planning.task.release'), ('PMC_PLANNER','planning.work_order.create'),
-    ('PMC_PLANNER','warehouse.read'), ('PMC_PLANNER','quality.read'),
-    ('PMC_PLANNER','equipment.read'), ('PMC_PLANNER','trace.read'),
+    ('PMC_PLANNER','planning.rework.read'), ('PMC_PLANNER','planning.rework.plan'),
+    ('PMC_PLANNER','trace.read'),
     ('PMC_PLANNER','feedback.read'), ('PMC_PLANNER','feedback.create'),
     ('PMC_PLANNER','master.read'), ('PMC_PLANNER','process.read'),
 
@@ -192,6 +194,14 @@ WHERE rp.role_id = r.role_id
   AND rp.permission_id = p.permission_id
   AND r.role_code IN ('PMC_PLANNER', 'WORKSHOP_MANAGER')
   AND p.permission_code = 'warehouse.requisition.approve';
+
+-- PMC planners stay in planning workflows; they do not enter warehouse, quality, or equipment modules.
+DELETE FROM mes_role_permission rp
+USING mes_role r, mes_permission p
+WHERE rp.role_id = r.role_id
+  AND rp.permission_id = p.permission_id
+  AND r.role_code = 'PMC_PLANNER'
+  AND p.permission_code IN ('warehouse.read', 'quality.read', 'equipment.read');
 
 -- Production operators are limited to the execution permissions listed in the role boundary table.
 DELETE FROM mes_role_permission rp

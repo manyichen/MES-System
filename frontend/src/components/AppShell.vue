@@ -8,6 +8,7 @@ import {
 } from 'lucide-vue-next'
 import { navigation } from '../config/modules'
 import { useSessionStore } from '../stores/session'
+import { codeLabel } from '../utils/display.js'
 
 const iconMap = { BadgeCheck, ChartNoAxesCombined, ClipboardList, Factory, LayoutDashboard, MessageSquareText, Route, ScanLine, ShieldCheck, UserRound, Warehouse, Wrench }
 const route = useRoute()
@@ -17,7 +18,9 @@ const collapsed = ref(false)
 const mobileOpen = ref(false)
 
 const items = computed(() => navigation.filter(item => {
+  if (session.isSuperAdmin) return true
   if (item.roles?.length && !item.roles.some(session.hasRole)) return false
+  if (item.denyRoles?.some(session.hasRole)) return false
   return !item.permissions?.length || session.hasAnyPermission(item.permissions)
 }))
 
@@ -47,7 +50,7 @@ function navigate(to) {
         </button>
       </nav>
       <footer>
-        <div class="account"><span>{{ session.user.realName?.slice(0, 1) || '用' }}</span><div><strong>{{ session.user.realName || session.user.username }}</strong><small>{{ session.user.roleCode }}</small></div></div>
+        <div class="account"><span>{{ session.user.realName?.slice(0, 1) || '用' }}</span><div><strong>{{ session.user.realName || session.user.username }}</strong><small>{{ codeLabel(session.user.roleCode, 'roleCode') }}</small></div></div>
         <button type="button" class="logout" title="退出登录" @click="logout"><LogOut :size="18" /><span>退出</span></button>
       </footer>
       <button type="button" class="collapse-control" :title="collapsed ? '展开导航' : '收起导航'" @click="collapsed = !collapsed">

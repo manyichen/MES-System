@@ -7,6 +7,8 @@ import com.example.messystem.common.BadRequestException;
 import com.example.messystem.security.service.DataScopeService;
 import com.example.messystem.dashboard.entity.MesManagementFeedback;
 import com.example.messystem.dashboard.service.ManagementFeedbackService;
+import com.example.messystem.planning.entity.MesWorkOrder;
+import com.example.messystem.planning.service.WorkOrderService;
 
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
@@ -23,6 +25,16 @@ public class ManagementFeedbackResource {
 
     private final ManagementFeedbackService service = new ManagementFeedbackService();
     private final DataScopeService dataScopeService = new DataScopeService();
+    private final WorkOrderService workOrderService = new WorkOrderService();
+
+    @GET
+    @Path("/create-options")
+    public ApiResponse<List<MesWorkOrder>> createOptions(@Context ContainerRequestContext context) {
+        AuthenticatedUser user = AuthFilter.currentUser(context);
+        rejectProductionOperator(user);
+        var scope = dataScopeService.snapshot(user);
+        return ApiResponse.ok(workOrderService.listWorkOrders().stream().filter(scope::canView).toList());
+    }
 
     @GET
     public ApiResponse<List<MesManagementFeedback>> listFeedback(@QueryParam("workOrderId") Long workOrderId,

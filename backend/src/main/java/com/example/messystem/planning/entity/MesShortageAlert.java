@@ -18,5 +18,6 @@ public class MesShortageAlert {
     public String alertStatus;
     public Long acceptedBy;
     public LocalDateTime acceptedAt;
+    public LocalDateTime resolvedAt;
     public LocalDateTime createdAt;
 }

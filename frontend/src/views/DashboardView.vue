@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ArrowRight, RefreshCw } from 'lucide-vue-next'
 import { api } from '../api/http'
+import { localizeMessage, localizeText } from '../utils/display.js'
 
 const router = useRouter()
 const dashboard = ref({ metrics: [], todos: [], prohibitedActions: [] })
@@ -24,7 +25,7 @@ async function load() {
   try {
     dashboard.value = await api.get('/dashboard/my-summary')
     generatedAt.value = new Date()
-  } catch (cause) { error.value = cause.message } finally { loading.value = false }
+  } catch (cause) { error.value = `工作台数据加载未完成：${localizeMessage(cause.message)}` } finally { loading.value = false }
 }
 
 function go(target) { router.push(targetRoutes[target] || '/') }
@@ -36,7 +37,7 @@ onMounted(load)
     <header class="page-header"><div><span>角色工作台</span><h1>{{ dashboard.roleName || '生产运行总览' }}</h1></div><button type="button" class="icon-button" title="刷新" @click="load"><RefreshCw :size="19" /></button></header>
     <p v-if="error" class="notice error">{{ error }}</p>
     <section class="dashboard-band">
-      <div><span>数据范围</span><strong>{{ dashboard.dataScope || '-' }}</strong></div>
+      <div><span>数据范围</span><strong>{{ localizeText(dashboard.dataScope || '-') }}</strong></div>
       <div><span>更新时间</span><strong>{{ generatedAt.toLocaleTimeString('zh-CN', { hour12: false }) }}</strong></div>
       <div><span>当前待办</span><strong>{{ priorityTodos.length }} 项</strong></div>
     </section>

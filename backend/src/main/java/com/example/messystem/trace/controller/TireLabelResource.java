@@ -9,6 +9,8 @@ import com.example.messystem.trace.entity.TireGenerationResult;
 import com.example.messystem.trace.entity.TirePrintRequest;
 import com.example.messystem.trace.entity.TireTraceItem;
 import com.example.messystem.trace.service.TireTraceService;
+import com.example.messystem.quality.service.QualityInspectionService;
+import com.example.messystem.warehouse.service.WarehouseService;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
@@ -22,6 +24,8 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.StreamingOutput;
 import java.nio.file.Files;
 import java.util.List;
+import java.util.Map;
+import java.sql.SQLException;
 
 /** 承载 /tire-labels 轮胎标签接口契约的 JAX-RS 控制器。 */
 @Path("/tire-labels")
@@ -29,11 +33,38 @@ import java.util.List;
 @Consumes(MediaType.APPLICATION_JSON)
 public class TireLabelResource {
     private final TireTraceService service = new TireTraceService();
+    private final QualityInspectionService qualityService = new QualityInspectionService();
+    private final WarehouseService warehouseService = new WarehouseService();
 
     @GET
     public ApiResponse<List<TireTraceItem>> list(@Context ContainerRequestContext context) {
         AuthenticatedUser user = AuthFilter.currentUser(context);
         return ApiResponse.ok(service.list(isWarehouseRole(user) ? user.warehouseIds : null));
+    }
+
+    @GET
+    @Path("/generate-options")
+    public ApiResponse<Map<String, Object>> generateOptions(@Context ContainerRequestContext context) {
+        try {
+            AuthenticatedUser user = AuthFilter.currentUser(context);
+            var inspections = qualityService.listInspections().stream()
+                    .filter(item -> "APPROVED".equals(item.inspectionStatus())
+                            && "PASS".equals(item.judgementResult()))
+                    .toList();
+            var warehouses = warehouseService.listWarehouses().stream()
+                    .filter(item -> !isWarehouseRole(user) || user.warehouseIds.contains(item.warehouseId))
+                    .toList();
+            var warehouseIds = warehouses.stream().map(item -> item.warehouseId).collect(java.util.stream.Collectors.toSet());
+            var locations = warehouseService.listLocations().stream()
+                    .filter(item -> warehouseIds.contains(item.warehouseId))
+                    .toList();
+            return ApiResponse.ok(Map.of(
+                    "inspections", inspections,
+                    "warehouses", warehouses,
+                    "locations", locations));
+        } catch (SQLException e) {
+            throw new BadRequestException(e.getMessage());
+        }
     }
 
     @POST
@@ -97,7 +128,7 @@ public class TireLabelResource {
     }
 
     private void requireWarehouseAccess(AuthenticatedUser user, Long warehouseId) {
-        if (user.hasRole("SYSTEM_ADMIN")) return;
+        if (user.hasRole("SYSTEM_ADMIN") || user.isSuperAdmin()) return;
         if (!isWarehouseRole(user) || warehouseId == null || !user.warehouseIds.contains(warehouseId)) {
             throw new BadRequestException("无权为该仓库生成或打印轮胎二维码标签");
         }

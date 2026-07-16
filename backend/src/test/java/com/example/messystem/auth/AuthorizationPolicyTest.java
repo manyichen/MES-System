@@ -14,6 +14,14 @@ class AuthorizationPolicyTest {
         assertFalse(AuthorizationPolicy.requiredPermissions("GET", "warehouses/locations").isEmpty());
         assertTrue(AuthorizationPolicy.requiredPermissions("POST", "inventory/external-purchase")
                 .contains("warehouse.inventory.adjust"));
+        assertTrue(AuthorizationPolicy.requiredPermissions("GET", "planning/reworks")
+                .contains("planning.rework.read"));
+        assertTrue(AuthorizationPolicy.requiredPermissions("POST", "planning/reworks/12/tasks")
+                .contains("planning.rework.plan"));
+        assertTrue(AuthorizationPolicy.requiredPermissions("POST", "access/account-applications/12/review")
+                .contains("permission.review"));
+        assertTrue(AuthorizationPolicy.requiredPermissions("POST", "access/system-maintenance/users/12/restore")
+                .contains("system.health.read"));
     }
 
     @Test

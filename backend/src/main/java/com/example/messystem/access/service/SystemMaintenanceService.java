@@ -30,6 +30,10 @@ public class SystemMaintenanceService {
         return dao.disableUser(userId, actorUserId);
     }
 
+    public int restoreUser(long userId, long actorUserId) {
+        return dao.restoreUser(userId, actorUserId);
+    }
+
     public int markSyncLogHandled(long syncLogId) {
         return dao.markSyncLogHandled(syncLogId);
     }

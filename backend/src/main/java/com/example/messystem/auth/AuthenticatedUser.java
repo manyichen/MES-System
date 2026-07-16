@@ -6,6 +6,8 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class AuthenticatedUser {
+    public static final String SUPER_ADMIN_ROLE = "SUPER_ADMIN";
+
     public MesUser user;
     public Set<String> roles = new LinkedHashSet<>();
     public Set<String> permissions = new LinkedHashSet<>();
@@ -30,7 +32,19 @@ public class AuthenticatedUser {
         return roles.contains(roleCode);
     }
 
+    public boolean isSuperAdmin() {
+        return hasRole(SUPER_ADMIN_ROLE);
+    }
+
+    /**
+     * Allows a super administrator through role-specific action gates without treating the
+     * account as a restricted front-line role in list and data-scope branches.
+     */
+    public boolean canActAs(String roleCode) {
+        return isSuperAdmin() || hasRole(roleCode);
+    }
+
     public boolean hasPermission(String permissionCode) {
-        return permissions.contains(permissionCode);
+        return isSuperAdmin() || permissions.contains(permissionCode);
     }
 }

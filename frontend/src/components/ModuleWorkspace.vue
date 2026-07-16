@@ -4,8 +4,10 @@ import { useRoute } from 'vue-router'
 import { Plus, RefreshCw, Search } from 'lucide-vue-next'
 import { api } from '../api/http'
 import { modules } from '../config/modules'
+import { businessValue, completedMessage, incompleteMessage, localizeMessage } from '../utils/display.js'
 import { useSessionStore } from '../stores/session'
 import ActionDialog from './ActionDialog.vue'
+import AiPlanningPanel from './AiPlanningPanel.vue'
 import DataTable from './DataTable.vue'
 
 const route = useRoute()
@@ -20,14 +22,29 @@ const query = ref('')
 const dialog = ref(null)
 
 const module = computed(() => modules[route.params.moduleKey])
-const sections = computed(() => module.value?.sections.filter(section => !section.permission || session.hasPermission(section.permission)) || [])
+const allowed = item => {
+  if (session.isSuperAdmin) return true
+  if (item.roles?.length && !item.roles.some(session.hasRole)) return false
+  if (item.denyRoles?.some(session.hasRole)) return false
+  if (item.permissions?.length && !session.hasAnyPermission(item.permissions)) return false
+  return !item.permission || session.hasPermission(item.permission)
+}
+const sections = computed(() => module.value?.sections.filter(allowed) || [])
 const section = computed(() => sections.value.find(item => item.key === activeSection.value) || sections.value[0])
-const allowedActions = computed(() => (section.value?.actions || []).filter(item => session.hasPermission(item.permission)))
-const allowedRowActions = computed(() => (section.value?.rowActions || []).filter(item => session.hasPermission(item.permission)))
+const allowedActions = computed(() => (section.value?.actions || []).filter(allowed))
+const allowedRowActions = computed(() => (section.value?.rowActions || []).filter(allowed))
+const showAiPlanning = computed(() => (
+  route.params.moduleKey === 'planning'
+  && section.value?.key === 'workOrders'
+  && session.hasPermission('planning.work_order.create')
+))
 const filteredRows = computed(() => {
   const keyword = query.value.trim().toLowerCase()
   if (!keyword) return rows.value
-  return rows.value.filter(row => JSON.stringify(row).toLowerCase().includes(keyword))
+  return rows.value.filter(row => {
+    const translated = Object.entries(row).map(([key, value]) => businessValue(key, value)).join(' ')
+    return `${JSON.stringify(row)} ${translated}`.toLowerCase().includes(keyword)
+  })
 })
 
 function normalize(data) {
@@ -37,14 +54,19 @@ function normalize(data) {
   return data ? [data] : []
 }
 
-async function load() {
+async function load({ preserveNotice = false } = {}) {
   if (!section.value) return
   loading.value = true
   error.value = ''
+  if (!preserveNotice) notice.value = ''
   try {
-    rows.value = normalize(await api.get(section.value.endpoint))
+    const payload = await api.get(section.value.endpoint)
+    const selected = section.value.dataPath
+      ? section.value.dataPath.split('.').reduce((value, key) => value?.[key], payload)
+      : payload
+    rows.value = normalize(selected)
   } catch (cause) {
-    error.value = cause.message
+    error.value = `页面数据加载未完成：${localizeMessage(cause.message)}`
     rows.value = []
   } finally {
     loading.value = false
@@ -56,6 +78,17 @@ function openAction(action, row = null) {
   dialog.value = { action, row }
 }
 
+function applyAiAdvice(defaults) {
+  const action = allowedActions.value.find(item => (
+    item.path === '/work-orders' && (item.method || 'post') === 'post'
+  ))
+  if (!action) return
+  dialog.value = {
+    action: { ...action, defaults: { ...(action.defaults || {}), ...defaults } },
+    row: null
+  }
+}
+
 async function execute(action, row, values) {
   busy.value = true
   error.value = ''
@@ -64,11 +97,11 @@ async function execute(action, row, values) {
     const path = typeof action.path === 'function' ? action.path(row, values) : action.path
     const body = typeof action.body === 'function' ? action.body(values, row) : values
     await api[action.method || 'post'](path, body)
-    notice.value = `${action.label}成功`
+    notice.value = completedMessage(action.label)
     dialog.value = null
-    await load()
+    await load({ preserveNotice: true })
   } catch (cause) {
-    error.value = cause.message
+    error.value = incompleteMessage(action.label, cause)
   } finally {
     busy.value = false
   }
@@ -78,7 +111,7 @@ watch(() => route.params.moduleKey, () => {
   activeSection.value = sections.value[0]?.key || ''
   load()
 })
-watch(activeSection, load)
+watch(activeSection, () => load())
 onMounted(() => {
   activeSection.value = sections.value[0]?.key || ''
   load()
@@ -89,7 +122,7 @@ onMounted(() => {
   <main v-if="module" class="workspace-page">
     <header class="page-header">
       <div><span>{{ module.eyebrow }}</span><h1>{{ module.title }}</h1></div>
-      <button type="button" class="icon-button" title="刷新" @click="load"><RefreshCw :size="19" /></button>
+      <button type="button" class="icon-button" title="刷新" @click="load()"><RefreshCw :size="19" /></button>
     </header>
 
     <nav class="section-tabs" aria-label="模块视图">
@@ -106,6 +139,7 @@ onMounted(() => {
           <button v-for="action in allowedActions" :key="action.label" type="button" @click="openAction(action)"><Plus :size="17" />{{ action.label }}</button>
         </div>
       </header>
+      <AiPlanningPanel v-if="showAiPlanning" @apply="applyAiAdvice" />
       <p v-if="notice" class="notice success">{{ notice }}</p>
       <p v-if="error" class="notice error">{{ error }}</p>
       <div v-if="loading" class="loading-line">正在加载数据...</div>

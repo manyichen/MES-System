@@ -11,6 +11,7 @@ export const useSessionStore = defineStore('session', () => {
   const user = computed(() => session.value?.user || {})
   const roles = computed(() => new Set(session.value?.roles || []))
   const permissions = computed(() => new Set(session.value?.permissions || []))
+  const isSuperAdmin = computed(() => roles.value.has('SUPER_ADMIN'))
 
   function persist(value) {
     session.value = value
@@ -47,13 +48,13 @@ export const useSessionStore = defineStore('session', () => {
   }
 
   const hasRole = (role) => roles.value.has(role)
-  const hasPermission = (permission) => !permission || permissions.value.has(permission)
+  const hasPermission = (permission) => isSuperAdmin.value || !permission || permissions.value.has(permission)
   const hasAnyPermission = (items = []) => !items.length || items.some(hasPermission)
 
   window.addEventListener('mes:unauthorized', () => persist(null))
 
   return {
-    session, restored, authenticated, user, roles, permissions,
+    session, restored, authenticated, user, roles, permissions, isSuperAdmin,
     restore, login, logout, hasRole, hasPermission, hasAnyPermission
   }
 })

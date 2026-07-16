@@ -26,29 +26,41 @@ public class RoleDashboardDao {
     private static List<DashboardCard> metrics(Connection c, String role, long userId) throws SQLException {
         List<DashboardCard> cards = new ArrayList<>();
         switch (role) {
+            case "SUPER_ADMIN" -> {
+                card(cards, "users", "\u7cfb\u7edf\u7528\u6237", count(c, "select count(*) from mes_user"), "\u4eba", "normal", "system");
+                card(cards, "active_work_orders", "\u6267\u884c\u4e2d\u5de5\u5355", count(c, "select count(*) from mes_work_order where work_order_status not in ('FINISHED','COMPLETED','CLOSED','CANCELLED')"), "\u5f20", "normal", "planning");
+                card(cards, "requisitions", "\u5f85\u5904\u7406\u9886\u6599\u5355", count(c, "select count(*) from mes_material_requisition where request_status in ('CREATED','RECEIVED')"), "\u5f20", "warning", "warehouse");
+                card(cards, "quality_review", "\u5f85\u5ba1\u6838\u8d28\u68c0", count(c, "select count(*) from mes_quality_inspection where inspection_status = 'SUBMITTED'"), "\u5f20", "warning", "quality");
+                card(cards, "equipment_fault", "\u6545\u969c\u8bbe\u5907", count(c, "select count(*) from mes_equipment where equipment_status in ('FAULT','REPAIRING','DOWN')"), "\u53f0", "danger", "equipment");
+                card(cards, "permission_apply", "\u5f85\u5904\u7406\u6743\u9650\u7533\u8bf7", count(c, "select count(*) from mes_permission_apply where apply_status = 'SUBMITTED'"), "\u9879", "warning", "system");
+            }
             case "SYSTEM_ADMIN" -> {
                 card(cards, "users", "系统用户", count(c, "select count(*) from mes_user"), "人", "normal", "system");
                 card(cards, "sessions", "当前有效会话", count(c, "select count(*) from mes_user_session where revoked_at is null and expires_at > current_timestamp"), "个", "normal", "systemOps");
                 card(cards, "permission_apply", "待处理权限申请", count(c, "select count(*) from mes_permission_apply where apply_status = 'SUBMITTED'"), "项", "warning", "system");
-                card(cards, "locked_users", "锁定账号", count(c, "select count(*) from mes_user where locked_until > current_timestamp"), "个", "warning", "systemOps");
+                card(cards, "account_apply", "待审核账号申请", countOptional(c,
+                        "select count(*) from mes_account_apply where apply_status = 'SUBMITTED'"), "项", "warning", "system");
             }
             case "HR_MANAGER" -> {
                 card(cards, "users", "在册账号", count(c, "select count(*) from mes_user"), "人", "normal", "system");
                 card(cards, "enabled_users", "启用账号", count(c, "select count(*) from mes_user where enabled = 1"), "人", "normal", "system");
                 card(cards, "disabled_users", "停用账号", count(c, "select count(*) from mes_user where enabled <> 1"), "人", "warning", "system");
-                card(cards, "permission_apply", "权限变更申请", count(c, "select count(*) from mes_permission_apply where apply_status = 'SUBMITTED'"), "项", "warning", "system");
+                card(cards, "account_apply", "账号申请", countOptional(c,
+                        "select count(*) from mes_account_apply where applicant_id = ? and apply_status = 'SUBMITTED'", userId), "项", "warning", "system");
             }
             case "GENERAL_MANAGER" -> {
                 card(cards, "pending_orders", "待排产订单", count(c, "select count(*) from mes_customer_order where order_status = 'PENDING_PLAN'"), "单", "warning", "planning");
-                card(cards, "active_work_orders", "执行中工单", count(c, "select count(*) from mes_work_order where work_order_status not in ('COMPLETED','CLOSED')"), "单", "normal", "planning");
+                card(cards, "active_work_orders", "执行中工单", count(c, "select count(*) from mes_work_order where work_order_status not in ('FINISHED','COMPLETED','CLOSED','CANCELLED')"), "单", "normal", "planning");
                 card(cards, "quality_risk", "质量异常/返工", count(c, "select count(*) from mes_rework_order where rework_status not in ('FINISHED','CLOSED')"), "单", "danger", "quality");
                 card(cards, "equipment_fault", "故障设备", count(c, "select count(*) from mes_equipment where equipment_status in ('FAULT','REPAIRING','DOWN')"), "台", "danger", "equipment");
             }
             case "PMC_PLANNER" -> {
                 card(cards, "pending_orders", "待排产订单", count(c, "select count(*) from mes_customer_order where order_status = 'PENDING_PLAN'"), "单", "warning", "planning");
-                card(cards, "draft_tasks", "待发布生产任务", count(c, "select count(*) from mes_production_task where task_status = 'DRAFT'"), "项", "warning", "planning");
-                card(cards, "shortages", "未解决缺料预警", count(c, "select count(*) from mes_shortage_alert where alert_status = 'OPEN'"), "项", "danger", "warehouse");
-                card(cards, "rework", "待排返工单", count(c, "select count(*) from mes_rework_order where rework_status = 'CREATED'"), "单", "warning", "quality");
+                card(cards, "pending_tasks", "待齐套生产任务", count(c, "select count(*) from mes_production_task where task_status in ('CREATED','SHORTAGE')"), "项", "warning", "planning");
+                card(cards, "ready_tasks", "待生成工单任务", count(c, "select count(*) from mes_production_task where task_status = 'READY' and kitting_status = 'READY'"), "项", "normal", "planning");
+                card(cards, "shortages", "未解决缺料预警", count(c, "select count(*) from mes_shortage_alert where alert_status in ('OPEN','ACCEPTED')"), "项", "danger", "planning");
+                card(cards, "active_work_orders", "执行中生产工单", count(c, "select count(*) from mes_work_order where work_order_status not in ('FINISHED','COMPLETED','CLOSED','CANCELLED')"), "单", "normal", "planning");
+                card(cards, "rework", "待排返工需求", count(c, "select count(*) from mes_rework_order where rework_status = 'CREATED'"), "单", "warning", "planning");
             }
             case "WORKSHOP_MANAGER" -> {
                 card(cards, "active_work_orders", "本车间执行工单", count(c, "select count(*) from mes_work_order wo where wo.work_order_status in ('DISPATCHED','RECEIVED','IN_PROGRESS') and wo.line_id in (select line_id from mes_user_line_scope where user_id = ?)", userId), "单", "normal", "planning");
@@ -111,23 +123,35 @@ public class RoleDashboardDao {
     private static List<DashboardTodo> todos(Connection c, String role, long userId) throws SQLException {
         List<DashboardTodo> todos = new ArrayList<>();
         switch (role) {
+            case "SUPER_ADMIN" -> {
+                todo(todos, "account-review", "\u5ba1\u6838\u8d26\u53f7\u7533\u8bf7", "\u5904\u7406\u5f85\u5ba1\u6838\u7684\u65b0\u8d26\u53f7\u7533\u8bf7\u3002",
+                        countOptional(c, "select count(*) from mes_account_apply where apply_status = 'SUBMITTED'"), "HIGH", "system", "accountApplications", "permission.review");
+                todo(todos, "permission-review", "\u5ba1\u6279\u6743\u9650\u53d8\u66f4", "\u5904\u7406\u5f85\u5ba1\u6279\u7684\u6743\u9650\u53d8\u66f4\u7533\u8bf7\u3002",
+                        count(c, "select count(*) from mes_permission_apply where apply_status = 'SUBMITTED'"), "HIGH", "system", "permission-apply-table", "permission.review");
+                todo(todos, "quality-review", "\u5ba1\u6838\u8d28\u68c0\u7ed3\u679c", "\u5904\u7406\u5f85\u5ba1\u6838\u7684\u4ea7\u54c1\u68c0\u9a8c\u3002",
+                        count(c, "select count(*) from mes_quality_inspection where inspection_status = 'SUBMITTED'"), "HIGH", "quality", "quality-table", "quality.review");
+                todo(todos, "repair-review", "\u5904\u7406\u8bbe\u5907\u6545\u969c", "\u5ba1\u6838\u5f85\u5904\u7406\u7684\u8bbe\u5907\u6545\u969c\u4e0a\u62a5\u3002",
+                        count(c, "select count(*) from mes_equipment_repair_report where repair_status = 'REPORTED'"), "HIGH", "equipment", "repair-table", "equipment.repair.review");
+            }
             case "SYSTEM_ADMIN" -> {
+                todo(todos, "account-review", "审核账号申请", "核对新账号姓名、角色、部门与申请说明后决定通过或拒绝。",
+                        countOptional(c, "select count(*) from mes_account_apply where apply_status = 'SUBMITTED'"), "HIGH", "system", "accountApplications", "permission.review");
                 todo(todos, "permission-review", "审批权限变更申请", "核对申请人、目标用户、原角色与申请角色后处理。",
                         count(c, "select count(*) from mes_permission_apply where apply_status = 'SUBMITTED'"), "HIGH", "system", "permission-apply-table", "permission.review");
                 todo(todos, "login-risk", "处理异常登录", "检查连续失败或已锁定账号，必要时联系用户并重置。",
                         count(c, "select count(*) from mes_user where locked_until > current_timestamp"), "HIGH", "systemOps", "locked-user-table", "system.health.read");
             }
-            case "HR_MANAGER" -> todo(todos, "permission-apply", "补充并提交权限申请", "为岗位变化人员发起角色变更，系统管理员审批后生效。",
-                    count(c, "select count(*) from mes_permission_apply where applicant_id = ? and apply_status in ('DRAFT','RETURNED')", userId), "MEDIUM", "system", "permission-apply-form", "permission.apply");
+            case "HR_MANAGER" -> todo(todos, "account-apply", "发起账号申请", "为新员工填写账号申请单，系统管理员审核通过后账号生效。",
+                    countOptional(c, "select count(*) from mes_account_apply where applicant_id = ? and apply_status = 'SUBMITTED'", userId), "MEDIUM", "system", "accountApplications", "permission.apply");
             case "GENERAL_MANAGER" -> todo(todos, "management-feedback", "督办未闭环管理反馈", "查看跨部门异常、处理意见与闭环进度。",
                     count(c, "select count(*) from mes_management_feedback where feedback_status = 'OPEN'"), "HIGH", "feedback", "feedback-table", "feedback.read");
             case "PMC_PLANNER" -> {
                 todo(todos, "plan-orders", "为待排产订单创建生产任务", "确认交期、数量和目标产线后完成排产。",
                         count(c, "select count(*) from mes_customer_order where order_status = 'PENDING_PLAN'"), "HIGH", "planning", "orderTable", "planning.task.create");
                 todo(todos, "shortage", "处理齐套与缺料预警", "分析受影响订单，协调仓库或调整排产。",
-                        count(c, "select count(*) from mes_shortage_alert where alert_status = 'OPEN'"), "HIGH", "planning", "taskTable", "planning.task.release");
-                todo(todos, "rework-plan", "安排质量返工", "将质量部门确认的返工需求纳入生产计划。",
-                        count(c, "select count(*) from mes_rework_order where rework_status = 'CREATED'"), "MEDIUM", "quality", "rework-table", "planning.work_order.create");
+                        count(c, "select count(*) from mes_shortage_alert where alert_status in ('OPEN','ACCEPTED')"), "HIGH", "planning", "tasks", "planning.task.release");
+                todo(todos, "rework-plan", "安排质量返工需求", "将质量部门已经确认的返工需求生成返工生产任务。",
+                        count(c, "select count(*) from mes_rework_order where rework_status = 'CREATED'"), "MEDIUM", "planning", "reworks", "planning.rework.plan");
             }
             case "WORKSHOP_MANAGER" -> {
                 todo(todos, "report-review", "审核操作工报工单", "核对工单、批次、合格数、不良数和工时后审批。",
@@ -207,6 +231,15 @@ public class RoleDashboardDao {
                 rs.next();
                 return rs.getLong(1);
             }
+        }
+    }
+
+    /** 新增迁移尚未执行时，首页保持可用但不伪造待办。 */
+    private static long countOptional(Connection connection, String sql, Object... args) throws SQLException {
+        try {
+            return count(connection, sql, args);
+        } catch (SQLException ex) {
+            return 0;
         }
     }
 

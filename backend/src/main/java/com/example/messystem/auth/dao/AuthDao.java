@@ -61,7 +61,7 @@ public class AuthDao {
     public AuthenticatedUser authenticate(String token) {
         String sql = """
                 select u.user_id, u.username, u.real_name, u.role_code, u.department, u.phone,
-                       u.enabled, u.created_at, u.updated_at, u.last_login_at, s.expires_at
+                       u.enabled, u.locked_until, u.created_at, u.updated_at, u.last_login_at, s.expires_at
                 from mes_user_session s
                 join mes_user u on u.user_id = s.user_id
                 where s.token_hash = ? and s.revoked_at is null and s.expires_at > current_timestamp
@@ -71,6 +71,10 @@ public class AuthDao {
             statement.setString(1, TokenHasher.hash(token));
             try (ResultSet rs = statement.executeQuery()) {
                 if (!rs.next() || rs.getInt("enabled") != 1) {
+                    return null;
+                }
+                Timestamp lockedUntil = rs.getTimestamp("locked_until");
+                if (lockedUntil != null && lockedUntil.toLocalDateTime().isAfter(LocalDateTime.now())) {
                     return null;
                 }
                 MesUser user = mapUser(rs);
@@ -197,11 +201,19 @@ public class AuthDao {
                 while (rs.next()) permissions.add(rs.getString(1));
             }
         }
+        if (roles.contains(AuthenticatedUser.SUPER_ADMIN_ROLE)) {
+            try (PreparedStatement statement = connection.prepareStatement("""
+                    select permission_code from mes_permission
+                    where enabled = 1 order by permission_code
+                    """)) {
+                try (ResultSet rs = statement.executeQuery()) {
+                    while (rs.next()) permissions.add(rs.getString(1));
+                }
+            }
+        }
         if (roles.contains("HR_MANAGER")) {
             permissions.add("user.update_role");
             permissions.add("data_scope.manage");
-            permissions.add("master.read");
-            permissions.add("warehouse.read");
         }
         if (roles.contains("WORKSHOP_MANAGER")) {
             permissions.removeIf(permission -> permission.startsWith("warehouse."));
@@ -215,9 +227,30 @@ public class AuthDao {
             permissions.add("warehouse.requisition.approve");
             permissions.add("warehouse.purchase.request");
         }
+        if (roles.contains("SYSTEM_ADMIN") && !roles.contains(AuthenticatedUser.SUPER_ADMIN_ROLE)) {
+            permissions.removeIf(AuthDao::isProductionBusinessPermission);
+        }
+        if (roles.contains("PMC_PLANNER") && !roles.contains("SYSTEM_ADMIN")
+                && !roles.contains(AuthenticatedUser.SUPER_ADMIN_ROLE)) {
+            permissions.removeIf(permission -> permission.startsWith("warehouse.")
+                    || permission.startsWith("quality.") || permission.startsWith("equipment."));
+        }
         Set<Long> lineIds = loadScopeIds(connection, "mes_user_line_scope", "line_id", user.userId);
         Set<Long> warehouseIds = loadScopeIds(connection, "mes_user_warehouse_scope", "warehouse_id", user.userId);
         return new AuthenticatedUser(user, roles, permissions, lineIds, warehouseIds, expiresAt);
+    }
+
+    /**
+     * 系统管理员只承担账号、权限、审计和运行维护职责。即使旧库尚未执行撤权迁移，
+     * 也不能凭历史残留授权进入生产业务。
+     */
+    private static boolean isProductionBusinessPermission(String permission) {
+        return permission.startsWith("planning.") || permission.startsWith("production.")
+                || permission.startsWith("warehouse.") || permission.startsWith("quality.")
+                || permission.startsWith("equipment.") || permission.startsWith("master.")
+                || permission.startsWith("process.") || permission.startsWith("trace.")
+                || permission.startsWith("feedback.") || permission.equals("business.delete")
+                || permission.equals("demo.seed");
     }
 
     private static Set<Long> loadScopeIds(Connection connection, String table, String column, long userId)

@@ -67,7 +67,7 @@ public class RobotDeliveryTaskResource {
     public Response confirmReceipt(@PathParam("id") long id, @Context ContainerRequestContext context) {
         try {
             AuthenticatedUser user = AuthFilter.currentUser(context);
-            if (!user.hasRole("PRODUCTION_OPERATOR")) {
+            if (!user.canActAs("PRODUCTION_OPERATOR")) {
                 throw new BadRequestException("only production operators can confirm requisition receipt");
             }
             return ResourceSupport.action("物料已确认接收", service.confirmDeliveryReceipt(id, user.user.userId));

@@ -91,6 +91,19 @@ public class AccessResource {
     }
 
     @jakarta.ws.rs.POST
+    @Path("/system-maintenance/users/{userId}/restore")
+    public Response restoreUser(@PathParam("userId") long userId,
+            @Context ContainerRequestContext context) {
+        try {
+            long actorUserId = AuthFilter.currentUser(context).user.userId;
+            return ResourceSupport.action("账号已恢复启用",
+                    systemMaintenanceService.restoreUser(userId, actorUserId));
+        } catch (RuntimeException ex) {
+            return ResourceSupport.handle(ex);
+        }
+    }
+
+    @jakarta.ws.rs.POST
     @Path("/system-maintenance/users/{userId}/revoke-sessions")
     public Response revokeUserSessions(@PathParam("userId") long userId,
             @Context ContainerRequestContext context) {
@@ -174,6 +187,46 @@ public class AccessResource {
     }
 
     @GET
+    @Path("/account-applications")
+    public Response accountApplications(@Context ContainerRequestContext context) {
+        try {
+            return ResourceSupport.ok(service.listAccountApplications(AuthFilter.currentUser(context)));
+        } catch (RuntimeException ex) {
+            return ResourceSupport.handle(ex);
+        }
+    }
+
+    @jakarta.ws.rs.POST
+    @Path("/account-applications")
+    public Response createAccountApplication(AccountApplicationRequest request,
+            @Context ContainerRequestContext context) {
+        try {
+            AccessService.AccountApplicationRequest payload = request == null
+                    ? null
+                    : new AccessService.AccountApplicationRequest(request.username(), request.password(),
+                            request.realName(), request.roleCode(), request.department(), request.phone(),
+                            request.reason());
+            return ResourceSupport.created("账号申请已提交",
+                    service.createAccountApplication(payload, AuthFilter.currentUser(context)));
+        } catch (RuntimeException ex) {
+            return ResourceSupport.handle(ex);
+        }
+    }
+
+    @jakarta.ws.rs.POST
+    @Path("/account-applications/{applyId}/review")
+    public Response reviewAccountApplication(@PathParam("applyId") long applyId,
+            AccountApplicationReviewRequest request, @Context ContainerRequestContext context) {
+        try {
+            if (request == null) throw new com.example.messystem.common.BadRequestException("审核信息不能为空");
+            return ResourceSupport.action("账号申请已处理", service.reviewAccountApplication(
+                    applyId, request.decision(), request.comment(), AuthFilter.currentUser(context)));
+        } catch (RuntimeException ex) {
+            return ResourceSupport.handle(ex);
+        }
+    }
+
+    @GET
     @Path("/users/{userId}/roles")
     public Response userRoles(@PathParam("userId") long userId) {
         try {
@@ -230,6 +283,13 @@ public class AccessResource {
     }
 
     public record PermissionReviewRequest(String decision, String comment) {
+    }
+
+    public record AccountApplicationRequest(String username, String password, String realName,
+            String roleCode, String department, String phone, String reason) {
+    }
+
+    public record AccountApplicationReviewRequest(String decision, String comment) {
     }
 
     public record DataScopeRequest(List<Long> lineIds, List<Long> warehouseIds) {

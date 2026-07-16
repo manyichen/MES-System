@@ -48,7 +48,7 @@ public class AuthFilter implements ContainerRequestFilter {
             abort(context, Response.Status.FORBIDDEN, "该接口尚未配置权限，系统已默认拒绝访问");
             return;
         }
-        boolean granted = required.stream().anyMatch(currentUser.permissions::contains);
+        boolean granted = required.stream().anyMatch(currentUser::hasPermission);
         if (!granted) {
             abort(context, Response.Status.FORBIDDEN, "权限不足，需要权限：" + String.join(" 或 ", required));
         }

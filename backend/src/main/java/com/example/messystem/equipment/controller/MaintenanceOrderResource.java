@@ -4,6 +4,7 @@ import com.example.messystem.auth.AuthFilter;
 import com.example.messystem.auth.AuthenticatedUser;
 import com.example.messystem.common.ApiResponse;
 import com.example.messystem.common.BadRequestException;
+import com.example.messystem.common.UserRoleValidator;
 import com.example.messystem.equipment.entity.MesMaintenanceOrder;
 import com.example.messystem.equipment.service.EquipmentService;
 
@@ -21,6 +22,16 @@ import jakarta.ws.rs.core.Context;
 public class MaintenanceOrderResource {
 
     private final EquipmentService service = new EquipmentService();
+
+    @GET
+    @Path("/maintainers")
+    public ApiResponse<List<UserRoleValidator.AssignableUser>> maintainers() {
+        try {
+            return ApiResponse.ok(UserRoleValidator.listEnabledUsers("EQUIPMENT_MAINTAINER"));
+        } catch (SQLException e) {
+            throw new BadRequestException(e.getMessage());
+        }
+    }
 
     @GET
     public ApiResponse<List<MesMaintenanceOrder>> list(@Context ContainerRequestContext context) {

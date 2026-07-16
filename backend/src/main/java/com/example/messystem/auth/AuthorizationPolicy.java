@@ -10,6 +10,8 @@ final class AuthorizationPolicy {
 
             rule("GET", "dashboard/(?:my-summary|executive)", "dashboard.read"),
 
+            rule("GET", "planning/reworks", "planning.rework.read"),
+            rule("POST", "planning/reworks/\\d+/tasks", "planning.rework.plan"),
             rule("GET", "orders(?:/.*)?", "planning.read"),
             rule("POST", "orders", "planning.order.create"),
             rule("GET", "production-tasks(?:/.*)?", "planning.read"),
@@ -101,6 +103,9 @@ final class AuthorizationPolicy {
             rule("POST", "access/permission-applications", "permission.apply"),
             rule("POST", "access/permission-applications/\\d+/review", "permission.review"),
             rule("POST", "access/permission-applications/\\d+/apply", "role.manage"),
+            any("GET", "access/account-applications", "permission.apply", "permission.review", "role.manage"),
+            rule("POST", "access/account-applications", "permission.apply"),
+            rule("POST", "access/account-applications/\\d+/review", "permission.review"),
             rule("GET", "access/users/\\d+/roles", "user.read"),
             rule("PUT", "access/users/\\d+/roles", "user.update_role"),
             rule("GET|PUT", "access/users/\\d+/data-scopes", "data_scope.manage")

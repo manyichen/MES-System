@@ -17,7 +17,7 @@ public class ExecutiveDashboardService {
 
     /** 校验经营视图权限，并将 DAO 汇总数据转换为可解释的业务指标。 */
     public ExecutiveDashboard build(AuthenticatedUser currentUser) {
-        if (currentUser == null || !currentUser.hasRole("GENERAL_MANAGER")) {
+        if (currentUser == null || !currentUser.canActAs("GENERAL_MANAGER")) {
             throw new BadRequestException("executive dashboard is only available to the general manager");
         }
         try {

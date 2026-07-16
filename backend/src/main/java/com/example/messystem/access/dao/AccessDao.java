@@ -4,6 +4,7 @@ import com.example.messystem.auth.AuthenticatedUser;
 import com.example.messystem.common.BadRequestException;
 import com.example.messystem.common.Db;
 import com.example.messystem.common.NotFoundException;
+import com.example.messystem.common.PasswordHasher;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -104,6 +105,10 @@ public class AccessDao {
         if (roleCodes.isEmpty()) throw new BadRequestException("用户至少需要一个有效角色");
         if (actor.user.userId == userId && actor.hasRole("SYSTEM_ADMIN") && !roleCodes.contains("SYSTEM_ADMIN")) {
             throw new BadRequestException("系统管理员不能移除自己的最高权限，请由另一名系统管理员操作");
+        }
+        if (actor.user.userId == userId && actor.isSuperAdmin()
+                && !roleCodes.contains(AuthenticatedUser.SUPER_ADMIN_ROLE)) {
+            throw new BadRequestException("超级管理员不能移除自己的最高权限，请由另一名超级管理员操作");
         }
 
         try (Connection connection = Db.getConnection()) {
@@ -262,6 +267,121 @@ public class AccessDao {
         }
     }
 
+    public List<AccountApplication> listAccountApplications(boolean all, long applicantId) {
+        String sql = """
+                select apply_id, apply_no, applicant_id, username, real_name, role_code,
+                       department, phone, apply_reason, apply_status, reviewer_id,
+                       reviewed_at, review_comment, created_user_id, created_at
+                from mes_account_apply
+                """ + (all ? "" : " where applicant_id = ? ") + " order by apply_id asc";
+        try (Connection connection = Db.getConnection()) {
+            ensureAccountApplicationTable(connection);
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                if (!all) statement.setLong(1, applicantId);
+                try (ResultSet rs = statement.executeQuery()) {
+                    List<AccountApplication> rows = new ArrayList<>();
+                    while (rs.next()) rows.add(mapAccountApplication(rs));
+                    return rows;
+                }
+            }
+        } catch (SQLException ex) {
+            throw database(ex);
+        }
+    }
+
+    public AccountApplication createAccountApplication(AccountApplicationRequest request, long applicantId) {
+        if (request == null) throw new BadRequestException("账号申请不能为空");
+        String username = normalizeUsername(request.username());
+        String realName = requireTextValue(request.realName(), "姓名不能为空");
+        String roleCode = requireTextValue(request.roleCode(), "申请角色不能为空").toUpperCase();
+        if ("SYSTEM_ADMIN".equals(roleCode)) throw new BadRequestException("不能通过账号申请创建系统管理员账号");
+        String passwordHash = PasswordHasher.hash(requireTextValue(request.password(), "初始密码不能为空"));
+        if (request.password().trim().length() < 6) throw new BadRequestException("初始密码至少需要 6 位");
+
+        String sql = """
+                insert into mes_account_apply
+                    (apply_no, applicant_id, username, real_name, role_code, department,
+                     phone, password_hash, apply_reason, apply_status, updated_at)
+                values (?, ?, ?, ?, ?, ?, ?, ?, ?, 'SUBMITTED', current_timestamp)
+                returning apply_id, apply_no, applicant_id, username, real_name, role_code,
+                          department, phone, apply_reason, apply_status, reviewer_id,
+                          reviewed_at, review_comment, created_user_id, created_at
+                """;
+        try (Connection connection = Db.getConnection()) {
+            ensureAccountApplicationTable(connection);
+            if (usernameExists(connection, username)) throw new BadRequestException("账号已存在");
+            if (submittedAccountApplicationExists(connection, username)) {
+                throw new BadRequestException("该登录账号已有待审核申请");
+            }
+            ensureRoleExists(connection, roleCode);
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setString(1, "AA-" + System.currentTimeMillis());
+                statement.setLong(2, applicantId);
+                statement.setString(3, username);
+                statement.setString(4, realName);
+                statement.setString(5, roleCode);
+                statement.setString(6, trimToNull(request.department()));
+                statement.setString(7, trimToNull(request.phone()));
+                statement.setString(8, passwordHash);
+                statement.setString(9, trimToNull(request.reason()));
+                try (ResultSet rs = statement.executeQuery()) {
+                    rs.next();
+                    return mapAccountApplication(rs);
+                }
+            }
+        } catch (SQLException ex) {
+            throw database(ex);
+        }
+    }
+
+    public AccountApplication reviewAccountApplication(long applyId, String decision,
+            String comment, long actorUserId) {
+        String normalizedDecision = String.valueOf(decision == null ? "" : decision).trim().toUpperCase();
+        if (!Set.of("APPROVED", "REJECTED").contains(normalizedDecision)) {
+            throw new BadRequestException("审核结果只能是通过或拒绝");
+        }
+        try (Connection connection = Db.getConnection()) {
+            ensureAccountApplicationTable(connection);
+            connection.setAutoCommit(false);
+            try {
+                AccountApplication application = findAccountApplicationForUpdate(connection, applyId);
+                if (!"SUBMITTED".equals(application.applyStatus())) {
+                    throw new BadRequestException("只有待审批的账号申请可以处理");
+                }
+                if (application.applicantId() != null && application.applicantId() == actorUserId) {
+                    throw new BadRequestException("账号申请人不能审核自己的申请");
+                }
+                AccountApplication reviewed;
+                if ("REJECTED".equals(normalizedDecision)) {
+                    reviewed = updateAccountApplicationStatus(connection, applyId, "REJECTED",
+                            actorUserId, comment, null);
+                    writeAccountApplicationAudit(connection, actorUserId, "reject_account_application",
+                            reviewed, "账号申请已拒绝");
+                } else {
+                    if (usernameExists(connection, application.username())) {
+                        throw new BadRequestException("申请的登录账号已存在，不能通过");
+                    }
+                    ensureRoleExists(connection, application.roleCode());
+                    long userId = createUserFromAccountApplication(connection, application);
+                    linkRole(connection, userId, application.roleCode(), actorUserId);
+                    reviewed = updateAccountApplicationStatus(connection, applyId, "APPROVED",
+                            actorUserId, comment, userId);
+                    writeAccountApplicationAudit(connection, actorUserId, "approve_account_application",
+                            reviewed, "账号申请已通过并创建账号");
+                }
+                connection.commit();
+                return reviewed;
+            } catch (SQLException | RuntimeException ex) {
+                connection.rollback();
+                throw ex;
+            } finally {
+                connection.setAutoCommit(true);
+            }
+        } catch (SQLException ex) {
+            throw database(ex);
+        }
+    }
+
     private PermissionApplication findApplication(long applyId) {
         String sql = """
                 select apply_id, apply_no, applicant_id, target_user_id, from_role_code,
@@ -292,6 +412,78 @@ public class AccessDao {
                 rs.getString("review_comment"), created == null ? null : created.toLocalDateTime());
     }
 
+    private static AccountApplication findAccountApplicationForUpdate(Connection connection, long applyId)
+            throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement("""
+                select apply_id, apply_no, applicant_id, username, real_name, role_code,
+                       department, phone, apply_reason, apply_status, reviewer_id,
+                       reviewed_at, review_comment, created_user_id, created_at
+                from mes_account_apply
+                where apply_id = ?
+                for update
+                """)) {
+            statement.setLong(1, applyId);
+            try (ResultSet rs = statement.executeQuery()) {
+                if (!rs.next()) throw new NotFoundException("账号申请不存在");
+                return mapAccountApplication(rs);
+            }
+        }
+    }
+
+    private static AccountApplication updateAccountApplicationStatus(Connection connection, long applyId,
+            String status, long reviewerId, String comment, Long createdUserId) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement("""
+                update mes_account_apply
+                set apply_status = ?, reviewer_id = ?, reviewed_at = current_timestamp,
+                    review_comment = ?, created_user_id = ?, updated_at = current_timestamp
+                where apply_id = ?
+                returning apply_id, apply_no, applicant_id, username, real_name, role_code,
+                          department, phone, apply_reason, apply_status, reviewer_id,
+                          reviewed_at, review_comment, created_user_id, created_at
+                """)) {
+            statement.setString(1, status);
+            statement.setLong(2, reviewerId);
+            statement.setString(3, trimToNull(comment));
+            if (createdUserId == null) statement.setNull(4, java.sql.Types.BIGINT);
+            else statement.setLong(4, createdUserId);
+            statement.setLong(5, applyId);
+            try (ResultSet rs = statement.executeQuery()) {
+                rs.next();
+                return mapAccountApplication(rs);
+            }
+        }
+    }
+
+    private static long createUserFromAccountApplication(Connection connection,
+            AccountApplication application) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement("""
+                insert into mes_user
+                    (username, real_name, role_code, department, phone, enabled, password_hash, updated_at)
+                select username, real_name, role_code, department, phone, 1, password_hash, current_timestamp
+                from mes_account_apply
+                where apply_id = ?
+                returning user_id
+                """)) {
+            statement.setLong(1, application.applyId());
+            try (ResultSet rs = statement.executeQuery()) {
+                rs.next();
+                return rs.getLong("user_id");
+            }
+        }
+    }
+
+    private static AccountApplication mapAccountApplication(ResultSet rs) throws SQLException {
+        java.sql.Timestamp reviewed = rs.getTimestamp("reviewed_at");
+        java.sql.Timestamp created = rs.getTimestamp("created_at");
+        return new AccountApplication(rs.getLong("apply_id"), rs.getString("apply_no"),
+                nullableLong(rs, "applicant_id"), rs.getString("username"),
+                rs.getString("real_name"), rs.getString("role_code"), rs.getString("department"),
+                rs.getString("phone"), rs.getString("apply_reason"), rs.getString("apply_status"),
+                nullableLong(rs, "reviewer_id"), reviewed == null ? null : reviewed.toLocalDateTime(),
+                rs.getString("review_comment"), nullableLong(rs, "created_user_id"),
+                created == null ? null : created.toLocalDateTime());
+    }
+
     private static Long nullableLong(ResultSet rs, String column) throws SQLException {
         long value = rs.getLong(column);
         return rs.wasNull() ? null : value;
@@ -302,6 +494,109 @@ public class AccessDao {
             statement.setLong(1, userId);
             try (ResultSet rs = statement.executeQuery()) {
                 if (!rs.next()) throw new NotFoundException("用户不存在");
+            }
+        }
+    }
+
+    private static void ensureAccountApplicationTable(Connection connection) throws SQLException {
+        try (var statement = connection.createStatement()) {
+            statement.execute("""
+                    create table if not exists mes_account_apply (
+                        apply_id bigserial primary key,
+                        apply_no varchar(50) not null,
+                        applicant_id bigint,
+                        username varchar(50) not null,
+                        real_name varchar(100) not null,
+                        role_code varchar(50) not null,
+                        department varchar(100),
+                        phone varchar(30),
+                        password_hash varchar(255) not null,
+                        apply_reason varchar(500),
+                        apply_status varchar(30) not null default 'SUBMITTED',
+                        reviewer_id bigint,
+                        reviewed_at timestamp,
+                        review_comment varchar(500),
+                        created_user_id bigint,
+                        created_at timestamp not null default current_timestamp,
+                        updated_at timestamp not null default current_timestamp
+                    )
+                    """);
+            statement.execute("create unique index if not exists uk_mes_account_apply_apply_no on mes_account_apply (apply_no)");
+            statement.execute("create index if not exists idx_mes_account_apply_applicant_id on mes_account_apply (applicant_id)");
+            statement.execute("create index if not exists idx_mes_account_apply_status on mes_account_apply (apply_status)");
+            statement.execute("create index if not exists idx_mes_account_apply_username_status on mes_account_apply (lower(username), apply_status)");
+        }
+    }
+
+    private static String normalizeUsername(String username) {
+        String value = requireTextValue(username, "登录账号不能为空");
+        if (value.length() < 3 || value.length() > 50) {
+            throw new BadRequestException("登录账号长度需要在 3-50 个字符之间");
+        }
+        if (!value.matches("[A-Za-z0-9_.-]+")) {
+            throw new BadRequestException("登录账号只能包含字母、数字、下划线、点和短横线");
+        }
+        return value;
+    }
+
+    private static String requireTextValue(String value, String message) {
+        if (value == null || value.isBlank()) throw new BadRequestException(message);
+        return value.trim();
+    }
+
+    private static String trimToNull(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
+    }
+
+    private static boolean usernameExists(Connection connection, String username) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(
+                "select 1 from mes_user where lower(username) = lower(?) limit 1")) {
+            statement.setString(1, username);
+            try (ResultSet rs = statement.executeQuery()) {
+                return rs.next();
+            }
+        }
+    }
+
+    private static boolean submittedAccountApplicationExists(Connection connection, String username)
+            throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement("""
+                select 1 from mes_account_apply
+                where lower(username) = lower(?)
+                  and apply_status = 'SUBMITTED'
+                limit 1
+                """)) {
+            statement.setString(1, username);
+            try (ResultSet rs = statement.executeQuery()) {
+                return rs.next();
+            }
+        }
+    }
+
+    private static void ensureRoleExists(Connection connection, String roleCode) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(
+                "select 1 from mes_role where role_code = ? and enabled = 1")) {
+            statement.setString(1, roleCode);
+            try (ResultSet rs = statement.executeQuery()) {
+                if (!rs.next()) throw new BadRequestException("申请角色不存在或已停用");
+            }
+        }
+    }
+
+    private static void linkRole(Connection connection, long userId, String roleCode, long assignedBy)
+            throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement("""
+                insert into mes_user_role (user_id, role_id, assigned_by)
+                select ?, role_id, ?
+                from mes_role
+                where role_code = ? and enabled = 1
+                on conflict (user_id, role_id) do nothing
+                """)) {
+            statement.setLong(1, userId);
+            statement.setLong(2, assignedBy);
+            statement.setString(3, roleCode);
+            if (statement.executeUpdate() == 0) {
+                throw new BadRequestException("申请角色不存在或已停用");
             }
         }
     }
@@ -339,6 +634,35 @@ public class AccessDao {
         }
     }
 
+    private static void writeAccountApplicationAudit(Connection connection, long actorUserId, String actionCode,
+            AccountApplication application, String message) throws SQLException {
+        try (PreparedStatement actor = connection.prepareStatement(
+                "select username, role_code from mes_user where user_id = ?")) {
+            actor.setLong(1, actorUserId);
+            try (ResultSet rs = actor.executeQuery();
+                    PreparedStatement statement = connection.prepareStatement("""
+                            insert into mes_audit_log
+                                (event_type, module_code, action_code, resource_type, resource_id, user_id,
+                                 username, role_code, result, message)
+                            values ('ACCOUNT_APPLICATION', 'system', ?, 'account_apply', ?, ?, ?, ?, 'SUCCESS', ?)
+                            """)) {
+                String username = null;
+                String roleCode = null;
+                if (rs.next()) {
+                    username = rs.getString("username");
+                    roleCode = rs.getString("role_code");
+                }
+                statement.setString(1, actionCode);
+                statement.setString(2, String.valueOf(application.applyId()));
+                statement.setLong(3, actorUserId);
+                statement.setString(4, username);
+                statement.setString(5, roleCode);
+                statement.setString(6, message);
+                statement.executeUpdate();
+            }
+        }
+    }
+
     private static IllegalStateException database(SQLException ex) {
         return new IllegalStateException("database operation failed: " + ex.getMessage(), ex);
     }
@@ -355,5 +679,15 @@ public class AccessDao {
             long targetUserId, String fromRoleCode, String toRoleCode, String applyReason,
             String applyStatus, Long reviewerId, LocalDateTime reviewedAt, String reviewComment,
             LocalDateTime createdAt) {
+    }
+
+    public record AccountApplication(long applyId, String applyNo, Long applicantId,
+            String username, String realName, String roleCode, String department, String phone,
+            String applyReason, String applyStatus, Long reviewerId, LocalDateTime reviewedAt,
+            String reviewComment, Long createdUserId, LocalDateTime createdAt) {
+    }
+
+    public record AccountApplicationRequest(String username, String password, String realName,
+            String roleCode, String department, String phone, String reason) {
     }
 }

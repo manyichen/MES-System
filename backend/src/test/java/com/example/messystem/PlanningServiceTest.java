@@ -25,6 +25,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PlanningServiceTest {
     private long materialId;
@@ -79,11 +80,11 @@ class PlanningServiceTest {
         workOrder.lineId = line.lineId;
         workOrder.processId = route.processId;
         workOrder = workOrderService.createWorkOrder(workOrder);
+        assertEquals("RELEASED", taskService.getTask(task.taskId).taskStatus);
         workOrderService.dispatch(workOrder.workOrderId, 1L);
         workOrderService.receive(workOrder.workOrderId, 1L);
 
         assertEquals("READY", analysis.kittingStatus);
-        assertEquals("RELEASED", taskService.getTask(task.taskId).taskStatus);
         assertEquals("RECEIVED", workOrderService.getWorkOrder(workOrder.workOrderId).workOrderStatus);
         assertEquals(3, workOrderService.listLogs(workOrder.workOrderId).size());
     }
@@ -110,6 +111,15 @@ class PlanningServiceTest {
         assertEquals("SHORTAGE", analysis.kittingStatus);
         assertFalse(kittingService.listAlerts().isEmpty());
         assertEquals("SHORTAGE", taskService.getTask(task.taskId).taskStatus);
+
+        createInventory();
+        MesKittingAnalysis recovered = kittingService.analyze(task.taskId);
+        long recoveredTaskId = task.taskId;
+
+        assertEquals("READY", recovered.kittingStatus);
+        assertTrue(kittingService.listAlerts().stream()
+                .filter(alert -> alert.taskId.equals(recoveredTaskId))
+                .allMatch(alert -> "RESOLVED".equals(alert.alertStatus)));
     }
 
     private MesProduct createProduct() {

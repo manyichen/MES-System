@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import { MoreHorizontal } from 'lucide-vue-next'
+import { businessValue } from '../utils/display.js'
 
 const props = defineProps({
   rows: { type: Array, default: () => [] },
@@ -10,14 +11,6 @@ const props = defineProps({
 const emit = defineEmits(['action'])
 
 const visibleColumns = computed(() => props.columns.slice(0, 9))
-
-function display(value) {
-  if (value === null || value === undefined || value === '') return '-'
-  if (typeof value === 'boolean') return value ? '是' : '否'
-  if (Array.isArray(value)) return value.join(', ') || '-'
-  if (typeof value === 'object') return JSON.stringify(value)
-  return String(value)
-}
 
 function tone(value) {
   const status = String(value || '').toUpperCase()
@@ -40,7 +33,7 @@ function tone(value) {
       <tbody>
         <tr v-for="(row, index) in rows" :key="row.id ?? row[Object.keys(row)[0]] ?? index">
           <td v-for="column in visibleColumns" :key="column.key">
-            <span :class="['cell-value', tone(row[column.key])]">{{ display(row[column.key]) }}</span>
+            <span :class="['cell-value', tone(row[column.key])]">{{ businessValue(column.key, row[column.key]) }}</span>
           </td>
           <td v-if="actions.length" class="row-actions">
             <button

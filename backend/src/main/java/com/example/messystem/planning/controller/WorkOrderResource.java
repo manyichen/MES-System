@@ -87,7 +87,7 @@ public class WorkOrderResource {
     public Response receive(@PathParam("id") long id, @Context ContainerRequestContext context) {
         try {
             AuthenticatedUser user = AuthFilter.currentUser(context);
-            if (!user.hasRole("PRODUCTION_OPERATOR")) {
+            if (!user.canActAs("PRODUCTION_OPERATOR")) {
                 throw new BadRequestException("只有被派发的生产操作工才能接收工单");
             }
             return ResourceSupport.action("生产工单已接收",
@@ -102,7 +102,7 @@ public class WorkOrderResource {
     public Response reject(@PathParam("id") long id, @Context ContainerRequestContext context) {
         try {
             AuthenticatedUser user = AuthFilter.currentUser(context);
-            if (!user.hasRole("PRODUCTION_OPERATOR")) {
+            if (!user.canActAs("PRODUCTION_OPERATOR")) {
                 throw new BadRequestException("只有被派发的生产操作工才能拒绝工单");
             }
             return ResourceSupport.action("生产工单已拒绝接收",

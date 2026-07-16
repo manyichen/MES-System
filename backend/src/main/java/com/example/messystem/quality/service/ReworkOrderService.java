@@ -33,8 +33,8 @@ public class ReworkOrderService {
     }
 
     public boolean dispatch(long id) throws SQLException {
-        if (!dao.updateStatus(id, "DISPATCHED", "CREATED")) {
-            throw new BadRequestException("只有新建的返工单才能派发");
+        if (!dao.updateStatus(id, "DISPATCHED", "PLANNED")) {
+            throw new BadRequestException("只有已由 PMC 排产的返工单才能派发");
         }
         return true;
     }

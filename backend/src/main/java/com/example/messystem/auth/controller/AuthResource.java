@@ -45,12 +45,13 @@ public class AuthResource {
 
     @POST
     @Path("/logout")
+    @Consumes(MediaType.WILDCARD)
     public Response logout(@Context ContainerRequestContext context,
             @HeaderParam(HttpHeaders.AUTHORIZATION) String authorization) {
         try {
             AuthenticatedUser currentUser = AuthFilter.currentUser(context);
             service.logout(AuthFilter.bearerToken(authorization), currentUser);
-            return ResourceSupport.action("已退出登录", null);
+            return ResourceSupport.action("已退出登录", true);
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }

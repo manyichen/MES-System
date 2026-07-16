@@ -542,7 +542,7 @@ public class PlanningDao {
     public List<MesShortageAlert> listAlerts() throws SQLException {
         String sql = """
                 select alert_id, alert_no, task_id, analysis_id, material_id, material_code, material_name,
-                       required_qty, available_qty, shortage_qty, severity, alert_status, accepted_by, accepted_at, created_at
+                       required_qty, available_qty, shortage_qty, severity, alert_status, accepted_by, accepted_at, resolved_at, created_at
                 from mes_shortage_alert
                 where material_id is not null
                   and coalesce(shortage_qty, 0) > 0
@@ -568,6 +568,7 @@ public class PlanningDao {
                 alert.alertStatus = rs.getString("alert_status");
                 alert.acceptedBy = getLong(rs, "accepted_by");
                 alert.acceptedAt = getLocalDateTime(rs, "accepted_at");
+                alert.resolvedAt = getLocalDateTime(rs, "resolved_at");
                 alert.createdAt = getLocalDateTime(rs, "created_at");
                 rows.add(alert);
             }
@@ -618,7 +619,7 @@ public class PlanningDao {
                 update mes_shortage_alert set alert_status = 'ACCEPTED', accepted_by = ?, accepted_at = current_timestamp
                 where alert_id = ? and alert_status = 'OPEN'
                 returning alert_id, alert_no, task_id, analysis_id, material_id, material_code, material_name,
-                          required_qty, available_qty, shortage_qty, severity, alert_status, accepted_by, accepted_at, created_at
+                          required_qty, available_qty, shortage_qty, severity, alert_status, accepted_by, accepted_at, resolved_at, created_at
                 """;
         try (Connection connection = Db.getConnection(); PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setLong(1, userId); statement.setLong(2, alertId);
@@ -628,9 +629,35 @@ public class PlanningDao {
                 alert.alertId = rs.getLong("alert_id"); alert.alertNo = rs.getString("alert_no"); alert.taskId = rs.getLong("task_id");
                 alert.materialId = getLong(rs, "material_id"); alert.materialCode = rs.getString("material_code"); alert.materialName = rs.getString("material_name");
                 alert.requiredQty = rs.getBigDecimal("required_qty"); alert.availableQty = rs.getBigDecimal("available_qty"); alert.shortageQty = rs.getBigDecimal("shortage_qty");
-                alert.alertLevel = rs.getString("severity"); alert.alertStatus = rs.getString("alert_status"); alert.acceptedBy = getLong(rs, "accepted_by"); alert.acceptedAt = getLocalDateTime(rs, "accepted_at"); alert.createdAt = getLocalDateTime(rs, "created_at");
+                alert.alertLevel = rs.getString("severity"); alert.alertStatus = rs.getString("alert_status"); alert.acceptedBy = getLong(rs, "accepted_by"); alert.acceptedAt = getLocalDateTime(rs, "accepted_at"); alert.resolvedAt = getLocalDateTime(rs, "resolved_at"); alert.createdAt = getLocalDateTime(rs, "created_at");
                 return alert;
             }
+        }
+    }
+
+    public int resolveRecoveredShortageAlerts(long taskId) throws SQLException {
+        String sql = """
+                update mes_shortage_alert a
+                set alert_status = 'RESOLVED', resolved_at = current_timestamp
+                where a.task_id = ?
+                  and a.alert_status in ('OPEN', 'ACCEPTED')
+                  and not exists (
+                      select 1
+                      from mes_kitting_shortage_item s
+                      where s.task_id = a.task_id
+                        and s.analysis_id = (
+                            select max(latest.analysis_id)
+                            from mes_kitting_analysis latest
+                            where latest.task_id = a.task_id
+                        )
+                        and s.shortage_type = 'MATERIAL'
+                        and s.resource_id = a.material_id
+                        and coalesce(s.shortage_qty, 0) > 0
+                  )
+                """;
+        try (Connection connection = Db.getConnection(); PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, taskId);
+            return statement.executeUpdate();
         }
     }
 

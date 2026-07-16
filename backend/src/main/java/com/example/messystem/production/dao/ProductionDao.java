@@ -225,6 +225,7 @@ public class ProductionDao {
                     statement.executeUpdate();
                 }
                 updateWorkOrderActualQty(connection, report.workOrderId, report.qualifiedQty);
+                refreshPlanningCompletion(connection, report.workOrderId);
                 connection.commit();
                 return report;
             } catch (SQLException | RuntimeException ex) {
@@ -490,6 +491,57 @@ public class ProductionDao {
             statement.setInt(2, qualifiedQty);
             statement.setInt(3, qualifiedQty);
             statement.setLong(4, workOrderId);
+            statement.executeUpdate();
+        }
+    }
+
+    private void refreshPlanningCompletion(Connection connection, long workOrderId) throws SQLException {
+        String taskSql = """
+                update mes_production_task t
+                set task_status = 'COMPLETED',
+                    close_time = coalesce(close_time, current_timestamp),
+                    updated_at = current_timestamp
+                where t.task_id = (select wo.task_id from mes_work_order wo where wo.work_order_id = ?)
+                  and exists (select 1 from mes_work_order wo where wo.task_id = t.task_id)
+                  and not exists (
+                      select 1 from mes_work_order wo
+                      where wo.task_id = t.task_id
+                        and wo.work_order_status not in ('FINISHED', 'COMPLETED', 'CLOSED')
+                  )
+                """;
+        try (PreparedStatement statement = connection.prepareStatement(taskSql)) {
+            statement.setLong(1, workOrderId);
+            statement.executeUpdate();
+        }
+
+        String orderSql = """
+                update mes_customer_order o
+                set order_status = case
+                        when exists (select 1 from mes_production_task t where t.order_id = o.order_id)
+                         and not exists (
+                             select 1 from mes_production_task t
+                             where t.order_id = o.order_id and t.task_status <> 'COMPLETED'
+                         ) then 'COMPLETED'
+                        when exists (
+                            select 1
+                            from mes_production_task t
+                            join mes_work_order wo on wo.task_id = t.task_id
+                            where t.order_id = o.order_id
+                              and (coalesce(wo.actual_qty, 0) > 0
+                                   or wo.work_order_status in ('RUNNING', 'IN_PROGRESS', 'FINISHED', 'COMPLETED', 'CLOSED'))
+                        ) then 'IN_PROGRESS'
+                        else 'PLANNED'
+                    end,
+                    updated_at = current_timestamp
+                where o.order_id = (
+                    select t.order_id
+                    from mes_work_order wo
+                    join mes_production_task t on t.task_id = wo.task_id
+                    where wo.work_order_id = ?
+                )
+                """;
+        try (PreparedStatement statement = connection.prepareStatement(orderSql)) {
+            statement.setLong(1, workOrderId);
             statement.executeUpdate();
         }
     }
