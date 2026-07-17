@@ -6,7 +6,7 @@
 [INFO] --------------------------------[ war ]---------------------------------
 [INFO] 
 [INFO] --- exec:3.5.0:java (default-cli) @ mes-backend ---
-MES backend started: http://127.0.0.1:8080/
+MES backend started: http://127.0.0.1:8081/
 Web root: E:\Projects\xiaoxueqishixun\chenlun\MES-System\frontend
-Listening on 127.0.0.1:8080
+Listening on 127.0.0.1:8081
 Press Ctrl+C to stop.
