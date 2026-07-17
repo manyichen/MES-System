@@ -226,6 +226,32 @@ public class TireTraceDao {
         }
     }
 
+    public void updateGeneratedFiles(long tireId, String qrPath, String labelPath, String labelHash,
+            String pdfPath, String pdfHash) throws SQLException {
+        try (Connection connection = Db.getConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                try (PreparedStatement statement = connection.prepareStatement("""
+                        update mes_tire_qrcode
+                        set storage_path = ?, generated_at = current_timestamp
+                        where tire_id = ? and qrcode_status = 'ACTIVE'
+                        """)) {
+                    statement.setString(1, qrPath);
+                    statement.setLong(2, tireId);
+                    if (statement.executeUpdate() == 0) throw new NotFoundException("轮胎二维码元数据不存在");
+                }
+                updateDocument(connection, tireId, "LABEL_PNG", "label.png", labelPath, labelHash);
+                updateDocument(connection, tireId, "PDF", "product-info.pdf", pdfPath, pdfHash);
+                connection.commit();
+            } catch (SQLException | RuntimeException exception) {
+                connection.rollback();
+                throw exception;
+            } finally {
+                connection.setAutoCommit(true);
+            }
+        }
+    }
+
     public void recordPrint(long tireId, long printedBy, String remark) throws SQLException {
         try (Connection connection = Db.getConnection()) {
             connection.setAutoCommit(false);
@@ -276,6 +302,38 @@ public class TireTraceDao {
                 if (!rs.next()) throw new NotFoundException("轮胎二维码文件不存在");
                 return rs.getString(1);
             }
+        }
+    }
+
+    private void updateDocument(Connection connection, long tireId, String type, String fileName,
+            String storagePath, String hash) throws SQLException {
+        try (PreparedStatement update = connection.prepareStatement("""
+                update mes_trace_document
+                set file_name = ?, storage_path = ?, file_hash = ?, generated_at = current_timestamp
+                where document_id = (
+                    select document_id from mes_trace_document
+                    where tire_id = ? and document_type = ?
+                    order by version_no desc limit 1
+                )
+                """)) {
+            update.setString(1, fileName);
+            update.setString(2, storagePath);
+            update.setString(3, hash);
+            update.setLong(4, tireId);
+            update.setString(5, type);
+            if (update.executeUpdate() > 0) return;
+        }
+        try (PreparedStatement insert = connection.prepareStatement("""
+                insert into mes_trace_document
+                    (tire_id, document_type, file_name, storage_path, file_hash, version_no)
+                values (?, ?, ?, ?, ?, 1)
+                """)) {
+            insert.setLong(1, tireId);
+            insert.setString(2, type);
+            insert.setString(3, fileName);
+            insert.setString(4, storagePath);
+            insert.setString(5, hash);
+            insert.executeUpdate();
         }
     }
 

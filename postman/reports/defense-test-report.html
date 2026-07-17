@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>MES 自动化测试答辩报告</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;background:#eef1f4;color:#17212b;font-family:"Microsoft YaHei","Segoe UI",sans-serif;letter-spacing:0}
+    .page{width:1600px;min-height:900px;margin:0 auto;background:#fff;padding:54px 64px 44px;border-top:12px solid #164e63}
+    header{display:flex;align-items:flex-end;justify-content:space-between;border-bottom:2px solid #d8e0e5;padding-bottom:24px}
+    h1{font-size:38px;line-height:1.2;margin:0 0 9px;font-weight:750}h2{font-size:22px;margin:0 0 16px}p{margin:0;color:#52616d;font-size:17px}
+    .pass{color:#147d4f;font-size:26px;font-weight:750}.date{text-align:right;font-size:15px;color:#61717d;margin-top:8px}
+    .metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin:28px 0}
+    .metric{border:1px solid #cfd9df;border-top:5px solid #164e63;border-radius:6px;padding:19px 20px;background:#fafcfd;min-height:118px}
+    .metric.good{border-top-color:#16845b}.metric.warn{border-top-color:#c47b13}.number{font-size:38px;font-weight:760;line-height:1;margin-bottom:11px}.label{font-size:15px;color:#5c6a74}
+    .content{display:grid;grid-template-columns:1.35fr .9fr;gap:34px}.section{border-top:1px solid #ced8de;padding-top:21px}
+    ul{margin:0;padding-left:23px;display:grid;gap:12px;font-size:17px;line-height:1.45}strong{color:#152a36}
+    table{width:100%;border-collapse:collapse;font-size:16px}th,td{text-align:left;padding:10px 12px;border-bottom:1px solid #dce3e7}th{background:#f0f4f6;color:#33434e}
+    .note{margin-top:25px;border-left:5px solid #c47b13;background:#fff8ec;padding:14px 18px;color:#5b4a2e;font-size:15px;line-height:1.5}
+    footer{display:flex;justify-content:space-between;margin-top:27px;padding-top:16px;border-top:1px solid #d8e0e5;color:#6b7881;font-size:14px}
+  </style>
+</head>
+<body><main class="page">
+  <header><div><h1>双星轮胎 MES 自动化测试报告</h1><p>Postman 全量接口契约测试 + JUnit 单元与架构测试</p></div><div><div class="pass">全部通过</div><div class="date">2026/7/17 18:30:39</div></div></header>
+  <section class="metrics">
+    <div class="metric"><div class="number">266</div><div class="label">Postman 请求</div></div>
+    <div class="metric"><div class="number">958</div><div class="label">接口断言</div></div>
+    <div class="metric good"><div class="number">0</div><div class="label">失败断言</div></div>
+    <div class="metric"><div class="number">13</div><div class="label">JUnit 测试</div></div>
+    <div class="metric warn"><div class="number">332 ms</div><div class="label">平均响应时间</div></div>
+  </section>
+  <section class="content">
+    <div class="section"><h2>覆盖范围</h2><ul>
+      <li><strong>173 个</strong> JAX-RS 正式接口已自动扫描并逐一建档。</li>
+      <li><strong>170 个</strong>受保护接口完成未登录 401 与 JSON 错误响应验证。</li>
+      <li><strong>88 个</strong>登录后只读接口完成权限、5xx、响应结构与性能验证。</li>
+      <li>系统管理员访问生产工单返回 403，超级管理员成功覆盖全量只读业务接口。</li>
+      <li>二维码 PNG、标签 PNG、产品 PDF 均完成真实文件下载验证。</li>
+      <li>JUnit：13 项执行，0 失败，0 错误，0 跳过。</li>
+    </ul></div>
+    <div class="section"><h2>HTTP 状态分布</h2><table><thead><tr><th>状态码</th><th>次数</th><th>含义</th></tr></thead><tbody><tr><td>200</td><td>87</td><td>成功</td></tr><tr><td>400</td><td>1</td><td>异常场景</td></tr><tr><td>401</td><td>171</td><td>认证拦截</td></tr><tr><td>403</td><td>1</td><td>权限拦截</td></tr><tr><td>404</td><td>6</td><td>异常场景</td></tr></tbody></table>
+      <div class="note"><strong>测试数据保护：</strong>当前连接远程演示数据库。POST、PUT、DELETE 已全量验证认证边界，但成功写入流程未批量执行，避免污染答辩数据；写库集成场景只允许在独立测试数据库运行。</div>
+    </div>
+  </section>
+  <footer><span>总耗时 119.4 秒 · 最快 1 ms · 最慢 3307 ms</span><span>报告不包含密码、令牌、请求体或响应体</span></footer>
+</main></body></html>

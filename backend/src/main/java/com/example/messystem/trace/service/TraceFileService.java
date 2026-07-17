@@ -62,6 +62,9 @@ public class TraceFileService {
     }
 
     public Path resolve(String relativePath) {
+        if (relativePath == null || relativePath.isBlank()) {
+            throw new IllegalArgumentException("追溯文件路径为空");
+        }
         Path result = storageRoot.resolve(relativePath).normalize();
         if (!result.startsWith(storageRoot) || !Files.isRegularFile(result)) {
             throw new IllegalArgumentException("追溯文件不存在");

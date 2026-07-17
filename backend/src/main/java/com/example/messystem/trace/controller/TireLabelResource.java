@@ -10,6 +10,7 @@ import com.example.messystem.trace.entity.TirePrintRequest;
 import com.example.messystem.trace.entity.TireTraceItem;
 import com.example.messystem.trace.service.TireTraceService;
 import com.example.messystem.quality.service.QualityInspectionService;
+import com.example.messystem.security.service.DataScopeService;
 import com.example.messystem.warehouse.service.WarehouseService;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
@@ -35,11 +36,13 @@ public class TireLabelResource {
     private final TireTraceService service = new TireTraceService();
     private final QualityInspectionService qualityService = new QualityInspectionService();
     private final WarehouseService warehouseService = new WarehouseService();
+    private final DataScopeService dataScopeService = new DataScopeService();
 
     @GET
     public ApiResponse<List<TireTraceItem>> list(@Context ContainerRequestContext context) {
         AuthenticatedUser user = AuthFilter.currentUser(context);
-        return ApiResponse.ok(service.list(isWarehouseRole(user) ? user.warehouseIds : null));
+        var scope = dataScopeService.snapshot(user);
+        return ApiResponse.ok(service.list().stream().filter(scope::canView).toList());
     }
 
     @GET
@@ -47,12 +50,14 @@ public class TireLabelResource {
     public ApiResponse<Map<String, Object>> generateOptions(@Context ContainerRequestContext context) {
         try {
             AuthenticatedUser user = AuthFilter.currentUser(context);
+            var scope = dataScopeService.snapshot(user);
             var inspections = qualityService.listInspections().stream()
                     .filter(item -> "APPROVED".equals(item.inspectionStatus())
                             && "PASS".equals(item.judgementResult()))
+                    .filter(scope::canView)
                     .toList();
             var warehouses = warehouseService.listWarehouses().stream()
-                    .filter(item -> !isWarehouseRole(user) || user.warehouseIds.contains(item.warehouseId))
+                    .filter(scope::canView)
                     .toList();
             var warehouseIds = warehouses.stream().map(item -> item.warehouseId).collect(java.util.stream.Collectors.toSet());
             var locations = warehouseService.listLocations().stream()
@@ -91,21 +96,24 @@ public class TireLabelResource {
     @GET
     @Path("/{id}/qrcode")
     @Produces("image/png")
-    public Response qrCode(@PathParam("id") long tireId) {
+    public Response qrCode(@PathParam("id") long tireId, @Context ContainerRequestContext context) {
+        requireVisible(AuthFilter.currentUser(context), tireId);
         return file(service.qrCode(tireId), "image/png", "qrcode.png", false);
     }
 
     @GET
     @Path("/{id}/label")
     @Produces("image/png")
-    public Response label(@PathParam("id") long tireId) {
+    public Response label(@PathParam("id") long tireId, @Context ContainerRequestContext context) {
+        requireVisible(AuthFilter.currentUser(context), tireId);
         return file(service.document(tireId, "LABEL_PNG"), "image/png", "tire-label.png", false);
     }
 
     @GET
     @Path("/{id}/document")
     @Produces("application/pdf")
-    public Response document(@PathParam("id") long tireId) {
+    public Response document(@PathParam("id") long tireId, @Context ContainerRequestContext context) {
+        requireVisible(AuthFilter.currentUser(context), tireId);
         return file(service.document(tireId, "PDF"), "application/pdf", "product-info.pdf", false);
     }
 
@@ -132,5 +140,19 @@ public class TireLabelResource {
         if (!isWarehouseRole(user) || warehouseId == null || !user.warehouseIds.contains(warehouseId)) {
             throw new BadRequestException("无权为该仓库生成或打印轮胎二维码标签");
         }
+    }
+
+    private TireTraceItem requireVisible(AuthenticatedUser user, long tireId) {
+        TireTraceItem tire = service.requireById(tireId);
+        var scope = dataScopeService.snapshot(user);
+        if (scope.lineRestricted()) {
+            if (tire.workOrderId() == null) throw new BadRequestException("轮胎未关联制造工单，无法校验数据权限");
+            scope.requireWorkOrder(tire.workOrderId());
+        }
+        if (scope.warehouseRestricted()) {
+            if (tire.warehouseId() == null) throw new BadRequestException("轮胎未关联仓库，无法校验数据权限");
+            scope.requireWarehouse(tire.warehouseId());
+        }
+        return tire;
     }
 }

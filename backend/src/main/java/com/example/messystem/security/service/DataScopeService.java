@@ -17,6 +17,7 @@ import com.example.messystem.production.entity.MesWorkReport;
 import com.example.messystem.quality.entity.MesQualityInspection;
 import com.example.messystem.quality.entity.MesQualityTrace;
 import com.example.messystem.quality.entity.MesReworkOrder;
+import com.example.messystem.trace.entity.TireTraceItem;
 import com.example.messystem.warehouse.entity.MesInventory;
 import com.example.messystem.warehouse.entity.MesInventoryTransaction;
 import com.example.messystem.warehouse.entity.MesMaterialRequisition;
@@ -198,6 +199,7 @@ public class DataScopeService {
                     && ids("lineReworks").contains(value.reworkOrderId());
             if (item instanceof MesQualityTrace value) return value.workOrderId() != null && visibleWorkOrdersForLines().contains(value.workOrderId());
             if (item instanceof MesProductTrace value) return value.workOrderId() != null && visibleWorkOrdersForLines().contains(value.workOrderId());
+            if (item instanceof TireTraceItem value) return value.workOrderId() != null && visibleWorkOrdersForLines().contains(value.workOrderId());
             if (item instanceof MesManagementFeedback value) return value.workOrderId() != null && visibleWorkOrdersForLines().contains(value.workOrderId());
             if (item instanceof MesEquipment value) return value.lineId() != null && lineIds().contains(value.lineId());
             if (item instanceof MesEquipmentRepairReport value) return value.equipmentId() != null && visibleEquipment().contains(value.equipmentId());
@@ -216,6 +218,7 @@ public class DataScopeService {
             if (item instanceof MesPickingTask value) return value.warehouseId != null && warehouseIds().contains(value.warehouseId);
             if (item instanceof MesRobotDeliveryTask value) return value.pickingTaskId != null && visiblePicking().contains(value.pickingTaskId);
             if (item instanceof MesRobot value) return value.warehouseId != null && warehouseIds().contains(value.warehouseId);
+            if (item instanceof TireTraceItem value) return value.warehouseId() != null && warehouseIds().contains(value.warehouseId());
             return true;
         }
 
@@ -237,6 +240,7 @@ public class DataScopeService {
                     || item instanceof MesWorkReport || item instanceof MesPieceworkWage
                     || item instanceof MesQualityInspection || item instanceof MesReworkOrder
                     || item instanceof MesQualityTrace || item instanceof MesProductTrace
+                    || item instanceof TireTraceItem
                     || item instanceof MesManagementFeedback || item instanceof MesEquipment
                     || item instanceof MesEquipmentRepairReport || item instanceof MesMaintenanceOrder
                     || item instanceof MesMaintenancePlan || item instanceof MesMaterialRequisition;
@@ -245,7 +249,8 @@ public class DataScopeService {
         private boolean isWarehouseBusiness(Object item) {
             return item instanceof MesWarehouse || item instanceof MesWarehouseLocation || item instanceof MesInventory
                     || item instanceof MesInventoryTransaction || item instanceof MesMaterialRequisition
-                    || item instanceof MesPickingTask || item instanceof MesRobotDeliveryTask || item instanceof MesRobot;
+                    || item instanceof MesPickingTask || item instanceof MesRobotDeliveryTask || item instanceof MesRobot
+                    || item instanceof TireTraceItem;
         }
 
         private boolean isProductionReference(Object item) {

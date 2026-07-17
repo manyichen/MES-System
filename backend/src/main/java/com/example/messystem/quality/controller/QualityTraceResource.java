@@ -2,6 +2,7 @@ package com.example.messystem.quality.controller;
 
 import com.example.messystem.common.ApiResponse;
 import com.example.messystem.common.BadRequestException;
+import com.example.messystem.common.NotFoundException;
 import com.example.messystem.quality.entity.MesQualityTrace;
 import com.example.messystem.quality.service.QualityInspectionService;
 
@@ -23,7 +24,7 @@ public class QualityTraceResource {
         try {
             return ApiResponse.ok(service.listAllTraces());
         } catch (SQLException e) {
-            throw new BadRequestException(e.getMessage());
+            throw databaseFailure("读取质量追溯列表失败", e);
         }
     }
 
@@ -33,7 +34,7 @@ public class QualityTraceResource {
         try {
             return ApiResponse.ok(service.listTracesByWorkOrder(workOrderId));
         } catch (SQLException e) {
-            throw new BadRequestException(e.getMessage());
+            throw databaseFailure("读取工单质量追溯记录失败", e);
         }
     }
 
@@ -49,7 +50,7 @@ public class QualityTraceResource {
         try {
             return ApiResponse.ok(service.listTracesByInspection(inspectionId));
         } catch (SQLException e) {
-            throw new BadRequestException(e.getMessage());
+            throw databaseFailure("读取质检单追溯记录失败", e);
         }
     }
 
@@ -59,9 +60,13 @@ public class QualityTraceResource {
         try {
             return service.getTraceById(id)
                     .map(ApiResponse::ok)
-                    .orElseGet(() -> ApiResponse.fail("Quality trace not found"));
+                    .orElseThrow(() -> new NotFoundException("质量追溯记录不存在"));
         } catch (SQLException e) {
-            throw new BadRequestException(e.getMessage());
+            throw databaseFailure("读取质量追溯详情失败", e);
         }
+    }
+
+    private static IllegalStateException databaseFailure(String message, SQLException exception) {
+        return new IllegalStateException(message + "：" + exception.getMessage(), exception);
     }
 }

@@ -1,0 +1,36 @@
+{
+  "generatedAt": "2026/7/17 18:30:39",
+  "outcome": "PASS",
+  "coverage": {
+    "declaredEndpoints": 173,
+    "protectedEndpoints": 170,
+    "authenticatedReads": 88
+  },
+  "postman": {
+    "requests": 266,
+    "failedRequests": 0,
+    "assertions": 958,
+    "failed": 0
+  },
+  "junit": {
+    "tests": 13,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "performance": {
+    "durationSeconds": 119.4,
+    "averageMs": 332,
+    "minMs": 1,
+    "maxMs": 3307,
+    "responseBytes": 600469
+  },
+  "httpStatus": {
+    "200": 87,
+    "400": 1,
+    "401": 171,
+    "403": 1,
+    "404": 6
+  },
+  "limitation": "远程演示数据库上不执行成功写入流程；写接口已完成认证边界覆盖。"
+}

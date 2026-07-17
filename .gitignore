@@ -1,5 +1,6 @@
 target/
 frontend/node_modules/
+/postman/node_modules/
 frontend/dist/
 **/target/
 tomcat.*/
@@ -9,6 +10,7 @@ tomcat.*/
 .env
 /storage/
 database/backups/
+/release/
 .env.*
 !.env.example
 

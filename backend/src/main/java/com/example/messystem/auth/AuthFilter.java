@@ -8,6 +8,7 @@ import jakarta.ws.rs.Priorities;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.Provider;
 import java.util.Set;
@@ -71,6 +72,9 @@ public class AuthFilter implements ContainerRequestFilter {
     }
 
     private static void abort(ContainerRequestContext context, Response.Status status, String message) {
-        context.abortWith(Response.status(status).entity(ApiResponse.fail(message)).build());
+        context.abortWith(Response.status(status)
+                .type(MediaType.APPLICATION_JSON_TYPE)
+                .entity(ApiResponse.fail(message))
+                .build());
     }
 }

@@ -57,7 +57,7 @@ public class QualityTraceDao {
     }
 
     public List<MesQualityTrace> findByWorkOrderId(long workOrderId) throws SQLException {
-        String sql = "SELECT trace_id, trace_no, order_id, task_id, work_order_id, batch_no, inspection_id, rework_order_id, trace_status, created_at FROM mes_quality_trace WHERE work_order_id = ?";
+        String sql = "SELECT trace_id, trace_no, order_id, task_id, work_order_id, batch_no, inspection_id, rework_order_id, trace_status, created_at FROM mes_quality_trace WHERE work_order_id = ? ORDER BY created_at DESC, trace_id DESC";
         try (Connection conn = Db.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, workOrderId);
             try (ResultSet rs = ps.executeQuery()) {
@@ -71,7 +71,7 @@ public class QualityTraceDao {
     }
 
     public List<MesQualityTrace> findByInspectionId(long inspectionId) throws SQLException {
-        String sql = "SELECT trace_id, trace_no, order_id, task_id, work_order_id, batch_no, inspection_id, rework_order_id, trace_status, created_at FROM mes_quality_trace WHERE inspection_id = ?";
+        String sql = "SELECT trace_id, trace_no, order_id, task_id, work_order_id, batch_no, inspection_id, rework_order_id, trace_status, created_at FROM mes_quality_trace WHERE inspection_id = ? ORDER BY created_at DESC, trace_id DESC";
         try (Connection conn = Db.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, inspectionId);
             try (ResultSet rs = ps.executeQuery()) {
@@ -85,7 +85,7 @@ public class QualityTraceDao {
     }
 
     public List<MesQualityTrace> findAll() throws SQLException {
-        String sql = "SELECT trace_id, trace_no, order_id, task_id, work_order_id, batch_no, inspection_id, rework_order_id, trace_status, created_at FROM mes_quality_trace";
+        String sql = "SELECT trace_id, trace_no, order_id, task_id, work_order_id, batch_no, inspection_id, rework_order_id, trace_status, created_at FROM mes_quality_trace ORDER BY created_at DESC, trace_id DESC";
         try (Connection conn = Db.getConnection(); PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
             List<MesQualityTrace> list = new ArrayList<>();
             while (rs.next()) {

@@ -141,6 +141,8 @@ public class TireTraceService {
     public Path qrCode(long tireId) {
         try {
             return fileService.resolve(dao.findQrPath(tireId));
+        } catch (NotFoundException | IllegalArgumentException exception) {
+            return repairFiles(tireId).qrCode();
         } catch (SQLException exception) {
             throw new IllegalStateException("数据库操作失败：" + exception.getMessage(), exception);
         }
@@ -149,6 +151,9 @@ public class TireTraceService {
     public Path document(long tireId, String type) {
         try {
             return fileService.resolve(dao.findDocumentPath(tireId, type));
+        } catch (NotFoundException | IllegalArgumentException exception) {
+            TraceFileBundle files = repairFiles(tireId);
+            return "LABEL_PNG".equals(type) ? files.labelImage() : files.pdfDocument();
         } catch (SQLException exception) {
             throw new IllegalStateException("数据库操作失败：" + exception.getMessage(), exception);
         }
@@ -164,6 +169,27 @@ public class TireTraceService {
             dao.recordPrint(tireId, printedBy, remark == null || remark.isBlank() ? "二维码标签打印" : remark.trim());
         } catch (SQLException exception) {
             throw new IllegalStateException("数据库操作失败：" + exception.getMessage(), exception);
+        }
+    }
+
+    private synchronized TraceFileBundle repairFiles(long tireId) {
+        TireTraceItem tire = requireById(tireId);
+        if (tire.targetUrl() == null || tire.targetUrl().isBlank()) {
+            throw new NotFoundException("轮胎二维码元数据不完整，无法恢复追溯文件");
+        }
+        TraceFileBundle files = fileService.generate(tire);
+        try {
+            dao.updateGeneratedFiles(
+                    tireId,
+                    fileService.relative(files.qrCode()),
+                    fileService.relative(files.labelImage()),
+                    fileService.sha256(files.labelImage()),
+                    fileService.relative(files.pdfDocument()),
+                    fileService.sha256(files.pdfDocument()));
+            return files;
+        } catch (SQLException exception) {
+            fileService.deleteQuietly(files);
+            throw new IllegalStateException("追溯文件恢复记录保存失败：" + exception.getMessage(), exception);
         }
     }
 
