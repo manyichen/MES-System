@@ -12,6 +12,9 @@ database/backups/
 .env.*
 !.env.example
 
+### Runtime logs ###
+*.log
+
 ### IDE ###
 .idea/
 **/.idea/
