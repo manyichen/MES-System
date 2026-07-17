@@ -70,7 +70,9 @@ public class RobotDeliveryTaskResource {
             if (!user.canActAs("PRODUCTION_OPERATOR")) {
                 throw new BadRequestException("only production operators can confirm requisition receipt");
             }
-            return ResourceSupport.action("物料已确认接收", service.confirmDeliveryReceipt(id, user.user.userId));
+            return ResourceSupport.action("物料已确认接收", user.isSuperAdmin()
+                    ? service.confirmDeliveryReceipt(id)
+                    : service.confirmDeliveryReceipt(id, user.user.userId));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }

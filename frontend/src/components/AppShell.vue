@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
   BadgeCheck, ChartNoAxesCombined, ChevronLeft, ChevronRight, ClipboardList,
@@ -7,6 +7,7 @@ import {
   ShieldCheck, UserRound, Warehouse, Wrench, X
 } from 'lucide-vue-next'
 import { navigation } from '../config/modules'
+import { api } from '../api/http'
 import { useSessionStore } from '../stores/session'
 import { codeLabel } from '../utils/display.js'
 
@@ -16,6 +17,7 @@ const router = useRouter()
 const session = useSessionStore()
 const collapsed = ref(false)
 const mobileOpen = ref(false)
+const backendOnline = ref(null)
 
 const items = computed(() => navigation.filter(item => {
   if (session.isSuperAdmin) return true
@@ -33,6 +35,19 @@ function navigate(to) {
   mobileOpen.value = false
   router.push(to)
 }
+
+onMounted(async () => {
+  try {
+    await api.get('/auth/me')
+    backendOnline.value = true
+  } catch {
+    backendOnline.value = false
+  }
+})
+
+function isActive(item) {
+  return route.path === item.to || (item.key === 'executive' && route.path.startsWith('/executive/'))
+}
 </script>
 
 <template>
@@ -44,7 +59,7 @@ function navigate(to) {
         <button type="button" class="mobile-close" title="关闭导航" @click="mobileOpen = false"><X :size="20" /></button>
       </header>
       <nav>
-        <button v-for="item in items" :key="item.key" type="button" :class="{ active: route.path === item.to }" :title="collapsed ? item.label : undefined" @click="navigate(item.to)">
+        <button v-for="item in items" :key="item.key" type="button" :class="{ active: isActive(item) }" :title="collapsed ? item.label : undefined" @click="navigate(item.to)">
           <component :is="iconMap[item.icon]" :size="19" />
           <span>{{ item.label }}</span>
         </button>
@@ -61,7 +76,7 @@ function navigate(to) {
     <section class="app-main">
       <header class="topbar">
         <button type="button" class="mobile-menu" title="打开导航" @click="mobileOpen = true"><Menu :size="20" /></button>
-        <div class="connection"><i />后端服务已连接</div>
+        <div :class="['connection', { offline: backendOnline === false }]"><i />{{ backendOnline === null ? '正在检测后端服务' : backendOnline ? '后端服务已连接' : '后端服务连接异常' }}</div>
         <div class="topbar-meta"><span>{{ new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' }) }}</span><strong>双星轮胎工厂</strong></div>
       </header>
       <slot />

@@ -24,7 +24,6 @@ final class AuthorizationPolicy {
             rule("POST", "work-orders", "planning.work_order.create"),
             rule("POST", "work-orders/\\d+/dispatch", "planning.work_order.dispatch"),
             rule("POST", "work-orders/\\d+/receive", "planning.work_order.receive"),
-            rule("POST", "work-orders/\\d+/reject", "planning.work_order.receive"),
 
             any("GET", "materials(?:/.*)?", "warehouse.read", "warehouse.requisition.create", "master.read"),
             any("GET", "warehouses(?:/\\d+)?", "warehouse.read", "warehouse.requisition.create"),
@@ -76,9 +75,11 @@ final class AuthorizationPolicy {
             rule("POST", "maintenance-plans", "equipment.manage"),
 
             rule("GET", "products(?:/.*)?", "master.read"),
-            rule("POST", "products(?:/.*)?", "master.manage"),
+            rule("POST|PUT|DELETE", "products(?:/.*)?", "master.manage"),
+            rule("GET", "product-boms(?:/.*)?", "master.read"),
+            rule("POST|PUT|DELETE", "product-boms(?:/.*)?", "master.manage"),
             rule("GET", "production-lines(?:/.*)?", "master.read"),
-            rule("POST", "production-lines(?:/.*)?", "master.manage"),
+            rule("POST|PUT|DELETE", "production-lines(?:/.*)?", "master.manage"),
             rule("GET", "process-routes(?:/.*)?", "process.read"),
             rule("POST|PUT|DELETE", "process-routes(?:/.*)?", "process.manage"),
             rule("GET", "sync-logs(?:/.*)?", "system.health.read"),

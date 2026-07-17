@@ -32,10 +32,28 @@ import java.util.Map;
 public class WarehouseDao {
     public List<MesMaterial> listMaterials() throws SQLException {
         String sql = """
-                select material_id, material_code, material_name, material_type, specification,
-                       unit, shelf_life_days, enabled, created_at
-                from mes_material
-                order by material_id asc
+                select m.material_id, m.material_code, m.material_name, m.material_type, m.specification,
+                       m.unit, m.shelf_life_days, m.enabled, m.created_at,
+                       case when m.material_type in ('RAW', 'AUX') then 'RAW'
+                            when m.material_type = 'WIP' then 'WIP'
+                            when m.material_type = 'FINISHED' then 'FINISHED'
+                       end as default_warehouse_type,
+                       dw.warehouse_id as default_warehouse_id,
+                       dw.warehouse_code as default_warehouse_code,
+                       dw.warehouse_name as default_warehouse_name
+                from mes_material m
+                left join lateral (
+                    select w.warehouse_id, w.warehouse_code, w.warehouse_name
+                    from mes_warehouse w
+                    where w.enabled = 1
+                      and w.warehouse_type = case when m.material_type in ('RAW', 'AUX') then 'RAW'
+                                                   when m.material_type = 'WIP' then 'WIP'
+                                                   when m.material_type = 'FINISHED' then 'FINISHED'
+                                              end
+                    order by w.warehouse_id
+                    limit 1
+                ) dw on true
+                order by m.material_id asc
                 """;
         try (Connection connection = Db.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql);
@@ -274,10 +292,20 @@ public class WarehouseDao {
 
     public List<MesInventory> listInventory() throws SQLException {
         String sql = """
-                select inventory_id, material_id, warehouse_id, location_id, batch_no,
-                       available_qty, reserved_qty, frozen_qty, quality_status, last_check_time
-                from mes_inventory
-                order by inventory_id asc
+                select i.inventory_id, i.material_id,
+                       m.material_code, m.material_name, m.material_type, m.specification, m.unit,
+                       i.warehouse_id, w.warehouse_code, w.warehouse_name,
+                       i.location_id, l.location_code, l.location_name, i.batch_no,
+                       i.available_qty,
+                       sum(case when i.quality_status = 'QUALIFIED' then i.available_qty else 0 end)
+                           over (partition by i.warehouse_id, i.material_id)
+                           as warehouse_material_available_qty,
+                       i.reserved_qty, i.frozen_qty, i.quality_status, i.last_check_time
+                from mes_inventory i
+                left join mes_material m on m.material_id = i.material_id
+                left join mes_warehouse w on w.warehouse_id = i.warehouse_id
+                left join mes_warehouse_location l on l.location_id = i.location_id
+                order by w.warehouse_name, m.material_name, i.batch_no, i.inventory_id
                 """;
         try (Connection connection = Db.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql);
@@ -446,8 +474,17 @@ public class WarehouseDao {
         try (Connection connection = Db.getConnection()) {
             connection.setAutoCommit(false);
             try {
-                findMaterial(request.materialId);
-                findWarehouse(request.warehouseId);
+                MesMaterial material = findMaterial(request.materialId);
+                MesWarehouse warehouse = findWarehouse(request.warehouseId);
+                String expectedWarehouseType = warehouseTypeForMaterial(material.materialType);
+                if (warehouse.enabled == null || warehouse.enabled != 1) {
+                    throw new BadRequestException("目标仓库已停用，不能办理采购入库");
+                }
+                if (expectedWarehouseType != null
+                        && !expectedWarehouseType.equals(warehouse.warehouseType)) {
+                    throw new BadRequestException(material.materialName + "应入库到"
+                            + expectedWarehouseType + "类型仓库");
+                }
                 Long locationId = request.locationId == null || request.locationId <= 0
                         ? ensurePurchaseLocation(connection, request.warehouseId)
                         : request.locationId;
@@ -868,14 +905,20 @@ public class WarehouseDao {
     private void ensureInventoryEnoughForRequisition(Connection connection, long requisitionId) throws SQLException {
         String sql = """
                 select i.material_id, i.required_qty, i.batch_no,
+                       m.material_name, m.unit, w.warehouse_name,
                        coalesce(sum(inv.available_qty), 0) as available_qty
                 from mes_material_requisition_item i
+                join mes_material_requisition r on r.requisition_id = i.requisition_id
+                left join mes_material m on m.material_id = i.material_id
+                left join mes_warehouse w on w.warehouse_id = r.warehouse_id
                 left join mes_inventory inv on inv.material_id = i.material_id
                     and inv.available_qty > 0
-                    and inv.warehouse_id = (select r.warehouse_id from mes_material_requisition r where r.requisition_id = i.requisition_id)
-                    and (i.batch_no is null or inv.batch_no = i.batch_no)
+                    and inv.quality_status = 'QUALIFIED'
+                    and inv.warehouse_id = r.warehouse_id
+                    and (nullif(btrim(i.batch_no), '') is null or inv.batch_no = i.batch_no)
                 where i.requisition_id = ?
-                group by i.requisition_item_id, i.material_id, i.required_qty, i.batch_no
+                group by i.requisition_item_id, i.material_id, i.required_qty, i.batch_no,
+                         m.material_name, m.unit, w.warehouse_name
                 order by i.requisition_item_id
                 """;
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -887,7 +930,14 @@ public class WarehouseDao {
                     BigDecimal requiredQty = rs.getBigDecimal("required_qty");
                     BigDecimal availableQty = rs.getBigDecimal("available_qty");
                     if (availableQty.compareTo(requiredQty) < 0) {
-                        throw new BadRequestException("inventory is not enough for materialId " + rs.getLong("material_id"));
+                        String materialName = defaultText(rs.getString("material_name"),
+                                "物料 #" + rs.getLong("material_id"));
+                        String warehouseName = defaultText(rs.getString("warehouse_name"), "目标仓库");
+                        String unit = defaultText(rs.getString("unit"), "");
+                        throw new BadRequestException(materialName + "在" + warehouseName
+                                + "的可用库存为 " + availableQty.stripTrailingZeros().toPlainString() + unit
+                                + "，领料需要 " + requiredQty.stripTrailingZeros().toPlainString() + unit
+                                + "；请采购入同一仓库后重新批准");
                     }
                 }
                 if (!hasItems) {
@@ -1254,41 +1304,50 @@ public class WarehouseDao {
                     BigDecimal qty = rs.getBigDecimal("required_qty");
                     String batchNo = rs.getString("batch_no");
                     long warehouseId = rs.getLong("warehouse_id");
-                    MesInventory inventory = findInventoryForDeduction(connection, warehouseId, materialId, batchNo, qty);
-                    updateInventoryAfterDeduction(connection, inventory.inventoryId, qty);
+                    deductAvailableInventory(connection, warehouseId, materialId, batchNo, qty, pickingTaskId);
                     updateRequisitionItemCompleted(connection, itemId, qty);
-                    insertInventoryTransaction(connection, materialId, inventory.inventoryId, qty, pickingTaskId);
                 }
             }
         }
         markRequisitionCompleted(connection, pickingTaskId);
     }
 
-    private MesInventory findInventoryForDeduction(Connection connection, long warehouseId, long materialId, String batchNo, BigDecimal qty) throws SQLException {
+    private void deductAvailableInventory(Connection connection, long warehouseId, long materialId,
+            String batchNo, BigDecimal qty, long pickingTaskId) throws SQLException {
+        String normalizedBatchNo = batchNo == null || batchNo.isBlank() ? null : batchNo;
         String sql = """
                 select inventory_id, material_id, warehouse_id, location_id, batch_no,
                        available_qty, reserved_qty, frozen_qty, quality_status, last_check_time
                 from mes_inventory
                 where material_id = ?
                   and warehouse_id = ?
-                  and available_qty >= ?
+                  and available_qty > 0
+                  and quality_status = 'QUALIFIED'
                   and (? is null or batch_no = ?)
-                order by inventory_id
-                limit 1
+                order by last_check_time, inventory_id
                 for update
                 """;
+        BigDecimal remaining = qty;
+        List<MesInventory> inventories = new ArrayList<>();
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setLong(1, materialId);
             statement.setLong(2, warehouseId);
-            statement.setBigDecimal(3, qty);
-            statement.setString(4, batchNo);
-            statement.setString(5, batchNo);
+            statement.setString(3, normalizedBatchNo);
+            statement.setString(4, normalizedBatchNo);
             try (ResultSet rs = statement.executeQuery()) {
-                if (!rs.next()) {
-                    throw new BadRequestException("inventory is not enough for materialId " + materialId);
-                }
-                return mapInventory(rs);
+                while (rs.next()) inventories.add(mapInventory(rs));
             }
+        }
+        for (MesInventory inventory : inventories) {
+            if (remaining.signum() <= 0) break;
+            BigDecimal deducted = inventory.availableQty.min(remaining);
+            updateInventoryAfterDeduction(connection, inventory.inventoryId, deducted);
+            insertInventoryTransaction(
+                    connection, materialId, inventory.inventoryId, deducted, pickingTaskId);
+            remaining = remaining.subtract(deducted);
+        }
+        if (remaining.signum() > 0) {
+            throw new BadRequestException("inventory is not enough for materialId " + materialId);
         }
     }
 
@@ -1957,6 +2016,10 @@ public class WarehouseDao {
         item.unit = rs.getString("unit");
         item.shelfLifeDays = getInteger(rs, "shelf_life_days");
         item.enabled = rs.getInt("enabled");
+        item.defaultWarehouseType = getOptionalString(rs, "default_warehouse_type");
+        item.defaultWarehouseId = getOptionalLong(rs, "default_warehouse_id");
+        item.defaultWarehouseCode = getOptionalString(rs, "default_warehouse_code");
+        item.defaultWarehouseName = getOptionalString(rs, "default_warehouse_name");
         item.createdAt = getLocalDateTime(rs, "created_at");
         return item;
     }
@@ -1985,10 +2048,20 @@ public class WarehouseDao {
         MesInventory item = new MesInventory();
         item.inventoryId = rs.getLong("inventory_id");
         item.materialId = rs.getLong("material_id");
+        item.materialCode = getOptionalString(rs, "material_code");
+        item.materialName = getOptionalString(rs, "material_name");
+        item.materialType = getOptionalString(rs, "material_type");
+        item.specification = getOptionalString(rs, "specification");
+        item.unit = getOptionalString(rs, "unit");
         item.warehouseId = rs.getLong("warehouse_id");
+        item.warehouseCode = getOptionalString(rs, "warehouse_code");
+        item.warehouseName = getOptionalString(rs, "warehouse_name");
         item.locationId = rs.getLong("location_id");
+        item.locationCode = getOptionalString(rs, "location_code");
+        item.locationName = getOptionalString(rs, "location_name");
         item.batchNo = rs.getString("batch_no");
         item.availableQty = rs.getBigDecimal("available_qty");
+        item.warehouseMaterialAvailableQty = getOptionalBigDecimal(rs, "warehouse_material_available_qty");
         item.reservedQty = rs.getBigDecimal("reserved_qty");
         item.frozenQty = rs.getBigDecimal("frozen_qty");
         item.qualityStatus = rs.getString("quality_status");
@@ -2099,6 +2172,16 @@ public class WarehouseDao {
         return value == null || value.isBlank() ? fallback : value;
     }
 
+    private static String warehouseTypeForMaterial(String materialType) {
+        if (materialType == null) return null;
+        return switch (materialType.toUpperCase()) {
+            case "RAW", "AUX" -> "RAW";
+            case "WIP" -> "WIP";
+            case "FINISHED" -> "FINISHED";
+            default -> null;
+        };
+    }
+
     private static BigDecimal nvl(BigDecimal value) {
         return value == null ? BigDecimal.ZERO : value;
     }
@@ -2127,6 +2210,30 @@ public class WarehouseDao {
     private static Long getLong(ResultSet rs, String column) throws SQLException {
         long value = rs.getLong(column);
         return rs.wasNull() ? null : value;
+    }
+
+    private static String getOptionalString(ResultSet rs, String column) {
+        try {
+            return rs.getString(column);
+        } catch (SQLException ignored) {
+            return null;
+        }
+    }
+
+    private static BigDecimal getOptionalBigDecimal(ResultSet rs, String column) {
+        try {
+            return rs.getBigDecimal(column);
+        } catch (SQLException ignored) {
+            return null;
+        }
+    }
+
+    private static Long getOptionalLong(ResultSet rs, String column) {
+        try {
+            return getLong(rs, column);
+        } catch (SQLException ignored) {
+            return null;
+        }
     }
 
     private static LocalDateTime getLocalDateTime(ResultSet rs, String column) throws SQLException {

@@ -14,6 +14,10 @@ public class MesProductionTask {
     public Long targetLineId;
     public String taskStatus;
     public String kittingStatus;
+    public Boolean kittingAnalyzable;
+    public String kittingBlockedReason;
+    public Boolean shortageAlertPublished;
+    public String shortageSummary;
     public LocalDateTime releaseTime;
     public LocalDateTime closeTime;
     public String remark;

@@ -37,19 +37,57 @@ public class MasterDataService {
                 .orElseThrow(() -> new NotFoundException("product not found"));
     }
 
+    public MesProduct updateProduct(long productId, MesProduct product) {
+        requireId(productId, "productId is required");
+        requireText(product.productCode, "productCode is required");
+        requireText(product.productName, "productName is required");
+        product.productModel = product.productModel == null || product.productModel.isBlank()
+                ? product.productName : product.productModel;
+        product.enabled = product.enabled == null ? 1 : product.enabled;
+        return database(() -> dao.updateProduct(productId, product));
+    }
+
+    public MesProduct disableProduct(long productId) {
+        requireId(productId, "productId is required");
+        return database(() -> dao.disableProduct(productId));
+    }
+
     public List<MesProductBom> listBom(long productId) {
         findProduct(productId);
         return database(() -> dao.listBom(productId));
+    }
+
+    public List<MesProductBom> listAllBom() {
+        return database(dao::listAllBom);
     }
 
     public MesProductBom createBom(long productId, MesProductBom bom) {
         findProduct(productId);
         requireId(bom.materialId, "materialId is required");
         bom.productId = productId;
-        bom.qtyPerUnit = bom.qtyPerUnit == null ? BigDecimal.ONE : bom.qtyPerUnit;
+        if (bom.qtyPerUnit == null || bom.qtyPerUnit.signum() <= 0) {
+            throw new BadRequestException("BOM物料单耗必须大于0");
+        }
         bom.unit = bom.unit == null || bom.unit.isBlank() ? "kg" : bom.unit;
         bom.enabled = bom.enabled == null ? 1 : bom.enabled;
         return database(() -> dao.insertBom(bom));
+    }
+
+    public MesProductBom updateBom(long bomId, MesProductBom bom) {
+        requireId(bomId, "bomId is required");
+        requireId(bom.productId, "productId is required");
+        requireId(bom.materialId, "materialId is required");
+        if (bom.qtyPerUnit == null || bom.qtyPerUnit.signum() <= 0) {
+            throw new BadRequestException("qtyPerUnit must be positive");
+        }
+        bom.unit = bom.unit == null || bom.unit.isBlank() ? "kg" : bom.unit;
+        bom.enabled = bom.enabled == null ? 1 : bom.enabled;
+        return database(() -> dao.updateBom(bomId, bom));
+    }
+
+    public void deleteBom(long bomId) {
+        requireId(bomId, "bomId is required");
+        database(() -> { dao.deleteBom(bomId); return null; });
     }
 
     public List<MesProcessRoute> listProcessRoutes() {
@@ -95,6 +133,20 @@ public class MasterDataService {
         line.lineStatus = line.lineStatus == null || line.lineStatus.isBlank() ? "IDLE" : line.lineStatus;
         line.enabled = line.enabled == null ? 1 : line.enabled;
         return database(() -> dao.insertProductionLine(line));
+    }
+
+    public MesProductionLine updateProductionLine(long lineId, MesProductionLine line) {
+        requireId(lineId, "lineId is required");
+        requireText(line.lineCode, "lineCode is required");
+        requireText(line.lineName, "lineName is required");
+        line.lineStatus = line.lineStatus == null || line.lineStatus.isBlank() ? "IDLE" : line.lineStatus;
+        line.enabled = line.enabled == null ? 1 : line.enabled;
+        return database(() -> dao.updateProductionLine(lineId, line));
+    }
+
+    public MesProductionLine disableProductionLine(long lineId) {
+        requireId(lineId, "lineId is required");
+        return database(() -> dao.disableProductionLine(lineId));
     }
 
     public List<MesSyncLog> listSyncLogs() {

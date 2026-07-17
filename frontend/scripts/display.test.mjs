@@ -28,5 +28,7 @@ assert.match(businessValue('batchNo', 'BATCH-20260716-001'), /^生产批次 /)
 assert.equal(completedMessage('创建生产工单'), '操作已完成：创建生产工单')
 assert.match(incompleteMessage('创建生产工单', new Error('work order is required')), /^操作未完成：创建生产工单。/)
 assert.doesNotMatch(localizeMessage('work order is required'), /required|work order/i)
+assert.equal(localizeMessage('task productId is required'), '生产任务未关联产品，请先补全客户订单的产品信息')
+assert.equal(localizeMessage('product bom is required before kitting analysis'), '产品未配置启用的BOM物料，请先维护产品BOM')
 
 console.log(`Chinese display checks passed for ${cases.length} required business fields`)

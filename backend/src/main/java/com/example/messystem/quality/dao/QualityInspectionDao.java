@@ -93,21 +93,28 @@ public class QualityInspectionDao {
     }
 
     public boolean submit(long inspectionId, long inspectorId, String submittedResult, String resultNote) throws SQLException {
+        return submit(inspectionId, inspectorId, submittedResult, resultNote, true);
+    }
+
+    public boolean submit(long inspectionId, long inspectorId, String submittedResult,
+            String resultNote, boolean requireAssignment) throws SQLException {
         String sql = """
                 update mes_quality_inspection
                 set inspection_status = 'SUBMITTED', submitted_by = ?, submitted_at = current_timestamp,
                     submitted_result = ?, result_note = ?,
                     inspection_time = coalesce(inspection_time, current_timestamp)
-                where inspection_id = ? and (assigned_to = ? or inspector_id = ?)
+                where inspection_id = ? %s
                   and inspection_status in ('CREATED','IN_PROGRESS')
-                """;
+                """.formatted(requireAssignment ? "and (assigned_to = ? or inspector_id = ?)" : "");
         try (Connection conn = Db.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, inspectorId);
             ps.setString(2, submittedResult);
             ps.setString(3, resultNote);
             ps.setLong(4, inspectionId);
-            ps.setLong(5, inspectorId);
-            ps.setLong(6, inspectorId);
+            if (requireAssignment) {
+                ps.setLong(5, inspectorId);
+                ps.setLong(6, inspectorId);
+            }
             return ps.executeUpdate() > 0;
         }
     }

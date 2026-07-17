@@ -92,12 +92,39 @@ function selectedOption(field, value = values[field.key]) {
   return availableOptions(field).find(row => String(optionValue(field, row)) === String(value))
 }
 
+function selectOptionValue(option) {
+  return option && typeof option === 'object'
+    ? option.value ?? option.key ?? option.code ?? option.label
+    : option
+}
+
+function selectOptionLabel(field, option) {
+  const label = option && typeof option === 'object'
+    ? option.label ?? option.name ?? option.value ?? option.code
+    : option
+  return businessValue(field.key, label)
+}
+
+function selectedSelectOption(field) {
+  return (field.options || []).find(option => String(selectOptionValue(option)) === String(values[field.key]))
+}
+
 function onLookupChange(field) {
   const selected = selectedOption(field)
+  const assignedKeys = []
   for (const [targetKey, sourceKey] of Object.entries(field.source.assign || {})) {
-    values[targetKey] = selected?.[sourceKey] ?? ''
+    values[targetKey] = clone(selected?.[sourceKey] ?? '')
+    assignedKeys.push(targetKey)
   }
   reconcileDependentValues(field.key)
+  for (const targetKey of assignedKeys) reconcileDependentValues(targetKey)
+}
+
+function onSelectChange(field) {
+  const selected = selectedSelectOption(field)
+  for (const [targetKey, sourceKey] of Object.entries(field.assign || {})) {
+    values[targetKey] = selected?.[sourceKey] ?? ''
+  }
 }
 
 function reconcileDependentValues(changedKey = null) {
@@ -190,9 +217,9 @@ function submit() {
           <select v-else-if="field.type === 'multi-lookup'" v-model="values[field.key]" multiple :required="field.required" :disabled="optionLoading[field.key]">
             <option v-for="option in availableOptions(field)" :key="optionValue(field, option)" :value="optionValue(field, option)">{{ optionLabel(field, option) }}</option>
           </select>
-          <select v-else-if="field.type === 'select'" v-model="values[field.key]" :required="field.required">
+          <select v-else-if="field.type === 'select'" v-model="values[field.key]" :required="field.required" @change="onSelectChange(field)">
             <option value="" :disabled="field.required">请选择</option>
-            <option v-for="option in field.options" :key="option" :value="option">{{ businessValue(field.key, option) }}</option>
+            <option v-for="option in field.options" :key="selectOptionValue(option)" :value="selectOptionValue(option)">{{ selectOptionLabel(field, option) }}</option>
           </select>
           <textarea v-else-if="field.type === 'json'" v-model="values[field.key]" rows="7" :required="field.required" />
           <input v-else v-model="values[field.key]" :type="field.type === 'decimal' ? 'number' : field.type" :step="field.type === 'decimal' ? '0.01' : undefined" :required="field.required" />

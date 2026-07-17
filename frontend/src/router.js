@@ -12,6 +12,7 @@ const router = createRouter({
     { path: '/login', name: 'login', component: LoginView },
     { path: '/', name: 'dashboard', component: DashboardView },
     { path: '/executive', name: 'executive', component: ExecutiveView },
+    { path: '/executive/live', name: 'executive-live', component: ExecutiveView },
     { path: '/profile', name: 'profile', component: ProfileView },
     { path: '/module/:moduleKey', name: 'module', component: ModuleWorkspace },
     { path: '/trace-public', name: 'public-trace', component: PublicTraceView, meta: { public: true } },

@@ -19,6 +19,10 @@ public class ProductionService {
     }
 
     public MesWorkReport createWorkReport(MesWorkReport report) {
+        return createWorkReport(report, false);
+    }
+
+    public MesWorkReport createWorkReport(MesWorkReport report, boolean allowAdministrativeOverride) {
         if (report.workOrderId == null || report.workOrderId <= 0) {
             throw new BadRequestException("生产工单ID不能为空");
         }
@@ -31,7 +35,7 @@ public class ProductionService {
         if (report.qualifiedQty + report.defectQty > report.reportQty) {
             throw new BadRequestException("合格数量与不合格数量之和不能超过报工数量");
         }
-        return database(() -> dao.insertWorkReport(report));
+        return database(() -> dao.insertWorkReport(report, !allowAdministrativeOverride));
     }
 
     public MesWorkReport getWorkReport(long reportId) {
@@ -39,6 +43,11 @@ public class ProductionService {
     }
 
     public MesWorkReport updateWorkReport(long reportId, MesWorkReport report) {
+        return updateWorkReport(reportId, report, false);
+    }
+
+    public MesWorkReport updateWorkReport(long reportId, MesWorkReport report,
+            boolean allowAdministrativeOverride) {
         if (report.reportQty != null && report.reportQty < 0
                 || report.qualifiedQty != null && report.qualifiedQty < 0
                 || report.defectQty != null && report.defectQty < 0) {
@@ -48,7 +57,7 @@ public class ProductionService {
                 && report.qualifiedQty + report.defectQty > report.reportQty) {
             throw new BadRequestException("合格数量与不合格数量之和不能超过报工数量");
         }
-        return database(() -> dao.updateWorkReport(reportId, report));
+        return database(() -> dao.updateWorkReport(reportId, report, !allowAdministrativeOverride));
     }
 
     public void deleteWorkReport(long reportId) {

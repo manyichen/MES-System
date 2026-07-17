@@ -124,6 +124,22 @@ public class MaintenanceOrderDao {
         }
     }
 
+    public boolean finishAny(long id, String resultDesc) throws SQLException {
+        String sql = """
+                UPDATE mes_maintenance_order
+                SET maintenance_status = 'FINISHED',
+                    finish_time = current_timestamp,
+                    result_desc = COALESCE(NULLIF(?, ''), result_desc)
+                WHERE maintenance_order_id = ?
+                  AND maintenance_status IN ('ASSIGNED','IN_PROGRESS')
+                """;
+        try (Connection conn = Db.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, resultDesc);
+            ps.setLong(2, id);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
     public boolean updateStatus(long id, String status) throws SQLException {
         String sql = "UPDATE mes_maintenance_order SET maintenance_status = ?, finish_time = CASE WHEN ? IN ('FINISHED', 'ACCEPTED') THEN NOW() ELSE finish_time END WHERE maintenance_order_id = ?";
         try (Connection conn = Db.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {

@@ -40,6 +40,26 @@ public class MasterDataResource {
         }
     }
 
+    @PUT
+    @Path("/products/{id}")
+    public Response updateProduct(@PathParam("id") long productId, MesProduct product) {
+        try {
+            return ResourceSupport.action("product updated", service.updateProduct(productId, product));
+        } catch (RuntimeException ex) {
+            return ResourceSupport.handle(ex);
+        }
+    }
+
+    @DELETE
+    @Path("/products/{id}")
+    public Response disableProduct(@PathParam("id") long productId) {
+        try {
+            return ResourceSupport.action("product disabled", service.disableProduct(productId));
+        } catch (RuntimeException ex) {
+            return ResourceSupport.handle(ex);
+        }
+    }
+
     @GET
     @Path("/products/{id}/bom")
     public Response listBom(@PathParam("id") long productId) {
@@ -55,6 +75,43 @@ public class MasterDataResource {
     public Response createBom(@PathParam("id") long productId, MesProductBom bom) {
         try {
             return ResourceSupport.created("bom item created", service.createBom(productId, bom));
+        } catch (RuntimeException ex) {
+            return ResourceSupport.handle(ex);
+        }
+    }
+
+    @GET
+    @Path("/product-boms")
+    public Response listAllBom() {
+        return ResourceSupport.ok(service.listAllBom());
+    }
+
+    @POST
+    @Path("/product-boms")
+    public Response createBom(MesProductBom bom) {
+        try {
+            return ResourceSupport.created("bom item created", service.createBom(bom.productId, bom));
+        } catch (RuntimeException ex) {
+            return ResourceSupport.handle(ex);
+        }
+    }
+
+    @PUT
+    @Path("/product-boms/{id}")
+    public Response updateBom(@PathParam("id") long bomId, MesProductBom bom) {
+        try {
+            return ResourceSupport.action("bom item updated", service.updateBom(bomId, bom));
+        } catch (RuntimeException ex) {
+            return ResourceSupport.handle(ex);
+        }
+    }
+
+    @DELETE
+    @Path("/product-boms/{id}")
+    public Response deleteBom(@PathParam("id") long bomId) {
+        try {
+            service.deleteBom(bomId);
+            return ResourceSupport.action("bom item deleted", null);
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }
@@ -108,6 +165,26 @@ public class MasterDataResource {
     public Response createProductionLine(MesProductionLine line) {
         try {
             return ResourceSupport.created("production line created", service.createProductionLine(line));
+        } catch (RuntimeException ex) {
+            return ResourceSupport.handle(ex);
+        }
+    }
+
+    @PUT
+    @Path("/production-lines/{id}")
+    public Response updateProductionLine(@PathParam("id") long lineId, MesProductionLine line) {
+        try {
+            return ResourceSupport.action("production line updated", service.updateProductionLine(lineId, line));
+        } catch (RuntimeException ex) {
+            return ResourceSupport.handle(ex);
+        }
+    }
+
+    @DELETE
+    @Path("/production-lines/{id}")
+    public Response disableProductionLine(@PathParam("id") long lineId) {
+        try {
+            return ResourceSupport.action("production line disabled", service.disableProductionLine(lineId));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }

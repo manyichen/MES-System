@@ -192,10 +192,20 @@ public class WarehouseService {
 
     /** 仅当操作工拥有相关生产工单时才允许创建领料申请。 */
     public MesMaterialRequisition createOperatorRequisition(MesMaterialRequisition requisition, long operatorId) {
-        requireId(operatorId, "operatorId is required");
+        return createRequisitionForRequester(requisition, operatorId, false);
+    }
+
+    /**
+     * 超级管理员可以代表任意可执行工单发起领料；普通操作工仍只能选择本人被派或已接收的工单。
+     */
+    public MesMaterialRequisition createRequisitionForRequester(MesMaterialRequisition requisition,
+            long requesterId, boolean allowAdministrativeOverride) {
+        requireId(requesterId, "requesterId is required");
         validateRequisition(requisition);
-        requireOperatorWorkOrderAccess(requisition.workOrderId, operatorId);
-        requisition.requestedBy = operatorId;
+        if (!allowAdministrativeOverride) {
+            requireOperatorWorkOrderAccess(requisition.workOrderId, requesterId);
+        }
+        requisition.requestedBy = requesterId;
         return database(() -> dao.insertRequisition(requisition));
     }
 
@@ -224,6 +234,9 @@ public class WarehouseService {
             requireId(item.materialId, "materialId is required");
             if (item.requiredQty == null || item.requiredQty.signum() <= 0) {
                 throw new BadRequestException("requiredQty must be positive");
+            }
+            if (item.batchNo != null && item.batchNo.isBlank()) {
+                item.batchNo = null;
             }
         }
     }

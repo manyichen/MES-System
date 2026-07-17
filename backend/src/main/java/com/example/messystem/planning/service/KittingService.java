@@ -12,7 +12,9 @@ import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class KittingService {
     private final ProductionTaskService taskService = new ProductionTaskService();
@@ -20,12 +22,14 @@ public class KittingService {
 
     public MesKittingAnalysis analyze(long taskId) {
         MesProductionTask task = taskService.getTask(taskId);
-        if (task.productId == null) {
-            throw new BadRequestException("task productId is required");
+        if (!Boolean.TRUE.equals(task.kittingAnalyzable)) {
+            throw new BadRequestException(task.kittingBlockedReason == null
+                    ? "当前生产任务不满足齐套分析条件，请检查产品、计划数量和产品BOM"
+                    : task.kittingBlockedReason);
         }
         List<MesProductBom> bomItems = database(() -> dao.listBomForProduct(task.productId));
         if (bomItems.isEmpty()) {
-            throw new BadRequestException("product bom is required before kitting analysis");
+            throw new BadRequestException("产品未配置启用的BOM物料，请先维护产品BOM");
         }
         MesKittingAnalysis analysis = new MesKittingAnalysis();
         analysis.analysisNo = IdGenerator.nextCode("KIT");
@@ -34,19 +38,27 @@ public class KittingService {
         analysis.planQty = task.planQty;
         analysis.analysisTime = LocalDateTime.now();
 
-        List<MesKittingShortageItem> shortages = new ArrayList<>();
+        Map<Long, MesKittingShortageItem> requirements = new LinkedHashMap<>();
         for (MesProductBom bom : bomItems) {
             BigDecimal requiredQty = nvl(bom.qtyPerUnit).multiply(BigDecimal.valueOf(task.planQty == null ? 0 : task.planQty));
-            BigDecimal availableQty = database(() -> dao.availableQty(bom.materialId));
-            if (availableQty.compareTo(requiredQty) < 0) {
-                MesKittingShortageItem item = new MesKittingShortageItem();
-                item.taskId = task.taskId;
-                item.materialId = bom.materialId;
-                item.materialCode = bom.materialCode;
-                item.materialName = bom.materialName;
-                item.requiredQty = requiredQty;
+            MesKittingShortageItem item = requirements.computeIfAbsent(bom.materialId, ignored -> {
+                MesKittingShortageItem requirement = new MesKittingShortageItem();
+                requirement.taskId = task.taskId;
+                requirement.materialId = bom.materialId;
+                requirement.materialCode = bom.materialCode;
+                requirement.materialName = bom.materialName;
+                requirement.requiredQty = BigDecimal.ZERO;
+                return requirement;
+            });
+            item.requiredQty = item.requiredQty.add(requiredQty);
+        }
+
+        List<MesKittingShortageItem> shortages = new ArrayList<>();
+        for (MesKittingShortageItem item : requirements.values()) {
+            BigDecimal availableQty = database(() -> dao.availableQty(item.materialId));
+            if (availableQty.compareTo(item.requiredQty) < 0) {
                 item.availableQty = availableQty;
-                item.shortageQty = requiredQty.subtract(availableQty);
+                item.shortageQty = item.requiredQty.subtract(availableQty);
                 item.itemStatus = "OPEN";
                 shortages.add(item);
             }
@@ -75,6 +87,9 @@ public class KittingService {
         MesProductionTask task = taskService.getTask(taskId);
         if (!"SHORTAGE".equals(task.kittingStatus)) {
             throw new BadRequestException("当前任务不存在待发布的物料缺口");
+        }
+        if (database(() -> dao.hasPublishedShortageAlert(taskId))) {
+            throw new BadRequestException("该生产任务已经发布过缺料预警，不能重复发布");
         }
         return database(() -> dao.publishShortageAlerts(taskId));
     }

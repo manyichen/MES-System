@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { Plus, RefreshCw, Search } from 'lucide-vue-next'
+import { ExternalLink, Plus, RefreshCw, Search, X } from 'lucide-vue-next'
 import { api } from '../api/http'
 import { modules } from '../config/modules'
 import { businessValue, completedMessage, incompleteMessage, localizeMessage } from '../utils/display.js'
@@ -20,6 +20,7 @@ const error = ref('')
 const notice = ref('')
 const query = ref('')
 const dialog = ref(null)
+const preview = ref(null)
 
 const module = computed(() => modules[route.params.moduleKey])
 const allowed = item => {
@@ -64,7 +65,13 @@ async function load({ preserveNotice = false } = {}) {
     const selected = section.value.dataPath
       ? section.value.dataPath.split('.').reduce((value, key) => value?.[key], payload)
       : payload
-    rows.value = normalize(selected)
+    const normalized = normalize(selected)
+    const transformed = section.value.transformRows
+      ? section.value.transformRows(normalized)
+      : normalized
+    rows.value = section.value.enrichRows
+      ? await section.value.enrichRows(transformed, endpoint => api.get(endpoint))
+      : transformed
   } catch (cause) {
     error.value = `页面数据加载未完成：${localizeMessage(cause.message)}`
     rows.value = []
@@ -74,8 +81,51 @@ async function load({ preserveNotice = false } = {}) {
 }
 
 function openAction(action, row = null) {
+  const disabled = row && (typeof action.disabled === 'function' ? action.disabled(row) : action.disabled)
+  if (disabled) {
+    error.value = typeof action.disabledReason === 'function'
+      ? action.disabledReason(row)
+      : (action.disabledReason || '当前操作暂不可用')
+    return
+  }
+  if (action.confirm && !window.confirm(typeof action.confirm === 'function' ? action.confirm(row) : action.confirm)) return
+  if (action.preview) return openPreview(action, row)
   if (!(action.fields || []).length) return execute(action, row, {})
   dialog.value = { action, row }
+}
+
+function resolveActionValue(value, row) {
+  return typeof value === 'function' ? value(row) : value
+}
+
+function closePreview() {
+  if (preview.value?.url) URL.revokeObjectURL(preview.value.url)
+  preview.value = null
+}
+
+async function openPreview(action, row) {
+  busy.value = true
+  error.value = ''
+  notice.value = ''
+  closePreview()
+  try {
+    const config = action.preview || {}
+    const path = resolveActionValue(config.path || action.path, row)
+    const blob = await api.blob(path)
+    preview.value = {
+      title: resolveActionValue(config.title, row) || action.label,
+      subtitle: resolveActionValue(config.subtitle, row) || row?.serialNo || '',
+      url: URL.createObjectURL(blob),
+      mimeType: blob.type,
+      openUrl: '',
+      traceUrl: row?.accessToken ? `/trace-public?token=${encodeURIComponent(row.accessToken)}` : ''
+    }
+    preview.value.openUrl = preview.value.url
+  } catch (cause) {
+    error.value = incompleteMessage(action.label, cause)
+  } finally {
+    busy.value = false
+  }
 }
 
 function applyAiAdvice(defaults) {
@@ -147,6 +197,22 @@ onMounted(() => {
     </section>
 
     <ActionDialog v-if="dialog" :action="dialog.action" :row="dialog.row" :busy="busy" @close="dialog = null" @submit="values => execute(dialog.action, dialog.row, values)" />
+    <div v-if="preview" class="dialog-mask" @mousedown.self="closePreview">
+      <section class="dialog file-preview-dialog" role="dialog" aria-modal="true">
+        <header>
+          <div><span>文件预览</span><h2>{{ preview.title }}</h2><small v-if="preview.subtitle">{{ preview.subtitle }}</small></div>
+          <button type="button" class="icon-button" title="关闭" @click="closePreview"><X :size="20" /></button>
+        </header>
+        <div class="file-preview-body">
+          <img v-if="preview.mimeType?.startsWith('image/')" :src="preview.url" :alt="preview.title" />
+          <iframe v-else :src="preview.url" :title="preview.title"></iframe>
+        </div>
+        <footer class="file-preview-actions">
+          <a :href="preview.openUrl" target="_blank" rel="noopener"><ExternalLink :size="16" />新窗口打开</a>
+          <a v-if="preview.traceUrl" :href="preview.traceUrl" target="_blank" rel="noopener"><ExternalLink :size="16" />查看公开追溯页</a>
+        </footer>
+      </section>
+    </div>
   </main>
   <main v-else class="workspace-page"><p class="notice error">模块不存在</p></main>
 </template>

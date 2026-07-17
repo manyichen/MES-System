@@ -124,7 +124,9 @@ export function fieldLabel(key) {
 }
 
 const MESSAGE_REPLACEMENTS = [
-  [/not found/i, '未找到相关数据'], [/is required/i, '不能为空'],
+  [/task productId is required/i, '生产任务未关联产品，请先补全客户订单的产品信息'],
+  [/product bom is required before kitting analysis/i, '产品未配置启用的BOM物料，请先维护产品BOM'],
+  [/not found/i, '未找到相关数据'], [/is required/i, '必填信息不能为空'],
   [/must pass kitting analysis before creating work order/i, '必须先完成齐套分析才能创建生产工单'],
   [/must be an available production line/i, '请选择当前可用的生产产线'],
   [/must match the production task product/i, '所选工序必须与生产任务产品匹配'],

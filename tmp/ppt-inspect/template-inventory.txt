@@ -1,0 +1,946 @@
+FILE=C:\Users\Li Hanyu\Desktop\智测未来.pptx
+SLIDES=22
+SIZE=960x540
+
+=== SLIDE 1 | layout=空白 ===
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=-6.2 y=-9.3 w=969.2 h=549.3 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=60.1 y=-244.5 w=696.9 h=712.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=-69.7 y=-80.1 w=528.0 h=540.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=0.0 y=0.0 w=960.0 h=473.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=491.4 y=-109.4 w=528.0 h=540.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=268.3 y=-50.1 w=431.8 h=441.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=0.1 y=-7.6 w=960.0 h=540.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=-69.4 y=-65.9 w=528.0 h=361.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=11 x=115.9 y=-88.2 w=326.7 h=334.1 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=0.0 y=172.2 w=960.0 h=367.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=0.0 y=286.2 w=960.0 h=253.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=3.5 y=-70.5 w=960.0 h=525.3 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=0.1 y=311.3 w=964.4 h=230.9 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=75.0 y=27.6 w=689.9 h=444.2 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=133.6 y=-107.5 w=455.3 h=417.4 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=11 x=384.7 y=12.5 w=326.7 h=334.1 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=343.1 y=-40.9 w=273.7 h=621.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=241.1 y=-63.5 w=105.5 h=177.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=359.1 y=266.2 w=241.8 h=241.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=120.8 y=56.8 w=286.9 h=293.4 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=59.9 y=71.9 w=95.1 h=160.2 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=374.0 y=92.4 w=95.1 h=160.2 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=148.5 y=77.6 w=204.6 h=361.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=304.3 y=78.3 w=191.9 h=362.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=-8.6 y=56.2 w=233.0 h=363.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=162.6 y=33.6 w=148.0 h=249.4 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=282.6 y=-19.2 w=105.5 h=177.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=0.4 y=291.1 w=604.8 h=95.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=70.6 y=409.7 w=744.5 h=68.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=773.3 y=311.6 w=211.2 h=306.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=585.6 y=52.2 w=370.4 h=339.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=563.7 y=92.8 w=370.4 h=339.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=586.1 y=2.8 w=373.9 h=461.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=511.3 y=0.0 w=448.7 h=302.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=573.0 y=88.4 w=387.5 h=387.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=5 x=784.6 y=176.8 w=2.9 h=2.9 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=476.1 y=77.7 w=105.5 h=177.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=498.9 y=93.4 w=95.1 h=160.2 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=440.8 y=72.3 w=191.9 h=362.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=5 x=725.7 y=220.3 w=2.7 h=2.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=468.0 y=281.6 w=24.0 h=24.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=468.0 y=258.0 w=24.0 h=24.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=876.7 y=436.1 w=25.4 h=53.9 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=345.8 y=88.8 w=105.5 h=177.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=558.7 y=47.8 w=105.5 h=177.8 text=
+
+=== SLIDE 2 | layout=空白 ===
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=-6.2 y=-9.3 w=969.2 h=549.3 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=60.1 y=-244.5 w=696.9 h=712.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=264.5 y=-46.1 w=431.8 h=441.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=-69.4 y=-65.9 w=528.0 h=361.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=773.3 y=311.6 w=211.2 h=306.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=11 x=115.9 y=-88.2 w=326.7 h=334.1 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=0.0 y=172.2 w=960.0 h=367.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=0.0 y=44.3 w=890.8 h=495.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=5 x=2.1 y=138.3 w=957.9 h=401.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=5 x=2.1 y=138.3 w=957.9 h=401.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=75.0 y=27.6 w=689.9 h=444.2 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=585.6 y=52.2 w=370.4 h=339.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=11 x=384.7 y=12.5 w=326.7 h=334.1 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=563.7 y=92.8 w=370.4 h=339.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=343.1 y=-40.9 w=273.7 h=621.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=359.1 y=266.2 w=241.8 h=241.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=101.0 y=53.7 w=105.5 h=177.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=120.8 y=56.8 w=286.9 h=293.4 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=52.0 y=35.5 w=890.3 h=48.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=52.0 y=278.8 w=850.9 h=132.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=17 x=317.9 y=348.7 w=210.7 h=38.6 text=需求量不断攀升
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=49.6 y=115.4 w=857.4 h=130.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=683.2 y=249.0 w=190.6 h=190.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=84.0 y=322.0 w=120.1 h=32.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=215.5 y=322.3 w=111.9 h=30.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=74.6 y=135.1 w=549.0 h=93.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=879.1 y=113.4 w=30.1 h=19.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=49.9 y=115.9 w=30.1 h=19.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=875.9 y=226.3 w=30.1 h=19.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=48.5 y=226.3 w=30.1 h=19.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=49.8 y=277.4 w=32.2 h=132.2 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=875.5 y=278.6 w=28.0 h=131.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=93.2 y=102.7 w=230.2 h=41.4 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=92.7 y=259.9 w=226.7 h=41.2 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=342.9 y=322.3 w=111.9 h=30.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=468.0 y=258.0 w=24.0 h=24.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=696.8 y=261.3 w=160.3 h=160.3 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=24.3 y=83.6 w=257.8 h=39.4 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=155.6 y=121.3 w=257.8 h=39.4 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=139.0 y=278.2 w=257.8 h=39.4 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=29.6 y=241.3 w=257.8 h=39.4 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=609.5 y=132.3 w=141.2 h=101.1 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=611.0 y=135.0 w=160.5 h=104.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=756.0 y=131.5 w=141.2 h=101.1 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=758.7 y=133.2 w=136.2 h=96.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=827.0 y=321.9 w=131.6 h=197.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=-2.9 y=321.9 w=131.6 h=197.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=83.9 y=359.7 w=111.9 h=33.9 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=203.4 y=358.6 w=111.9 h=36.3 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=86.2 y=490.2 w=819.8 h=33.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=2.6 y=418.1 w=951.5 h=85.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=-3.7 y=432.4 w=999.5 h=52.1 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=581.5 y=-22.3 w=105.5 h=177.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=17 x=377.0 y=51.8 w=617.2 h=30.3 text=智能穿戴设备是实现健康管理与精准预测的重要工具
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=113.7 y=488.6 w=841.4 h=33.4 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=15.8 y=428.0 w=956.1 h=54.1 text=
+
+=== SLIDE 3 | layout=空白 ===
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=-6.2 y=-9.3 w=969.2 h=549.3 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=60.1 y=-244.5 w=696.9 h=712.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=1.1 y=61.5 w=958.9 h=481.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=-69.7 y=-80.1 w=528.0 h=540.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=268.3 y=-50.1 w=431.8 h=441.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=-69.4 y=-65.9 w=528.0 h=361.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=773.3 y=311.6 w=211.2 h=306.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=-44.8 y=-1.3 w=455.3 h=417.4 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=11 x=115.9 y=-88.2 w=326.7 h=334.1 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=0.0 y=172.2 w=960.0 h=367.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=0.0 y=44.3 w=890.8 h=495.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=5 x=2.1 y=138.3 w=957.9 h=401.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=5 x=2.1 y=138.3 w=957.9 h=401.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=5 x=2.1 y=138.3 w=957.9 h=401.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=5 x=-4.3 y=234.3 w=957.9 h=401.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=104.1 y=0.0 w=812.6 h=404.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=75.0 y=27.6 w=689.9 h=444.2 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=585.6 y=52.2 w=370.4 h=339.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=11 x=384.7 y=12.5 w=326.7 h=334.1 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=563.7 y=92.8 w=370.4 h=339.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=352.5 y=168.9 w=273.7 h=621.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=10.4 y=-29.2 w=105.5 h=177.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=101.0 y=53.7 w=105.5 h=177.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=120.8 y=56.8 w=286.9 h=293.4 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=52.0 y=35.5 w=890.3 h=48.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=827.0 y=321.9 w=131.6 h=197.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=-2.9 y=248.4 w=966.4 h=293.2 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=-2.9 y=321.9 w=131.6 h=197.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=581.5 y=-22.3 w=105.5 h=177.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=17 x=377.0 y=51.8 w=617.2 h=30.3 text=智能穿戴设备是实现健康管理与精准预测的重要工具
+shape=PA-原创小红书雷点PPT禁止盗用 type=17 x=483.3 y=254.9 w=445.4 h=44.3 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=52.7 y=177.3 w=852.8 h=156.9 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=53.1 y=186.0 w=854.2 h=152.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=49.4 y=330.1 w=865.6 h=156.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=65.4 y=196.0 w=412.0 h=134.2 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=17 x=71.5 y=207.0 w=394.1 h=58.9 text=2023年3月，科技部发布《智能健康科技发展行动方案》
+shape=PA-原创小红书雷点PPT禁止盗用 type=17 x=72.3 y=262.3 w=412.0 h=53.6 text=强调发展智能穿戴设备，推动高精度健康数据监测与分析，聚焦实时健康管理、运动监测、远程医疗等场景应用
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=486.9 y=197.0 w=410.7 h=129.9 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=17 x=493.5 y=211.2 w=405.4 h=32.3 text=2023年6月，国务院印发《健康中国2030战略规划
+shape=PA-原创小红书雷点PPT禁止盗用 type=17 x=493.3 y=254.6 w=384.8 h=53.6 text=提出普及智能健康管理技术，推动AI与传感技术融合发展，提升国民健康水平与日常监测覆盖率。
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=-187.4 y=412.1 w=1,324.2 h=185.9 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=82.0 y=85.5 w=885.8 h=84.8 text=
+
+=== SLIDE 4 | layout=空白 ===
+shape=Group 101 type=6 x=-6.2 y=-9.3 w=969.2 h=549.3 text=
+shape=Picture 47 type=13 x=60.1 y=-244.5 w=696.9 h=712.8 text=
+shape=Picture 2 type=13 x=482.9 y=-105.6 w=528.0 h=540.0 text=
+shape=Picture 2 type=13 x=268.3 y=-50.1 w=431.8 h=441.6 text=
+shape=Picture 5 type=13 x=-69.4 y=-65.9 w=528.0 h=361.0 text=
+shape=Picture 22 type=13 x=773.3 y=311.6 w=211.2 h=306.0 text=
+shape=Picture 2 type=13 x=-44.8 y=-1.3 w=455.3 h=417.4 text=
+shape=Picture 20 type=11 x=117.6 y=-94.5 w=326.7 h=334.1 text=
+shape=Picture 46 type=13 x=0.0 y=172.2 w=960.0 h=367.8 text=
+shape=Picture 1041 type=13 x=0.0 y=44.3 w=890.8 h=495.7 text=
+shape=Picture 1032 type=13 x=501.8 y=-59.0 w=528.0 h=361.0 text=
+shape=Picture 6 type=11 x=384.7 y=12.5 w=326.7 h=334.1 text=
+shape=Picture 39 type=13 x=-35.3 y=-107.5 w=105.5 h=177.8 text=
+shape=Picture 18 type=13 x=77.5 y=33.1 w=689.9 h=557.7 text=
+shape=Picture 18 type=13 x=2.5 y=-1.6 w=960.0 h=595.0 text=
+shape=Picture 2 type=13 x=566.2 y=114.9 w=370.4 h=426.4 text=
+shape=Picture 13 type=13 x=588.6 y=2.0 w=373.9 h=579.5 text=
+shape=Picture 1033 type=13 x=581.5 y=-22.3 w=105.5 h=177.8 text=
+shape=Picture 44 type=13 x=0.0 y=0.0 w=962.5 h=536.5 text=
+shape=Picture 1036 type=13 x=106.6 y=-1.6 w=812.6 h=507.9 text=
+shape=Oval 69 type=1 x=359.1 y=266.2 w=241.8 h=241.8 text=
+shape=Picture 40 type=13 x=103.5 y=65.9 w=105.5 h=223.2 text=
+shape=Picture 2 type=13 x=86.7 y=107.2 w=360.2 h=293.4 text=
+shape=Group 113 type=6 x=52.0 y=35.5 w=890.3 h=48.6 text=
+shape=TextBox 1038 type=17 x=377.0 y=51.8 w=617.2 h=29.0 text=智能穿戴设备是实现健康管理与精准预测的重要工具
+shape=Group 1 type=6 x=24.6 y=170.5 w=700.8 h=241.4 text=
+shape=Group 61 type=6 x=49.1 y=91.0 w=152.1 h=152.1 text=
+shape=Group 3136 type=6 x=677.8 y=305.9 w=146.4 h=146.4 text=
+shape=Group 3139 type=6 x=758.8 y=99.9 w=152.1 h=152.1 text=
+shape=Group 3142 type=6 x=103.7 y=305.3 w=158.8 h=158.8 text=
+shape=Group 3164 type=6 x=115.7 y=471.0 w=118.7 h=35.4 text=
+shape=Group 3189 type=6 x=691.6 y=458.0 w=118.7 h=35.4 text=
+shape=Group 73 type=6 x=774.5 y=260.9 w=118.7 h=35.4 text=
+shape=Group 1026 type=6 x=61.1 y=248.5 w=118.7 h=39.3 text=
+shape=TextBox 1057 type=17 x=125.6 y=471.5 w=103.7 h=37.7 text=远程医疗
+shape=TextBox 1058 type=17 x=700.7 y=454.0 w=100.9 h=37.7 text=慢病管理
+shape=TextBox 1059 type=17 x=780.9 y=257.5 w=105.1 h=37.7 text=健康管理
+shape=Oval 1060 type=1 x=243.8 y=359.7 w=460.5 h=66.0 text=
+shape=Group 1061 type=6 x=336.1 y=143.9 w=262.6 h=262.6 text=
+shape=112 type=13 x=324.3 y=415.1 w=318.2 h=89.7 text=
+shape=Group 1073 type=6 x=218.6 y=84.1 w=652.0 h=61.5 text=
+
+=== SLIDE 5 | layout=空白 ===
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=-69.4 y=-65.9 w=528.0 h=361.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=773.3 y=311.6 w=211.2 h=306.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用3 type=11 x=115.9 y=-88.2 w=326.7 h=334.1 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=0.0 y=172.2 w=960.0 h=367.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=0.0 y=44.3 w=890.8 h=495.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用6 type=13 x=77.5 y=33.1 w=689.9 h=557.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用7 type=13 x=566.2 y=114.9 w=370.4 h=426.4 text=
+shape=PA-原创小红书雷点PPT禁止盗用12 type=1 x=359.1 y=266.2 w=241.8 h=241.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用13 type=13 x=588.1 y=64.0 w=370.4 h=426.4 text=
+shape=PA-原创小红书雷点PPT禁止盗用14 type=13 x=103.5 y=65.9 w=105.5 h=223.2 text=
+shape=PA-原创小红书雷点PPT禁止盗用15 type=13 x=80.5 y=104.7 w=360.2 h=293.4 text=
+shape=PA-原创小红书雷点PPT禁止盗用16 type=13 x=827.0 y=321.9 w=131.6 h=197.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=-2.9 y=321.9 w=131.6 h=197.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用17 type=6 x=52.0 y=35.5 w=890.3 h=48.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用18 type=17 x=377.0 y=51.8 w=617.2 h=30.3 text=智能穿戴设备是实现健康管理与精准预测的重要工具
+shape=PA-原创小红书雷点PPT禁止盗用19 type=6 x=29.3 y=387.6 w=913.3 h=132.9 text=
+shape=PA-原创小红书雷点PPT禁止盗用20 type=6 x=49.9 y=92.5 w=852.3 h=44.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=5 x=435.0 y=-310.5 w=90.0 h=960.0 text=
+shape=Group 3 type=6 x=49.3 y=147.9 w=875.4 h=336.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用72 type=6 x=831.2 y=47.7 w=90.4 h=36.0 text=
+
+=== SLIDE 6 | layout=空白 ===
+shape=Picture 22 type=13 x=773.3 y=311.6 w=211.2 h=306.0 text=
+shape=Picture 2 type=13 x=-44.8 y=-1.3 w=455.3 h=417.4 text=
+shape=Picture 46 type=13 x=0.0 y=172.2 w=960.0 h=367.8 text=
+shape=Picture 1041 type=13 x=0.0 y=44.3 w=890.8 h=495.7 text=
+shape=Picture 6 type=11 x=384.7 y=12.5 w=326.7 h=334.1 text=
+shape=Picture 18 type=13 x=77.5 y=33.1 w=689.9 h=557.7 text=
+shape=Picture 2 type=13 x=566.2 y=114.9 w=370.4 h=426.4 text=
+shape=Picture 1033 type=13 x=581.5 y=-22.3 w=105.5 h=177.8 text=
+shape=Oval 69 type=1 x=359.1 y=266.2 w=241.8 h=241.8 text=
+shape=Picture 40 type=13 x=103.5 y=65.9 w=105.5 h=223.2 text=
+shape=Picture 2 type=13 x=86.7 y=107.2 w=360.2 h=293.4 text=
+shape=Picture 3159 type=13 x=827.0 y=321.9 w=131.6 h=197.5 text=
+shape=Picture 3160 type=13 x=-2.9 y=321.9 w=131.6 h=197.5 text=
+shape=Round Single Corner Rectangle 3 type=1 x=428.5 y=167.9 w=475.3 h=272.4 text=
+shape=Round Single Corner Rectangle 7 type=1 x=57.4 y=98.4 w=373.8 h=295.6 text=
+shape=Round Single Corner Rectangle 9 type=1 x=57.4 y=165.0 w=408.4 h=272.3 text=
+shape=TextBox 11 type=17 x=72.0 y=105.1 w=161.3 h=30.3 text=2022-2027年
+shape=Rounded Rectangle 26 type=1 x=779.2 y=193.7 w=117.0 h=31.8 text=
+shape=TextBox 27 type=17 x=792.2 y=195.1 w=91.0 h=29.1 text=健康管理
+shape=Rounded Rectangle 28 type=1 x=779.0 y=232.3 w=117.0 h=31.8 text=
+shape=TextBox 29 type=17 x=792.0 y=233.7 w=91.0 h=29.1 text=运动健康
+shape=Rounded Rectangle 30 type=1 x=781.3 y=270.3 w=117.0 h=31.8 text=
+shape=TextBox 32 type=17 x=794.3 y=271.7 w=91.0 h=29.1 text=远程医疗
+shape=TextBox 33 type=17 x=777.2 y=312.5 w=133.1 h=99.2 text=技术突破推动智能健康监测设备广泛应用，市场需求持续攀升
+shape=TextBox 112 type=17 x=70.3 y=128.4 w=314.1 h=35.1 text=全球智能健康设备市场需求预测
+shape=Group 113 type=6 x=52.0 y=35.5 w=890.3 h=50.7 text=
+shape=TextBox 1038 type=17 x=376.2 y=50.7 w=617.2 h=30.3 text=智能穿戴设备是实现健康管理与精准预测的重要工具
+shape=TextBox 12 type=17 x=74.3 y=177.6 w=381.2 h=56.7 text=2024年全球市场规模预计达到75亿， 年复合增长率为18.5%
+shape=Parallelogram 1086 type=1 x=70.1 y=357.0 w=402.1 h=40.7 text=
+shape=Rounded Rectangle 3073 type=1 x=73.8 y=405.8 w=65.7 h=20.7 text=
+shape=TextBox 3075 type=17 x=76.6 y=406.0 w=60.9 h=21.8 text=2023年
+shape=Rounded Rectangle 3078 type=1 x=148.9 y=405.8 w=65.7 h=20.7 text=
+shape=TextBox 3079 type=17 x=151.7 y=406.0 w=60.9 h=21.8 text=2024年
+shape=Rounded Rectangle 3081 type=1 x=224.0 y=405.8 w=65.7 h=20.7 text=
+shape=TextBox 3082 type=17 x=226.8 y=406.0 w=60.9 h=21.8 text=2025年
+shape=Rounded Rectangle 3084 type=1 x=299.1 y=405.8 w=65.7 h=20.7 text=
+shape=TextBox 3085 type=17 x=301.9 y=406.0 w=60.9 h=21.8 text=2026年
+shape=Rounded Rectangle 3087 type=1 x=374.2 y=405.8 w=65.7 h=20.7 text=
+shape=TextBox 3088 type=17 x=377.0 y=406.0 w=60.9 h=21.8 text=2027年
+shape=Freeform 55 type=5 x=416.1 y=114.7 w=491.1 h=78.4 text=
+shape=TextBox 24 type=17 x=446.3 y=128.4 w=545.5 h=33.9 text=预计2023—2027年复合增长率为23.41%
+shape=Freeform 57 type=5 x=76.4 y=229.0 w=299.9 h=9.8 text=
+shape=TextBox 3144 type=17 x=75.1 y=236.8 w=52.6 h=21.8 text=亿元
+shape=设计师康帅作品倒卖必究22 type=13 x=473.5 y=189.6 w=143.1 h=103.5 text=
+shape=设计师康帅作品倒卖必究22 type=13 x=623.5 y=193.7 w=143.1 h=99.4 text=
+shape=设计师康帅作品倒卖必究22 type=13 x=624.3 y=309.6 w=143.1 h=107.4 text=
+shape=设计师康帅作品倒卖必究22 type=13 x=471.8 y=302.1 w=143.1 h=107.4 text=
+shape=Group 3151 type=6 x=473.5 y=269.2 w=144.4 h=23.9 text=
+shape=Group 3152 type=6 x=473.5 y=385.2 w=144.4 h=23.9 text=
+shape=Group 3155 type=6 x=623.9 y=269.2 w=144.4 h=23.9 text=
+shape=Group 3158 type=6 x=623.9 y=387.5 w=144.4 h=23.9 text=
+shape=Group 3172 type=6 x=844.7 y=343.2 w=85.2 h=102.3 text=
+shape=Trapezoid 41 type=1 x=86.2 y=490.2 w=819.8 h=33.6 text=
+shape=Trapezoid 42 type=1 x=2.6 y=418.1 w=951.5 h=85.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=-3.7 y=432.4 w=999.5 h=52.1 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=8.6 y=430.0 w=956.3 h=61.4 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=99.3 y=488.6 w=841.4 h=33.4 text=
+shape=Group 45 type=6 x=96.7 y=253.6 w=174.5 h=60.6 text=
+shape=Group 61 type=6 x=831.2 y=47.7 w=90.4 h=36.0 text=
+shape=Cube 1 type=1 x=82.4 y=370.6 w=38.9 h=29.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=340.5 y=306.1 w=146.1 h=32.9 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=306.3 y=323.6 w=104.9 h=28.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=104.8 y=380.8 w=19.8 h=13.1 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=177.5 y=527.2 w=19.8 h=13.1 text=
+shape=Cube 15 type=1 x=162.3 y=350.3 w=38.9 h=47.5 text=
+shape=Cube 16 type=1 x=242.8 y=329.7 w=38.9 h=66.9 text=
+shape=Cube 23 type=1 x=321.5 y=280.5 w=38.9 h=115.9 text=
+shape=Cube 34 type=1 x=401.1 y=247.4 w=38.9 h=149.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=178.8 y=365.3 w=36.6 h=24.1 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=246.3 y=352.6 w=58.9 h=24.1 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=300.7 y=330.3 w=106.5 h=24.1 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=364.8 y=314.3 w=135.6 h=24.1 text=
+shape=TextBox 63 type=17 x=77.7 y=343.4 w=46.7 h=27.8 text=$44
+shape=TextBox 64 type=17 x=159.6 y=321.9 w=46.7 h=27.8 text=$75
+shape=TextBox 65 type=17 x=237.5 y=300.3 w=60.5 h=27.8 text=$120
+shape=TextBox 66 type=17 x=312.6 y=255.8 w=60.5 h=27.8 text=$213
+shape=TextBox 67 type=17 x=393.7 y=219.6 w=60.5 h=27.8 text=$285
+
+=== SLIDE 7 | layout=标题幻灯片 ===
+shape=Picture 2 type=13 x=481.0 y=-106.8 w=528.0 h=540.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用2 type=13 x=771.4 y=310.4 w=211.2 h=306.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用4 type=13 x=-1.9 y=171.0 w=960.0 h=367.8 text=
+shape=Picture 42 type=13 x=499.9 y=-60.2 w=528.0 h=361.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用6 type=11 x=382.8 y=11.3 w=326.7 h=334.1 text=
+shape=PA-原创小红书雷点PPT禁止盗用8 type=13 x=75.6 y=31.9 w=689.9 h=557.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用10 type=13 x=564.3 y=113.7 w=370.4 h=426.4 text=
+shape=PA-原创小红书雷点PPT禁止盗用11 type=13 x=586.7 y=0.8 w=373.9 h=579.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用15 type=1 x=357.2 y=265.0 w=241.8 h=241.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用16 type=13 x=586.2 y=62.8 w=370.4 h=426.4 text=
+shape=PA-原创小红书雷点PPT禁止盗用17 type=13 x=101.6 y=64.7 w=105.5 h=223.2 text=
+shape=PA-原创小红书雷点PPT禁止盗用18 type=13 x=84.8 y=106.0 w=360.2 h=293.4 text=
+shape=PA-原创小红书雷点PPT禁止盗用19 type=13 x=825.2 y=320.7 w=131.6 h=197.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用20 type=13 x=-4.7 y=320.7 w=131.6 h=197.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用21 type=13 x=5.0 y=201.5 w=955.0 h=338.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用22 type=6 x=52.0 y=35.5 w=890.3 h=52.4 text=
+shape=PA-原创小红书雷点PPT禁止盗用23 type=6 x=52.0 y=254.5 w=869.4 h=273.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用24 type=1 x=730.5 y=300.8 w=138.3 h=58.4 text=
+shape=PA-原创小红书雷点PPT禁止盗用25 type=17 x=253.9 y=201.5 w=157.7 h=75.2 text=在第一时间将故障情况通知相关的管理人员
+shape=PA-原创小红书雷点PPT禁止盗用26 type=17 x=462.4 y=201.7 w=124.6 h=52.0 text=在规定的时间内处理故障
+shape=PA-原创小红书雷点PPT禁止盗用27 type=17 x=611.7 y=201.7 w=174.7 h=75.2 text=遵循标准规范，操作流程等，逐步实现运维电子化、全面流程化
+shape=PA-原创小红书雷点PPT禁止盗用28 type=1 x=576.0 y=77.1 w=129.5 h=0.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用29 type=1 x=643.4 y=66.9 w=93.7 h=0.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用30 type=17 x=51.4 y=201.7 w=167.1 h=75.2 text=在故障发生之前发现异常情况，合理化判断是否有故障迹像
+shape=PA-原创小红书雷点PPT禁止盗用31 type=1 x=57.7 y=107.9 w=294.8 h=35.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用32 type=1 x=16.6 y=83.3 w=116.1 h=0.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用33 type=17 x=75.5 y=111.5 w=277.0 h=30.8 text=调研需求，发现问题
+shape=PA-原创小红书雷点PPT禁止盗用34 type=17 x=87.6 y=151.4 w=236.3 h=118.8 text=参与健康科技论坛，调研市场痛点 发现设备在数据精度和 适用场景方面存在不足
+shape=PA-原创小红书雷点PPT禁止盗用35 type=6 x=305.3 y=108.5 w=335.2 h=169.1 text=
+shape=PA-原创小红书雷点PPT禁止盗用36 type=6 x=593.6 y=107.7 w=332.1 h=169.1 text=
+shape=PA-原创小红书雷点PPT禁止盗用37 type=9 x=336.0 y=143.5 w=0.0 h=126.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用38 type=9 x=623.9 y=145.4 w=0.0 h=126.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用39 type=1 x=110.6 y=299.8 w=129.3 h=39.2 text=
+shape=PA-原创小红书雷点PPT禁止盗用40 type=1 x=134.1 y=303.7 w=82.2 h=31.5 text=2022年
+shape=PA-原创小红书雷点PPT禁止盗用41 type=1 x=745.7 y=295.3 w=129.3 h=39.2 text=
+shape=PA-原创小红书雷点PPT禁止盗用42 type=1 x=775.2 y=300.5 w=82.2 h=31.5 text=2024年
+shape=PA-原创小红书雷点PPT禁止盗用43 type=1 x=413.6 y=309.5 w=129.3 h=39.2 text=
+shape=PA-原创小红书雷点PPT禁止盗用44 type=1 x=440.8 y=314.5 w=82.2 h=31.5 text=2023年
+shape=PA-原创小红书雷点PPT禁止盗用45 type=6 x=473.1 y=265.1 w=27.7 h=20.3 text=
+shape=PA-原创小红书雷点PPT禁止盗用46 type=6 x=183.5 y=264.7 w=24.6 h=18.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用47 type=6 x=784.6 y=264.7 w=24.6 h=18.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用48 type=13 x=12.3 y=157.1 w=364.7 h=53.1 text=
+shape=PA-原创小红书雷点PPT禁止盗用49 type=13 x=354.2 y=118.2 w=272.4 h=53.1 text=
+shape=PA-原创小红书雷点PPT禁止盗用50 type=13 x=655.4 y=118.2 w=272.4 h=53.1 text=
+shape=PA-原创小红书雷点PPT禁止盗用51 type=6 x=831.2 y=47.7 w=90.4 h=36.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用52 type=17 x=377.0 y=51.8 w=617.2 h=30.3 text=智能穿戴设备是实现健康管理与精准预测的重要工具
+
+=== SLIDE 8 | layout=标题幻灯片 ===
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=5.0 y=201.5 w=955.0 h=338.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=52.0 y=35.5 w=890.3 h=48.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=363.7 y=-10.6 w=161.4 h=60.9 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=576.0 y=77.1 w=129.5 h=0.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=9 x=-137.3 y=77.1 w=42.5 h=23.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=612.6 y=157.4 w=381.7 h=381.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=58.3 y=159.1 w=149.7 h=149.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=70.4 y=171.2 w=125.5 h=125.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=82.8 y=204.9 w=100.7 h=58.3 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=229.8 y=229.1 w=20.1 h=21.1 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=216.6 y=229.1 w=20.1 h=21.1 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=254.5 y=160.5 w=149.7 h=149.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=266.6 y=172.6 w=125.5 h=125.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=420.6 y=230.7 w=20.1 h=21.1 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=407.5 y=230.7 w=20.1 h=21.1 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=445.3 y=162.1 w=149.7 h=149.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=457.4 y=174.2 w=125.5 h=125.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=58.3 y=306.2 w=548.5 h=79.1 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=9 x=784.9 y=352.5 w=42.5 h=23.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=17 x=83.2 y=479.0 w=154.7 h=33.7 text=寻创设计工作室 Professional ppt design
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=144.5 y=437.1 w=37.3 h=47.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=5 x=51.0 y=381.5 w=581.9 h=128.1 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=5 x=627.9 y=393.5 w=5.9 h=104.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=5 x=632.0 y=427.6 w=2.1 h=37.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=5 x=50.5 y=393.5 w=5.9 h=104.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=5 x=50.1 y=426.6 w=2.1 h=37.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=17 x=56.9 y=394.8 w=584.5 h=94.5 text=传感器与AI技术融合，实现健康数据精准、实时、个性化管理，助力健康生活 数据采集效率提升，设备成本降低30%，用户体验显著提升
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=641.7 y=177.9 w=311.3 h=303.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=469.0 y=259.0 w=24.0 h=24.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=52.0 y=104.3 w=420.3 h=46.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=455.1 y=104.3 w=633.6 h=46.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=455.1 y=99.1 w=159.0 h=43.0 text=
+shape=Group 3410 type=6 x=52.2 y=99.2 w=158.8 h=39.6 text=
+shape=PA-方能演亦17-4 type=13 x=26.9 y=113.0 w=211.1 h=53.1 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=831.2 y=47.7 w=90.4 h=36.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=17 x=377.0 y=51.8 w=617.2 h=30.3 text=智能穿戴设备是实现健康管理与精准预测的重要工具
+
+=== SLIDE 9 | layout=标题幻灯片 ===
+shape=Group 23 type=6 x=-68.1 y=-244.8 w=1,101.2 h=829.9 text=
+shape=Rounded Rectangle 1 type=1 x=31.5 y=181.3 w=198.2 h=263.6 text=
+shape=Straight Arrow Connector 2 type=1 x=412.4 y=136.0 w=291.8 h=0.9 text=
+shape=Rounded Rectangle 3 type=1 x=429.5 y=92.6 w=241.0 h=85.8 text=整体浇筑技术
+shape=Group 4 type=6 x=456.3 y=101.4 w=222.0 h=69.5 text=
+shape=Rounded Rectangle 8 type=1 x=262.5 y=181.3 w=198.2 h=263.6 text=
+shape=Rounded Rectangle 9 type=1 x=495.6 y=181.3 w=198.2 h=263.6 text=
+shape=Rounded Rectangle 10 type=1 x=724.7 y=182.5 w=198.2 h=263.6 text=
+shape=TextBox 11 type=17 x=221.7 y=222.2 w=41.3 h=55.7 text=+
+shape=Freeform 12 type=5 x=453.6 y=236.4 w=53.0 h=38.5 text=
+shape=Freeform 13 type=5 x=684.5 y=236.4 w=53.0 h=38.5 text=
+shape=Group 22 type=6 x=25.0 y=110.3 w=427.8 h=43.6 text=
+shape=Group 27 type=6 x=701.1 y=113.1 w=235.6 h=43.8 text=
+shape=Group 30 type=6 x=43.4 y=335.5 w=179.9 h=56.7 text=
+shape=Group 61 type=6 x=276.0 y=335.4 w=180.9 h=56.0 text=
+shape=Group 3235 type=6 x=507.0 y=335.4 w=180.9 h=56.0 text=
+shape=Group 3255 type=6 x=742.8 y=335.4 w=180.9 h=56.0 text=
+shape=Picture 3269 type=13 x=42.8 y=187.2 w=176.1 h=110.3 text=
+shape=Picture 3271 type=13 x=275.7 y=187.2 w=171.6 h=116.5 text=
+shape=Freeform 3272 type=5 x=504.8 y=187.2 w=176.1 h=110.3 text=
+shape=Freeform 3273 type=5 x=735.8 y=187.2 w=176.1 h=110.3 text=
+shape=Group 3274 type=6 x=17.5 y=269.8 w=230.2 h=58.5 text=
+shape=Group 3279 type=6 x=254.0 y=268.5 w=220.1 h=59.9 text=
+shape=Group 3284 type=6 x=470.4 y=268.5 w=255.7 h=59.9 text=
+shape=Group 3289 type=6 x=715.4 y=268.5 w=226.4 h=59.9 text=
+shape=Group 3320 type=6 x=-149.4 y=396.8 w=1,258.8 h=147.2 text=
+shape=Group 3295 type=6 x=16.6 y=420.7 w=909.0 h=45.3 text=
+shape=Freeform 3298 type=5 x=285.4 y=373.7 w=168.2 h=59.4 text=
+shape=Freeform 3299 type=5 x=46.5 y=373.7 w=168.2 h=59.4 text=
+shape=Freeform 3300 type=5 x=509.7 y=373.7 w=168.2 h=59.4 text=
+shape=Freeform 3301 type=5 x=745.3 y=373.7 w=168.2 h=59.4 text=
+shape=Group 3302 type=6 x=52.0 y=35.5 w=890.3 h=52.3 text=
+shape=方能演亦26 type=1 x=16.6 y=74.9 w=116.1 h=0.0 text=
+shape=Group 3321 type=6 x=831.2 y=47.7 w=90.4 h=36.0 text=
+shape=TextBox 3326 type=17 x=377.0 y=51.8 w=617.2 h=30.3 text=智能穿戴设备是实现健康管理与精准预测的重要工具
+shape=TextBox 41 type=17 x=-305.2 y=-230.1 w=320.0 h=72.0 text=
+shape=TextBox 56 type=17 x=-400.9 y=-267.6 w=320.0 h=72.0 text=
+
+=== SLIDE 10 | layout=标题幻灯片 ===
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=-7.7 y=-7.7 w=969.2 h=549.3 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=58.6 y=-242.9 w=696.9 h=712.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=481.4 y=-103.9 w=528.0 h=540.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=266.8 y=-48.5 w=431.8 h=441.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=-70.8 y=-64.3 w=528.0 h=361.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=771.8 y=313.2 w=211.2 h=306.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=-46.2 y=0.4 w=455.3 h=417.4 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=11 x=114.5 y=-86.6 w=326.7 h=334.1 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=-1.5 y=173.9 w=960.0 h=367.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=-1.5 y=45.9 w=890.8 h=495.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=500.3 y=-57.4 w=528.0 h=361.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=11 x=383.2 y=14.1 w=326.7 h=334.1 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=-36.7 y=-105.9 w=105.5 h=177.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=76.0 y=34.7 w=689.9 h=557.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=1.0 y=0.1 w=960.0 h=595.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=564.7 y=116.5 w=370.4 h=426.4 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=587.1 y=3.6 w=373.9 h=579.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=2.3 y=2.6 w=958.7 h=536.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=-24.6 y=25.7 w=528.0 h=481.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=105.1 y=0.1 w=812.6 h=507.9 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=586.6 y=65.6 w=370.4 h=426.4 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=85.2 y=108.9 w=360.2 h=293.4 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=823.5 y=342.2 w=131.6 h=197.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=-3.3 y=348.4 w=131.6 h=197.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=52.0 y=26.7 w=890.3 h=48.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=16.1 y=-166.3 w=4.9 h=4.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=106.5 y=-183.3 w=4.9 h=4.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=196.7 y=-165.3 w=4.9 h=4.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=106.5 y=-147.1 w=4.9 h=4.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=36.2 y=72.1 w=304.1 h=264.2 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=340.9 y=109.4 w=300.5 h=192.9 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=647.7 y=111.0 w=298.2 h=192.9 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=172.1 y=310.7 w=307.7 h=186.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=524.7 y=327.2 w=311.2 h=186.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=3.4 y=221.1 w=960.0 h=168.1 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=831.2 y=47.7 w=90.4 h=36.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=17 x=377.0 y=51.8 w=617.2 h=30.3 text=智能穿戴设备是实现健康管理与精准预测的重要工具
+
+=== SLIDE 11 | layout=标题幻灯片 ===
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=-76.7 y=-234.3 w=1,101.2 h=830.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=52.0 y=35.5 w=890.3 h=48.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=576.0 y=77.1 w=129.5 h=0.0 text=
+shape=PA-方能演亦17-4 type=13 x=16.4 y=113.3 w=211.1 h=53.1 text=
+shape=PA-文本框 1 type=17 x=107.2 y=104.7 w=723.5 h=44.9 text=委托权威机构进行智能健康设备性能检测与验证
+shape=PA-文本框 1+ type=17 x=122.5 y=104.8 w=693.0 h=44.8 text=委托权威机构进行智能健康设备性能检测与验证
+shape=Group 3 type=6 x=103.3 y=112.2 w=35.1 h=31.1 text=
+shape=Group 6 type=6 x=798.8 y=112.2 w=35.1 h=31.1 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=-157.1 y=390.7 w=1,258.8 h=147.2 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=37.7 y=413.0 w=894.0 h=94.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=63.7 y=154.1 w=268.5 h=238.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=356.9 y=159.5 w=268.5 h=235.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=472.3 y=225.7 w=24.0 h=24.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=831.2 y=47.7 w=90.4 h=36.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=17 x=377.0 y=51.8 w=617.2 h=30.3 text=智能穿戴设备是实现健康管理与精准预测的重要工具
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=755.4 y=163.6 w=139.0 h=65.1 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=754.2 y=240.5 w=139.0 h=63.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=552.9 y=247.0 w=207.5 h=51.2 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=707.7 y=172.9 w=54.5 h=208.2 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=617.1 y=259.7 w=51.1 h=23.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=754.2 y=322.0 w=139.0 h=63.8 text=
+shape=TextBox 11 type=17 x=-116.8 y=161.5 w=320.0 h=72.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=664.7 y=174.2 w=46.9 h=199.9 text=
+
+=== SLIDE 12 | layout=标题幻灯片 ===
+shape=Picture 56 type=13 x=1.1 y=58.5 w=958.9 h=481.5 text=
+shape=Picture 58 type=13 x=0.0 y=3.5 w=957.4 h=536.5 text=
+shape=Picture 60 type=13 x=0.0 y=0.0 w=958.7 h=536.5 text=
+shape=Picture 3142 type=13 x=0.0 y=0.0 w=958.7 h=536.5 text=
+shape=Picture 3255 type=13 x=-2.6 y=-3.5 w=952.0 h=532.9 text=
+shape=Picture 3144 type=13 x=-0.8 y=-3.1 w=958.8 h=536.5 text=
+shape=Group 1 type=6 x=52.0 y=35.5 w=890.3 h=53.0 text=
+shape=Straight Connector 3260 type=9 x=-137.3 y=77.1 w=42.5 h=23.0 text=
+shape=Oval 3261 type=1 x=-101.7 y=72.4 w=9.6 h=9.6 text=
+shape=方能演亦1 type=6 x=29.3 y=107.0 w=893.8 h=400.0 text=
+shape=Snip Diagonal Corner Rectangle 30 type=1 x=58.2 y=122.6 w=845.6 h=370.7 text=
+shape=Group 3329 type=6 x=38.6 y=393.2 w=889.3 h=77.1 text=
+shape=TextBox 3323 type=17 x=110.9 y=424.5 w=720.3 h=41.1 text=在确保性能领先的同时，实现成本降低80%以上，满足市场普及需求
+shape=方能演亦6 type=1 x=58.2 y=249.7 w=846.4 h=33.3 text=
+shape=方能演亦6 type=1 x=58.2 y=321.1 w=846.4 h=32.1 text=
+shape=表格 6 type=19 x=78.8 y=142.4 w=724.2 h=255.3 text=
+shape=Group 3335 type=6 x=750.6 y=251.6 w=145.7 h=29.1 text=
+shape=Group 3336 type=6 x=752.8 y=287.6 w=145.7 h=29.1 text=
+shape=Group 3340 type=6 x=752.8 y=324.0 w=145.7 h=29.1 text=
+shape=Group 3343 type=6 x=752.8 y=357.6 w=145.7 h=29.1 text=
+shape=Group 31 type=6 x=831.2 y=47.7 w=90.4 h=36.0 text=
+shape=TextBox 37 type=17 x=377.0 y=51.8 w=617.2 h=30.3 text=智能穿戴设备是实现健康管理与精准预测的重要工具
+shape=Picture 38 type=13 x=238.0 y=129.3 w=98.2 h=52.3 text=
+shape=Picture 39 type=13 x=451.0 y=138.3 w=82.4 h=50.3 text=
+shape=Picture 40 type=13 x=648.2 y=129.3 w=98.2 h=52.3 text=
+
+=== SLIDE 13 | layout=空白 ===
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=52.0 y=22.0 w=890.3 h=52.3 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=5.0 y=201.5 w=955.0 h=338.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=65.9 y=101.4 w=261.5 h=192.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=79.4 y=81.2 w=235.3 h=46.2 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=5 x=88.6 y=94.6 w=15.8 h=5.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=5 x=292.8 y=94.6 w=15.8 h=5.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=88.8 y=121.5 w=244.0 h=97.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=50.4 y=142.1 w=80.8 h=60.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=17 x=95.3 y=225.4 w=214.3 h=54.7 text=走访行业头部企业，分析领先技术方案走访行业头部企业先技术方案走访行业头部企业，分析领先技术方案
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=145.7 y=286.7 w=104.7 h=6.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=56.9 y=302.8 w=272.5 h=212.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=336.9 y=81.2 w=276.0 h=434.2 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=615.3 y=81.2 w=276.0 h=434.2 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=831.2 y=47.7 w=90.4 h=36.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=17 x=375.3 y=34.6 w=617.2 h=30.3 text=智能穿戴设备是实现健康管理与精准预测的重要工具
+
+=== SLIDE 14 | layout=空白 ===
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=52.0 y=22.0 w=890.3 h=52.3 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=5.0 y=201.5 w=955.0 h=338.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=831.2 y=47.7 w=90.4 h=36.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=17 x=375.3 y=34.6 w=617.2 h=30.3 text=智能穿戴设备是实现健康管理与精准预测的重要工具
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=52.0 y=152.2 w=351.9 h=288.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=37.9 y=372.2 w=19.9 h=10.9 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=353.7 y=372.2 w=19.9 h=10.9 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=60.8 y=158.8 w=18.2 h=10.9 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=376.5 y=158.8 w=18.2 h=10.9 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=84.0 y=110.5 w=288.0 h=45.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=572.0 y=145.6 w=335.5 h=54.3 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=572.0 y=209.7 w=335.5 h=54.3 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=572.0 y=274.0 w=335.5 h=54.3 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=572.0 y=336.8 w=335.5 h=54.3 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=584.7 y=234.7 w=99.8 h=142.3 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=393.7 y=209.6 w=127.1 h=189.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=421.4 y=161.7 w=225.6 h=259.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=442.0 y=110.8 w=165.0 h=43.4 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=82.3 y=173.5 w=290.3 h=204.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=80.7 y=422.1 w=798.8 h=102.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=-158.4 y=435.5 w=1,258.8 h=108.0 text=
+
+=== SLIDE 15 | layout=标题幻灯片 ===
+shape=Picture 56 type=13 x=1.1 y=58.5 w=958.9 h=481.5 text=
+shape=Picture 58 type=13 x=0.0 y=3.5 w=957.4 h=536.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=0.0 y=0.0 w=958.7 h=536.5 text=
+shape=Picture 3142 type=13 x=0.0 y=0.0 w=958.7 h=536.5 text=
+shape=Picture 3255 type=13 x=-2.6 y=-3.5 w=952.0 h=532.9 text=
+shape=Picture 105 type=13 x=0.0 y=0.0 w=960.0 h=457.6 text=
+shape=Group 1 type=6 x=52.0 y=35.5 w=890.3 h=51.4 text=
+shape=Straight Connector 3260 type=9 x=-137.4 y=66.8 w=42.5 h=23.0 text=
+shape=内容占位符 2 type=3 x=61.7 y=179.2 w=190.5 h=111.9 text=
+shape=Straight Connector 3313 type=9 x=-171.0 y=521.9 w=42.5 h=23.0 text=
+shape=Group 137 type=6 x=99.6 y=84.4 w=762.4 h=52.0 text=
+shape=Group 3311 type=6 x=63.5 y=147.1 w=327.8 h=212.9 text=
+shape=Group 178 type=6 x=55.6 y=363.6 w=195.1 h=131.4 text=
+shape=Picture 112 type=13 x=263.9 y=364.2 w=129.2 h=131.6 text=
+shape=Rectangle 182 type=1 x=258.6 y=465.9 w=139.5 h=31.1 text=生产委托书
+shape=Right Triangle 183 type=1 x=392.7 y=453.4 w=5.4 h=12.5 text=
+shape=Right Triangle 184 type=1 x=258.5 y=453.8 w=5.4 h=12.5 text=
+shape=任意多边形: 形状 29 type=5 x=501.0 y=135.7 w=390.7 h=292.2 text=
+shape=Rounded Rectangle 3116 type=1 x=410.1 y=153.9 w=492.7 h=337.1 text=
+shape=Chart 162 type=3 x=429.6 y=165.4 w=310.7 h=256.0 text=
+shape=Picture 3114 type=13 x=472.0 y=211.9 w=159.4 h=159.4 text=
+shape=Group 3334 type=6 x=495.6 y=237.9 w=110.8 h=125.2 text=
+shape=Straight Connector 163 type=9 x=675.5 y=208.8 w=200.7 h=0.0 text=
+shape=TextBox 167 type=17 x=740.9 y=174.3 w=155.3 h=34.5 text=3000万 47%
+shape=TextBox 3120 type=17 x=744.6 y=227.0 w=138.7 h=25.8 text=150万 21%
+shape=Straight Connector 3129 type=9 x=675.5 y=257.8 w=200.7 h=0.0 text=
+shape=Group 3335 type=6 x=675.5 y=274.3 w=206.3 h=132.6 text=
+shape=Snip Diagonal Corner Rectangle 3331 type=1 x=422.1 y=415.7 w=473.6 h=63.1 text=
+shape=Group 3332 type=6 x=471.7 y=421.2 w=410.0 h=49.9 text=
+shape=Group 7 type=6 x=73.2 y=204.1 w=152.7 h=97.6 text=
+shape=Group 33 type=6 x=232.3 y=204.1 w=152.7 h=97.6 text=
+shape=Group 49 type=6 x=831.2 y=47.7 w=90.4 h=36.0 text=
+shape=TextBox 54 type=17 x=377.0 y=51.8 w=617.2 h=30.3 text=智能穿戴设备是实现健康管理与精准预测的重要工具
+
+=== SLIDE 16 | layout=标题幻灯片 ===
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=-72.4 y=-240.5 w=1,101.2 h=836.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=52.0 y=35.5 w=890.3 h=51.4 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=44.8 y=87.6 w=854.4 h=411.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=831.2 y=47.7 w=90.4 h=36.0 text=
+
+=== SLIDE 17 | layout=标题幻灯片 ===
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=-73.4 y=-240.0 w=1,101.2 h=829.9 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=-149.4 y=396.8 w=1,258.8 h=147.2 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=16.6 y=74.9 w=116.1 h=0.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=482.5 y=151.5 w=416.4 h=394.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=-4.6 y=74.9 w=116.1 h=0.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=52.0 y=26.7 w=890.3 h=48.6 text=
+shape=PA-文本框 1 type=17 x=37.7 y=97.1 w=874.1 h=37.6 text=预测企业2024年年销售额可达到1197万元，实现净利润650万元
+shape=PA-文本框 1+ type=17 x=37.7 y=97.1 w=874.1 h=37.6 text=预测企业2024年年销售额可达到1197万元，实现净利润650万元
+shape=Group 7 type=6 x=846.9 y=99.3 w=35.1 h=31.1 text=
+shape=Group 10 type=6 x=69.1 y=99.3 w=35.1 h=31.1 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=57.3 y=148.7 w=416.4 h=394.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=62.0 y=153.3 w=416.4 h=394.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=3 x=29.8 y=213.0 w=303.2 h=227.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=89.4 y=278.9 w=375.7 h=172.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=17 x=92.0 y=200.8 w=379.4 h=58.5 text=公司主要以销售产品XXXXXX为主,再通过业务1、业务2等业务增加盈利点
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=139.5 y=142.4 w=250.2 h=76.4 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=486.0 y=154.5 w=429.2 h=394.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=17 x=527.8 y=199.9 w=379.4 h=58.5 text=公司营业收入增长明显，盈利能力显著， 净利润翻倍增长，预计未来几年进入飞速发展期
+shape=PA-原创小红书雷点PPT禁止盗用 type=5 x=576.6 y=143.6 w=249.9 h=50.1 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=9 x=576.3 y=193.7 w=209.5 h=0.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=17 x=604.8 y=145.9 w=195.2 h=43.6 text=营收现状
+shape=PA-原创小红书雷点PPT禁止盗用 type=17 x=630.3 y=146.9 w=143.3 h=43.6 text=营收现状
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=584.8 y=164.0 w=219.7 h=54.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=3 x=520.4 y=246.7 w=339.2 h=231.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=542.1 y=281.9 w=174.5 h=60.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=831.2 y=47.7 w=90.4 h=36.0 text=
+shape=TextBox 3 type=17 x=-45.8 y=206.3 w=320.0 h=72.0 text=
+
+=== SLIDE 18 | layout=标题幻灯片 ===
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=1.3 y=-8.2 w=960.0 h=540.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=340.5 y=300.1 w=290.1 h=134.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=426.0 y=327.0 w=376.0 h=174.3 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=477.4 y=272.3 w=376.0 h=174.3 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=506.6 y=281.8 w=157.9 h=73.2 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=749.7 y=430.8 w=211.6 h=101.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=541.2 y=78.2 w=287.7 h=287.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=1.3 y=441.4 w=319.8 h=90.4 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=1.3 y=362.3 w=373.0 h=169.4 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=792.6 y=93.0 w=168.7 h=222.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=11 x=515.5 y=-8.2 w=448.8 h=244.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=-4.9 y=-17.5 w=230.6 h=131.9 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=3.1 y=-8.2 w=206.4 h=117.2 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=116.4 y=-0.7 w=206.4 h=109.3 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=-1.9 y=-17.5 w=230.6 h=131.9 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=5 x=656.9 y=-8.2 w=205.3 h=111.9 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=665.5 y=-8.2 w=206.4 h=119.4 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=787.6 y=-8.2 w=173.7 h=116.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=61.4 y=-252.7 w=696.9 h=712.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=478.1 y=-104.5 w=528.0 h=526.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=269.6 y=-58.3 w=431.8 h=441.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=-68.1 y=-74.2 w=528.0 h=361.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=774.6 y=303.4 w=211.2 h=306.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=-43.5 y=-9.5 w=455.3 h=417.4 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=11 x=120.1 y=-101.1 w=326.7 h=334.1 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=0.6 y=173.1 w=960.0 h=367.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=18.7 y=37.7 w=890.8 h=495.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=503.0 y=-67.3 w=528.0 h=361.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=11 x=394.9 y=142.7 w=326.7 h=334.1 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=-34.0 y=-115.8 w=105.5 h=177.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=78.8 y=24.9 w=689.9 h=557.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=2.0 y=-8.2 w=958.6 h=535.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=567.5 y=106.7 w=370.4 h=426.4 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=589.9 y=-6.2 w=373.9 h=579.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=5.1 y=-10.0 w=958.7 h=536.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=55.1 y=32.3 w=520.7 h=481.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=130.1 y=112.2 w=812.6 h=498.1 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=360.4 y=258.0 w=241.8 h=241.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=589.4 y=55.8 w=370.4 h=426.4 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=104.8 y=57.7 w=105.5 h=223.2 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=87.9 y=99.0 w=360.2 h=293.4 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=828.3 y=313.6 w=131.6 h=197.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=-1.6 y=313.6 w=131.6 h=197.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=3.8 y=205.5 w=955.0 h=338.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=371.6 y=86.2 w=161.4 h=60.9 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=52.0 y=35.5 w=890.3 h=50.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=-150.0 y=419.6 w=1,258.8 h=147.2 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=670.9 y=320.0 w=235.3 h=184.9 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=29.4 y=320.0 w=235.3 h=184.9 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=196.1 y=320.0 w=235.3 h=184.9 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=491.0 y=320.0 w=235.3 h=184.9 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=389.3 y=308.9 w=143.7 h=196.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=51.3 y=112.1 w=426.7 h=190.4 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=486.5 y=109.9 w=426.7 h=190.4 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=831.2 y=47.7 w=90.4 h=36.0 text=
+
+=== SLIDE 19 | layout=标题幻灯片 ===
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=1.3 y=-8.2 w=960.0 h=540.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=1.3 y=441.4 w=319.8 h=90.4 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=1.3 y=362.3 w=373.0 h=169.4 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=11 x=515.5 y=-8.2 w=448.8 h=244.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=-4.9 y=-17.5 w=230.6 h=131.9 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=3.1 y=-8.2 w=206.4 h=117.2 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=116.4 y=-0.7 w=206.4 h=109.3 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=-1.9 y=-17.5 w=230.6 h=131.9 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=5 x=656.9 y=-8.2 w=205.3 h=111.9 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=665.5 y=-8.2 w=206.4 h=119.4 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=787.6 y=-8.2 w=173.7 h=116.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=61.4 y=-252.7 w=696.9 h=712.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=478.1 y=-104.5 w=528.0 h=526.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=269.6 y=-58.3 w=431.8 h=441.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=-68.1 y=-74.2 w=528.0 h=361.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=774.6 y=303.4 w=211.2 h=306.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=11 x=120.1 y=-101.1 w=326.7 h=334.1 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=0.6 y=173.1 w=960.0 h=367.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=18.7 y=37.7 w=890.8 h=495.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=503.0 y=-67.3 w=528.0 h=361.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=11 x=386.0 y=4.2 w=326.7 h=334.1 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=-34.0 y=-115.8 w=105.5 h=177.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=78.8 y=24.9 w=689.9 h=557.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=1.4 y=0.0 w=958.6 h=535.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=567.5 y=106.7 w=370.4 h=426.4 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=589.9 y=-6.2 w=373.9 h=579.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=4.8 y=-10.6 w=958.7 h=613.2 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=-19.1 y=31.4 w=520.7 h=481.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=107.8 y=-9.5 w=812.6 h=557.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=592.1 y=55.8 w=370.4 h=426.4 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=104.8 y=57.7 w=105.5 h=223.2 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=87.9 y=99.0 w=360.2 h=293.4 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=363.7 y=-10.6 w=161.4 h=60.9 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=52.0 y=35.5 w=890.3 h=50.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=468.0 y=258.0 w=24.0 h=24.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=831.2 y=47.7 w=90.4 h=36.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=17 x=377.0 y=51.8 w=617.2 h=30.3 text=智能穿戴设备是实现健康管理与精准预测的重要工具
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=-5.5 y=263.3 w=965.5 h=280.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=749.7 y=430.8 w=211.6 h=101.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=256.6 y=430.7 w=130.3 h=79.9 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=409.7 y=423.1 w=130.3 h=79.9 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=561.2 y=432.5 w=130.3 h=79.9 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=-467.4 y=-631.9 w=1,896.0 h=1,083.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=17 x=37.7 y=97.1 w=874.0 h=37.6 text=构建健康管理课程与科研实践体系，促进多学科交叉融合
+shape=PA-原创小红书雷点PPT禁止盗用 type=17 x=121.9 y=96.9 w=704.0 h=37.5 text=构建健康管理课程与科研实践体系，促进多学科交叉融合
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=797.2 y=99.3 w=35.0 h=31.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=116.4 y=99.3 w=35.0 h=31.0 text=
+shape=TextBox 14 type=17 x=-9.4 y=82.9 w=320.0 h=72.0 text=
+
+=== SLIDE 20 | layout=标题幻灯片 ===
+shape=Picture 56 type=13 x=1.1 y=58.5 w=958.9 h=481.5 text=
+shape=Picture 58 type=13 x=0.0 y=3.5 w=957.4 h=536.5 text=
+shape=Picture 60 type=13 x=0.0 y=0.0 w=958.7 h=536.5 text=
+shape=Picture 3142 type=13 x=0.0 y=0.0 w=958.7 h=536.5 text=
+shape=Picture 3144 type=13 x=0.0 y=0.0 w=960.0 h=540.0 text=
+shape=Picture 3255 type=13 x=-4.1 y=0.7 w=952.0 h=532.9 text=
+shape=Group 1 type=6 x=52.0 y=35.5 w=890.3 h=49.7 text=
+shape=Straight Connector 3260 type=9 x=-128.5 y=71.8 w=42.5 h=23.0 text=
+shape=Straight Connector 3313 type=9 x=-171.0 y=521.9 w=42.5 h=23.0 text=
+shape=Oval 24 type=1 x=217.5 y=641.0 w=6.9 h=6.9 text=
+shape=Freeform 25 type=5 x=224.2 y=645.1 w=82.2 h=0.0 text=
+shape=Group 3147 type=6 x=-159.4 y=429.9 w=1,258.8 h=115.7 text=
+shape=Rounded Rectangle 18 type=1 x=50.6 y=105.5 w=853.5 h=163.2 text=
+shape=TextBox 3180 type=17 x=230.6 y=183.6 w=132.1 h=23.9 text=初步发展
+shape=Freeform 3185 type=5 x=53.3 y=157.5 w=682.6 h=27.0 text=
+shape=Group 3223 type=6 x=140.1 y=197.3 w=130.0 h=31.9 text=
+shape=Group 3224 type=6 x=141.6 y=229.1 w=163.0 h=31.5 text=
+shape=Group 3232 type=6 x=345.4 y=200.4 w=139.0 h=29.4 text=
+shape=Group 3233 type=6 x=354.7 y=231.8 w=235.4 h=25.6 text=
+shape=Group 57 type=6 x=181.5 y=170.6 w=425.9 h=17.3 text=
+shape=TextBox 3248 type=17 x=544.0 y=200.4 w=79.1 h=29.4 text=20名
+shape=TextBox 3249 type=17 x=586.9 y=202.3 w=125.6 h=25.6 text=核心研发工程师
+shape=TextBox 3246 type=17 x=553.3 y=234.9 w=55.8 h=21.0 text=80名
+shape=TextBox 3247 type=17 x=586.3 y=231.8 w=217.0 h=25.6 text=销售与售后服务人员
+shape=TextBox 3252 type=17 x=456.0 y=184.7 w=132.1 h=23.9 text=扩大规模
+shape=Rounded Rectangle 3297 type=1 x=48.6 y=287.0 w=853.5 h=163.2 text=
+shape=Group 3403 type=6 x=101.4 y=302.4 w=715.0 h=22.6 text=
+shape=Rectangle 3402 type=1 x=247.6 y=296.9 w=444.4 h=32.5 text=产品推广预计将带动2500余名相关就业岗位
+shape=Group 3434 type=6 x=319.9 y=345.2 w=148.9 h=31.0 text=
+shape=Group 3437 type=6 x=485.3 y=343.8 w=148.9 h=31.0 text=
+shape=Group 3440 type=6 x=653.0 y=343.7 w=148.9 h=31.0 text=
+shape=Group 3443 type=6 x=319.7 y=390.3 w=148.9 h=31.0 text=
+shape=Group 3446 type=6 x=486.1 y=387.4 w=148.9 h=31.0 text=
+shape=Group 3449 type=6 x=654.5 y=385.5 w=148.9 h=31.0 text=
+shape=Picture 3301 type=13 x=745.0 y=112.7 w=126.4 h=97.2 text=
+shape=Group 3454 type=6 x=736.6 y=209.6 w=144.4 h=62.9 text=
+shape=Group 23 type=6 x=50.6 y=105.5 w=45.2 h=163.2 text=
+shape=Group 26 type=6 x=50.6 y=284.9 w=45.2 h=163.2 text=
+shape=Group 31 type=6 x=117.5 y=120.7 w=129.2 h=39.4 text=
+shape=Group 39 type=6 x=336.4 y=121.9 w=129.2 h=39.4 text=
+shape=Group 47 type=6 x=534.2 y=121.9 w=129.2 h=39.4 text=
+shape=Group 59 type=6 x=110.2 y=329.7 w=203.9 h=111.7 text=
+shape=Group 3157 type=6 x=831.2 y=47.7 w=90.4 h=36.0 text=
+shape=TextBox 3162 type=17 x=377.0 y=51.8 w=617.2 h=30.3 text=智能穿戴设备是实现健康管理与精准预测的重要工具
+
+=== SLIDE 21 | layout=标题幻灯片 ===
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=-149.4 y=396.8 w=1,258.8 h=147.2 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=16.6 y=74.9 w=116.1 h=0.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=-4.6 y=74.9 w=116.1 h=0.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=53.8 y=125.3 w=280.1 h=374.3 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=72.3 y=95.3 w=251.7 h=53.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=17 x=87.4 y=167.7 w=226.3 h=71.9 text=培养一批专注于智能健康监测技术的专业人才，加速健康科技创新，推动相关产业多元化发展
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=83.2 y=248.7 w=223.5 h=132.3 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=346.3 y=124.0 w=280.1 h=374.3 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=17 x=379.9 y=166.5 w=226.3 h=71.9 text=培养一批专注于智能健康监测技术的专业人才，加速健康科技创新，推动相关产业多元化发展
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=375.7 y=247.4 w=223.5 h=132.3 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=634.3 y=124.0 w=273.8 h=369.1 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=640.6 y=129.2 w=273.8 h=369.1 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=364.9 y=94.1 w=539.5 h=53.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=17 x=667.9 y=166.5 w=226.3 h=72.6 text=推动健康设备与AI技术深度融合，实现健康监测行业技术革新，助力产业高质量发展
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=670.4 y=252.9 w=210.0 h=120.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=665.7 y=247.7 w=220.7 h=131.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=873.3 y=247.4 w=13.9 h=11.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=873.3 y=368.2 w=13.9 h=11.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=663.7 y=247.4 w=13.9 h=11.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=665.5 y=367.7 w=13.9 h=11.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=57.2 y=412.9 w=806.0 h=103.1 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=52.0 y=26.7 w=890.3 h=48.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=835.8 y=37.6 w=90.4 h=36.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=17 x=377.2 y=41.7 w=617.2 h=30.3 text=智能穿戴设备是实现健康管理与精准预测的重要工具
+
+=== SLIDE 22 | layout=标题幻灯片 ===
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=52.0 y=26.7 w=890.3 h=48.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=-18.9 y=467.9 w=1,004.6 h=28.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=16.1 y=-166.3 w=4.9 h=4.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=106.5 y=-183.3 w=4.9 h=4.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=196.7 y=-165.3 w=4.9 h=4.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=106.5 y=-147.1 w=4.9 h=4.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=9 x=301.7 y=145.3 w=0.0 h=211.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=73.7 y=129.0 w=211.5 h=244.4 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=68.8 y=312.4 w=223.5 h=161.3 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=9 x=301.9 y=147.1 w=0.0 h=338.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=56.8 y=135.9 w=254.8 h=76.4 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=17 x=66.9 y=201.6 w=217.3 h=89.2 text=建立自主生产线，完善智能健康设备的研发与量产流程与国内医疗机构和科技企业合作，扩大产品知名度与市场影响力。
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=160.7 y=482.0 w=153.4 h=39.4 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=9 x=571.8 y=116.8 w=0.0 h=211.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=343.8 y=100.5 w=211.5 h=244.4 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=9 x=571.9 y=118.6 w=0.0 h=338.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=326.8 y=107.5 w=254.8 h=50.1 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=339.9 y=129.1 w=219.7 h=54.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=17 x=337.0 y=173.1 w=217.3 h=89.2 text=推广智能健康设备到医疗机构、运动场景与家庭健康管理等应用场景。根据用户反馈优化产品性能，实现全国市场覆盖。
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=487.5 y=402.4 w=39.4 h=141.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=17 x=430.8 y=458.4 w=153.4 h=30.7 text=2025-2028年
+shape=PA-原创小红书雷点PPT禁止盗用 type=9 x=841.8 y=88.3 w=0.0 h=211.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=613.8 y=72.0 w=211.5 h=244.4 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=608.9 y=255.5 w=223.5 h=161.3 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=9 x=842.0 y=90.1 w=0.0 h=338.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=596.9 y=79.0 w=250.2 h=50.1 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=620.5 y=84.2 w=218.9 h=37.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=610.0 y=100.6 w=219.7 h=54.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=17 x=607.1 y=144.6 w=217.3 h=108.1 text=“一带一路”战略，布局国际市场，推动智能健康设备进入欧美及新兴市场。加强与国际医疗与健康科技企业的合作，实现全球化发展。
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=700.9 y=425.0 w=153.4 h=39.4 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=809.3 y=251.7 w=359.8 h=332.2 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=347.4 y=279.5 w=212.7 h=168.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=833.0 y=39.4 w=90.4 h=36.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=17 x=376.9 y=40.9 w=617.2 h=30.3 text=智能穿戴设备是实现健康管理与精准预测的重要工具
+shape=TextBox 1 type=17 x=934.3 y=18.0 w=320.0 h=72.0 text=
+shape=TextBox 2 type=17 x=941.0 y=171.8 w=320.0 h=72.0 text=
+
+=== MASTER SHAPES ===
+shape=Title Placeholder 1 type=14 x=66.0 y=28.8 w=828.0 h=104.4 text=单击此处编辑母版标题样式
+shape=Text Placeholder 2 type=14 x=66.0 y=143.8 w=828.0 h=342.6 text=单击此处编辑母版文本样式 二级 三级 四级 五级
+shape=Date Placeholder 3 type=14 x=66.0 y=500.5 w=216.0 h=28.8 text=2026/7/16
+shape=Footer Placeholder 4 type=14 x=318.0 y=500.5 w=324.0 h=28.8 text=
+shape=Slide Number Placeholder 5 type=14 x=678.0 y=500.5 w=216.0 h=28.8 text=‹#›
+shape=PA-原创小红书雷点PPT禁止盗用 type=6 x=-6.2 y=-9.3 w=969.2 h=549.3 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=-69.7 y=-80.1 w=528.0 h=540.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=491.4 y=-109.4 w=528.0 h=540.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=264.5 y=-46.1 w=431.8 h=441.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=-69.4 y=-65.9 w=528.0 h=361.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=773.3 y=311.6 w=211.2 h=306.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=-44.8 y=-1.3 w=455.3 h=417.4 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=11 x=115.9 y=-88.2 w=326.7 h=334.1 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=0.0 y=172.2 w=960.0 h=367.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=0.0 y=44.3 w=890.8 h=495.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=501.8 y=-59.0 w=528.0 h=361.0 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=5 x=2.1 y=138.3 w=957.9 h=401.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=5 x=2.1 y=138.3 w=957.9 h=401.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=5 x=2.1 y=138.3 w=957.9 h=401.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=5 x=2.1 y=138.3 w=957.9 h=401.7 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=104.1 y=0.0 w=812.6 h=404.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=75.0 y=27.6 w=689.9 h=444.2 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=-7.3 y=-2.0 w=960.0 h=542.1 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=585.6 y=52.2 w=370.4 h=339.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=11 x=384.7 y=12.5 w=326.7 h=334.1 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=563.7 y=92.8 w=370.4 h=339.6 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=578.8 y=2.8 w=373.9 h=461.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=10.4 y=-29.2 w=105.5 h=177.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=1 x=359.1 y=266.2 w=241.8 h=241.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=101.0 y=53.7 w=105.5 h=177.8 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=120.8 y=56.8 w=286.9 h=293.4 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=828.3 y=342.6 w=131.6 h=197.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=0.0 y=342.6 w=131.6 h=197.5 text=
+shape=PA-原创小红书雷点PPT禁止盗用 type=13 x=581.5 y=-22.3 w=105.5 h=177.8 text=
+=== CUSTOM LAYOUTS ===
+-- layout=标题幻灯片 index=1
+shape=Title 1 type=14 x=120.0 y=88.4 w=720.0 h=188.0 text=单击此处编辑母版标题样式
+shape=Subtitle 2 type=14 x=120.0 y=283.6 w=720.0 h=130.4 text=单击此处编辑母版副标题样式
+shape=Date Placeholder 3 type=14 x=66.0 y=500.5 w=216.0 h=28.8 text=2026/7/16
+shape=Footer Placeholder 4 type=14 x=318.0 y=500.5 w=324.0 h=28.8 text=
+shape=Slide Number Placeholder 5 type=14 x=678.0 y=500.5 w=216.0 h=28.8 text=‹#›
+-- layout=标题和内容 index=2
+shape=Title 1 type=14 x=66.0 y=28.8 w=828.0 h=104.4 text=单击此处编辑母版标题样式
+shape=Content Placeholder 2 type=14 x=66.0 y=143.8 w=828.0 h=342.6 text=单击此处编辑母版文本样式 二级 三级 四级 五级
+shape=Date Placeholder 3 type=14 x=66.0 y=500.5 w=216.0 h=28.8 text=2026/7/16
+shape=Footer Placeholder 4 type=14 x=318.0 y=500.5 w=324.0 h=28.8 text=
+shape=Slide Number Placeholder 5 type=14 x=678.0 y=500.5 w=216.0 h=28.8 text=‹#›
+-- layout=节标题 index=3
+shape=Title 1 type=14 x=65.5 y=134.6 w=828.0 h=224.6 text=单击此处编辑母版标题样式
+shape=Text Placeholder 2 type=14 x=65.5 y=361.4 w=828.0 h=118.1 text=单击此处编辑母版文本样式
+shape=Date Placeholder 3 type=14 x=66.0 y=500.5 w=216.0 h=28.8 text=2026/7/16
+shape=Footer Placeholder 4 type=14 x=318.0 y=500.5 w=324.0 h=28.8 text=
+shape=Slide Number Placeholder 5 type=14 x=678.0 y=500.5 w=216.0 h=28.8 text=‹#›
+-- layout=两栏内容 index=4
+shape=Title 1 type=14 x=66.0 y=28.8 w=828.0 h=104.4 text=单击此处编辑母版标题样式
+shape=Content Placeholder 2 type=14 x=66.0 y=143.8 w=408.0 h=342.6 text=单击此处编辑母版文本样式 二级 三级 四级 五级
+shape=Content Placeholder 3 type=14 x=486.0 y=143.8 w=408.0 h=342.6 text=单击此处编辑母版文本样式 二级 三级 四级 五级
+shape=Date Placeholder 4 type=14 x=66.0 y=500.5 w=216.0 h=28.8 text=2026/7/16
+shape=Footer Placeholder 5 type=14 x=318.0 y=500.5 w=324.0 h=28.8 text=
+shape=Slide Number Placeholder 6 type=14 x=678.0 y=500.5 w=216.0 h=28.8 text=‹#›
+-- layout=比较 index=5
+shape=Title 1 type=14 x=66.1 y=28.8 w=828.0 h=104.4 text=单击此处编辑母版标题样式
+shape=Text Placeholder 2 type=14 x=66.1 y=132.4 w=406.1 h=64.9 text=单击此处编辑母版文本样式
+shape=Content Placeholder 3 type=14 x=66.1 y=197.3 w=406.1 h=290.1 text=单击此处编辑母版文本样式 二级 三级 四级 五级
+shape=Text Placeholder 4 type=14 x=486.0 y=132.4 w=408.1 h=64.9 text=单击此处编辑母版文本样式
+shape=Content Placeholder 5 type=14 x=486.0 y=197.3 w=408.1 h=290.1 text=单击此处编辑母版文本样式 二级 三级 四级 五级
+shape=Date Placeholder 6 type=14 x=66.0 y=500.5 w=216.0 h=28.8 text=2026/7/16
+shape=Footer Placeholder 7 type=14 x=318.0 y=500.5 w=324.0 h=28.8 text=
+shape=Slide Number Placeholder 8 type=14 x=678.0 y=500.5 w=216.0 h=28.8 text=‹#›
+-- layout=仅标题 index=6
+shape=Title 1 type=14 x=66.0 y=28.8 w=828.0 h=104.4 text=单击此处编辑母版标题样式
+shape=Date Placeholder 2 type=14 x=66.0 y=500.5 w=216.0 h=28.8 text=2026/7/16
+shape=Footer Placeholder 3 type=14 x=318.0 y=500.5 w=324.0 h=28.8 text=
+shape=Slide Number Placeholder 4 type=14 x=678.0 y=500.5 w=216.0 h=28.8 text=‹#›
+-- layout=空白 index=7
+shape=Date Placeholder 1 type=14 x=66.0 y=500.5 w=216.0 h=28.8 text=2026/7/16
+shape=Footer Placeholder 2 type=14 x=318.0 y=500.5 w=324.0 h=28.8 text=
+shape=Slide Number Placeholder 3 type=14 x=678.0 y=500.5 w=216.0 h=28.8 text=‹#›
+-- layout=内容与标题 index=8
+shape=Title 1 type=14 x=66.1 y=36.0 w=309.6 h=126.0 text=单击此处编辑母版标题样式
+shape=Content Placeholder 2 type=14 x=408.1 y=77.8 w=486.0 h=383.8 text=单击此处编辑母版文本样式 二级 三级 四级 五级
+shape=Text Placeholder 3 type=14 x=66.1 y=162.0 w=309.6 h=300.1 text=单击此处编辑母版文本样式
+shape=Date Placeholder 4 type=14 x=66.0 y=500.5 w=216.0 h=28.8 text=2026/7/16
+shape=Footer Placeholder 5 type=14 x=318.0 y=500.5 w=324.0 h=28.8 text=
+shape=Slide Number Placeholder 6 type=14 x=678.0 y=500.5 w=216.0 h=28.8 text=‹#›
+-- layout=图片与标题 index=9
+shape=Title 1 type=14 x=66.1 y=36.0 w=309.6 h=126.0 text=单击此处编辑母版标题样式
+shape=Picture Placeholder 2 type=14 x=408.1 y=77.8 w=486.0 h=383.8 text=
+shape=Text Placeholder 3 type=14 x=66.1 y=162.0 w=309.6 h=300.1 text=单击此处编辑母版文本样式
+shape=Date Placeholder 4 type=14 x=66.0 y=500.5 w=216.0 h=28.8 text=2026/7/16
+shape=Footer Placeholder 5 type=14 x=318.0 y=500.5 w=324.0 h=28.8 text=
+shape=Slide Number Placeholder 6 type=14 x=678.0 y=500.5 w=216.0 h=28.8 text=‹#›
+-- layout=标题和竖排文字 index=10
+shape=Title 1 type=14 x=66.0 y=28.8 w=828.0 h=104.4 text=单击此处编辑母版标题样式
+shape=Vertical Text Placeholder 2 type=14 x=66.0 y=143.8 w=828.0 h=342.6 text=单击此处编辑母版文本样式 二级 三级 四级 五级
+shape=Date Placeholder 3 type=14 x=66.0 y=500.5 w=216.0 h=28.8 text=2026/7/16
+shape=Footer Placeholder 4 type=14 x=318.0 y=500.5 w=324.0 h=28.8 text=
+shape=Slide Number Placeholder 5 type=14 x=678.0 y=500.5 w=216.0 h=28.8 text=‹#›
+-- layout=竖排标题与文本 index=11
+shape=Vertical Title 1 type=14 x=687.0 y=28.8 w=207.0 h=457.6 text=单击此处编辑母版标题样式
+shape=Vertical Text Placeholder 2 type=14 x=66.0 y=28.8 w=609.0 h=457.6 text=单击此处编辑母版文本样式 二级 三级 四级 五级
+shape=Date Placeholder 3 type=14 x=66.0 y=500.5 w=216.0 h=28.8 text=2026/7/16
+shape=Footer Placeholder 4 type=14 x=318.0 y=500.5 w=324.0 h=28.8 text=
+shape=Slide Number Placeholder 5 type=14 x=678.0 y=500.5 w=216.0 h=28.8 text=‹#›
+-- layout=自定义版式 index=12

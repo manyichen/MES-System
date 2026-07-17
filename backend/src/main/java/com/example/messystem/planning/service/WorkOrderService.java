@@ -97,14 +97,14 @@ public class WorkOrderService {
 
     /** 仅允许当前操作工接收已派给本人的 DISPATCHED 工单。 */
     public MesWorkOrder receive(long workOrderId, Long operatorId) {
-        requireId(operatorId, "operatorId is required");
-        return workOrderDao.changeStatus(workOrderId, "DISPATCHED", "RECEIVED", "RECEIVE",
-                operatorId, operatorId, "生产工单已接收");
+        return receive(workOrderId, operatorId, false);
     }
 
-    public MesWorkOrder reject(long workOrderId, Long operatorId) {
+    public MesWorkOrder receive(long workOrderId, Long operatorId, boolean allowAdministrativeTakeover) {
         requireId(operatorId, "operatorId is required");
-        return workOrderDao.reject(workOrderId, operatorId);
+        return workOrderDao.changeStatus(workOrderId, "DISPATCHED", "RECEIVED", "RECEIVE",
+                operatorId, operatorId, allowAdministrativeTakeover ? "超级管理员接管生产工单" : "生产工单已接收",
+                !allowAdministrativeTakeover);
     }
 
     public List<MesWorkOrderOperationLog> listLogsForOperator(long userId) {

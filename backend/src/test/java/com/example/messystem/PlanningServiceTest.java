@@ -15,6 +15,7 @@ import com.example.messystem.planning.service.PlanningStore;
 import com.example.messystem.planning.service.ProductionTaskService;
 import com.example.messystem.planning.service.WorkOrderService;
 import com.example.messystem.warehouse.entity.MesInventory;
+import com.example.messystem.warehouse.entity.MesMaterial;
 import com.example.messystem.warehouse.entity.MesWarehouse;
 import com.example.messystem.warehouse.entity.MesWarehouseLocation;
 import com.example.messystem.warehouse.service.WarehouseService;
@@ -25,6 +26,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PlanningServiceTest {
@@ -44,13 +46,19 @@ class PlanningServiceTest {
     @BeforeEach
     void setUp() {
         PlanningStore.clear();
-        materialId = 8_000_000_000L + Math.floorMod(System.nanoTime(), 1_000_000_000L);
         masterDataService = new MasterDataService();
         orderService = new CustomerOrderService();
         taskService = new ProductionTaskService();
         kittingService = new KittingService();
         workOrderService = new WorkOrderService();
         warehouseService = new WarehouseService();
+        MesMaterial material = new MesMaterial();
+        material.materialCode = "MAT-TEST-" + System.nanoTime();
+        material.materialName = "测试天然橡胶";
+        material.materialType = "RAW";
+        material.specification = "TEST-RSS3";
+        material.unit = "kg";
+        materialId = warehouseService.createMaterial(material).materialId;
     }
 
     @Test
@@ -120,6 +128,28 @@ class PlanningServiceTest {
         assertTrue(kittingService.listAlerts().stream()
                 .filter(alert -> alert.taskId.equals(recoveredTaskId))
                 .allMatch(alert -> "RESOLVED".equals(alert.alertStatus)));
+    }
+
+    @Test
+    void kittingShouldExplainMissingBomBeforeAnalysis() {
+        MesProduct product = createProduct();
+        MesCustomerOrder order = new MesCustomerOrder();
+        order.customerName = "未配置BOM客户";
+        order.productId = product.productId;
+        order.orderQty = 10;
+        order = orderService.createOrder(order);
+
+        MesProductionTask task = new MesProductionTask();
+        task.orderId = order.orderId;
+        task.plannerId = 1L;
+        task = taskService.createTask(task);
+
+        MesProductionTask pendingTask = taskService.getTask(task.taskId);
+        assertFalse(pendingTask.kittingAnalyzable);
+        assertEquals("产品未配置启用的BOM物料，请先维护产品BOM", pendingTask.kittingBlockedReason);
+        RuntimeException exception = assertThrows(RuntimeException.class,
+                () -> kittingService.analyze(pendingTask.taskId));
+        assertEquals("产品未配置启用的BOM物料，请先维护产品BOM", exception.getMessage());
     }
 
     private MesProduct createProduct() {

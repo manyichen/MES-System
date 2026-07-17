@@ -7,6 +7,6 @@
 [INFO] 
 [INFO] --- exec:3.5.0:java (default-cli) @ mes-backend ---
 MES backend started: http://127.0.0.1:8080/
-Web root: E:\Projects\xiaoxueqishixun\chenlun\MES-System\frontend
+Web root: E:\Projects\xiaoxueqishixun\chenlun\MES-System\frontend\dist
 Listening on 127.0.0.1:8080
 Press Ctrl+C to stop.

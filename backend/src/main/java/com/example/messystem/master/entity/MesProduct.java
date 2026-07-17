@@ -7,6 +7,7 @@ public class MesProduct {
     public String productCode;
     public String productName;
     public String productModel;
+    public String specification;
     public String unit;
     public Integer enabled;
     public LocalDateTime createdAt;

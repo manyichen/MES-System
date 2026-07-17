@@ -4,6 +4,7 @@ import com.example.messystem.common.Db;
 import com.example.messystem.common.BadRequestException;
 import com.example.messystem.production.entity.MesWorkReport;
 import com.example.messystem.production.service.ProductionService;
+import com.example.messystem.warehouse.entity.ExternalPurchaseRequest;
 import com.example.messystem.warehouse.entity.MesInventory;
 import com.example.messystem.warehouse.entity.MesMaterial;
 import com.example.messystem.warehouse.entity.MesMaterialRequisition;
@@ -153,6 +154,43 @@ class WarehouseProductionServiceTest {
     }
 
     @Test
+    void externalPurchasesAcrossBatchesShouldSatisfyRequisitionWithoutSpecifiedBatch() {
+        long workOrderId = createTestWorkOrder("WO-TEST-" + System.nanoTime(), 100);
+        MesMaterialRequisition requisition = createDatabaseRequisition(BigDecimal.ZERO, workOrderId, false);
+        MesInventory inventory = warehouseService.listInventoryByMaterial(requisition.items.get(0).materialId)
+                .stream().findFirst().orElseThrow();
+
+        ExternalPurchaseRequest firstPurchase = new ExternalPurchaseRequest();
+        firstPurchase.materialId = inventory.materialId;
+        firstPurchase.warehouseId = inventory.warehouseId;
+        firstPurchase.locationId = inventory.locationId;
+        firstPurchase.batchNo = "BATCH-TEST-PUR-A-" + System.nanoTime();
+        firstPurchase.qty = new BigDecimal("4");
+        warehouseService.externalPurchase(firstPurchase, 1L);
+
+        ExternalPurchaseRequest secondPurchase = new ExternalPurchaseRequest();
+        secondPurchase.materialId = inventory.materialId;
+        secondPurchase.warehouseId = inventory.warehouseId;
+        secondPurchase.locationId = inventory.locationId;
+        secondPurchase.batchNo = "BATCH-TEST-PUR-B-" + System.nanoTime();
+        secondPurchase.qty = new BigDecimal("6");
+        warehouseService.externalPurchase(secondPurchase, 1L);
+
+        warehouseService.receiveRequisition(requisition.requisitionId, 1L);
+        MesMaterialRequisition approved = warehouseService.approveRequisition(requisition.requisitionId, 1L);
+        warehouseService.completePicking(approved.pickingTaskId);
+        long deliveryTaskId = deliveryTaskIdFor(approved.pickingTaskId);
+        warehouseService.markDeliveryArrived(deliveryTaskId);
+        warehouseService.confirmDeliveryReceipt(deliveryTaskId);
+
+        assertEquals("RECEIVED", warehouseService.getDeliveryTask(deliveryTaskId).deliveryStatus);
+        assertEquals(0, warehouseService.listInventoryByMaterial(inventory.materialId).stream()
+                .map(row -> row.availableQty)
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .compareTo(BigDecimal.ZERO));
+    }
+
+    @Test
     void confirmReceiptShouldFailWhenRepeated() {
         MesMaterialRequisition requisition = createDatabaseRequisition(new BigDecimal("100"));
         warehouseService.receiveRequisition(requisition.requisitionId, 1L);
@@ -207,6 +245,11 @@ class WarehouseProductionServiceTest {
     }
 
     private MesMaterialRequisition createDatabaseRequisition(BigDecimal inventoryQty, long workOrderId) {
+        return createDatabaseRequisition(inventoryQty, workOrderId, true);
+    }
+
+    private MesMaterialRequisition createDatabaseRequisition(
+            BigDecimal inventoryQty, long workOrderId, boolean specifyBatch) {
         String suffix = "TEST-" + System.nanoTime();
 
         MesMaterial material = new MesMaterial();
@@ -240,7 +283,7 @@ class WarehouseProductionServiceTest {
         item.materialId = createdMaterial.materialId;
         item.requiredQty = new BigDecimal("10");
         item.unit = "kg";
-        item.batchNo = inventory.batchNo;
+        item.batchNo = specifyBatch ? inventory.batchNo : "";
 
         MesMaterialRequisition requisition = new MesMaterialRequisition();
         requisition.requisitionNo = "REQ-" + suffix;

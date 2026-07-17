@@ -91,22 +91,7 @@ public class WorkOrderResource {
                 throw new BadRequestException("只有被派发的生产操作工才能接收工单");
             }
             return ResourceSupport.action("生产工单已接收",
-                    service.receive(id, user.user.userId));
-        } catch (RuntimeException ex) {
-            return ResourceSupport.handle(ex);
-        }
-    }
-
-    @POST
-    @Path("/{id}/reject")
-    public Response reject(@PathParam("id") long id, @Context ContainerRequestContext context) {
-        try {
-            AuthenticatedUser user = AuthFilter.currentUser(context);
-            if (!user.canActAs("PRODUCTION_OPERATOR")) {
-                throw new BadRequestException("只有被派发的生产操作工才能拒绝工单");
-            }
-            return ResourceSupport.action("生产工单已拒绝接收",
-                    service.reject(id, user.user.userId));
+                    service.receive(id, user.user.userId, user.isSuperAdmin()));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }

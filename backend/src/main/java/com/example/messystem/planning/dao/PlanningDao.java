@@ -66,7 +66,7 @@ public class PlanningDao {
 
     public List<MesProduct> listProducts() throws SQLException {
         String sql = """
-                select product_id, product_code, product_name, product_model, enabled
+                select product_id, product_code, product_name, product_model, specification, enabled
                 from mes_product
                 order by product_id
                 """;
@@ -83,7 +83,7 @@ public class PlanningDao {
 
     public Optional<MesProduct> findProduct(long productId) throws SQLException {
         String sql = """
-                select product_id, product_code, product_name, product_model, enabled
+                select product_id, product_code, product_name, product_model, specification, enabled
                 from mes_product
                 where product_id = ?
                 """;
@@ -100,14 +100,14 @@ public class PlanningDao {
         String sql = """
                 insert into mes_product (product_code, product_name, product_model, specification, enabled)
                 values (?, ?, ?, ?, ?)
-                returning product_id, product_code, product_name, product_model, enabled
+                returning product_id, product_code, product_name, product_model, specification, enabled
                 """;
         try (Connection connection = Db.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, product.productCode);
             statement.setString(2, product.productName);
             statement.setString(3, product.productModel);
-            statement.setString(4, product.productModel);
+            statement.setString(4, product.specification == null ? product.productModel : product.specification);
             statement.setInt(5, product.enabled == null ? 1 : product.enabled);
             try (ResultSet rs = statement.executeQuery()) {
                 rs.next();
@@ -116,9 +116,66 @@ public class PlanningDao {
         }
     }
 
+    public MesProduct updateProduct(long productId, MesProduct product) throws SQLException {
+        String sql = """
+                update mes_product
+                set product_code = ?, product_name = ?, product_model = ?, specification = ?, enabled = ?
+                where product_id = ?
+                returning product_id, product_code, product_name, product_model, specification, enabled
+                """;
+        try (Connection connection = Db.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, product.productCode);
+            statement.setString(2, product.productName);
+            statement.setString(3, product.productModel);
+            statement.setString(4, product.specification);
+            statement.setInt(5, product.enabled == null ? 1 : product.enabled);
+            statement.setLong(6, productId);
+            try (ResultSet rs = statement.executeQuery()) {
+                if (!rs.next()) throw new NotFoundException("product not found");
+                return mapProduct(rs);
+            }
+        }
+    }
+
+    public MesProduct disableProduct(long productId) throws SQLException {
+        String sql = """
+                update mes_product set enabled = 0 where product_id = ?
+                returning product_id, product_code, product_name, product_model, specification, enabled
+                """;
+        try (Connection connection = Db.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, productId);
+            try (ResultSet rs = statement.executeQuery()) {
+                if (!rs.next()) throw new NotFoundException("product not found");
+                return mapProduct(rs);
+            }
+        }
+    }
+
+    public List<MesProductBom> listAllBom() throws SQLException {
+        String sql = """
+                select b.bom_id, b.product_id, p.product_code, p.product_name,
+                       b.material_id, m.material_code, m.material_name,
+                       b.usage_qty, b.unit, b.enabled, null::timestamp as created_at
+                from mes_product_bom b
+                join mes_product p on p.product_id = b.product_id
+                left join mes_material m on m.material_id = b.material_id
+                order by p.product_code, b.bom_id
+                """;
+        try (Connection connection = Db.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet rs = statement.executeQuery()) {
+            List<MesProductBom> rows = new ArrayList<>();
+            while (rs.next()) rows.add(mapBom(rs));
+            return rows;
+        }
+    }
+
     public List<MesProductBom> listBom(long productId) throws SQLException {
         String sql = """
-                select b.bom_id, b.product_id, b.material_id, m.material_code, m.material_name,
+                select b.bom_id, b.product_id, null::varchar as product_code,
+                       null::varchar as product_name, b.material_id, m.material_code, m.material_name,
                        b.usage_qty, b.unit, b.enabled, null::timestamp as created_at
                 from mes_product_bom b
                 left join mes_material m on m.material_id = b.material_id
@@ -142,7 +199,8 @@ public class PlanningDao {
         String sql = """
                 insert into mes_product_bom (product_id, material_id, usage_qty, unit, enabled)
                 values (?, ?, ?, ?, ?)
-                returning bom_id, product_id, material_id, null::varchar as material_code,
+                returning bom_id, product_id, null::varchar as product_code,
+                          null::varchar as product_name, material_id, null::varchar as material_code,
                           null::varchar as material_name, usage_qty, unit, enabled, null::timestamp as created_at
                 """;
         try (Connection connection = Db.getConnection();
@@ -159,12 +217,43 @@ public class PlanningDao {
         }
     }
 
+    public MesProductBom updateBom(long bomId, MesProductBom bom) throws SQLException {
+        String sql = """
+                update mes_product_bom
+                set product_id = ?, material_id = ?, usage_qty = ?, unit = ?, enabled = ?
+                where bom_id = ?
+                returning bom_id, product_id, null::varchar as product_code,
+                          null::varchar as product_name, material_id,
+                          null::varchar as material_code, null::varchar as material_name,
+                          usage_qty, unit, enabled, null::timestamp as created_at
+                """;
+        try (Connection connection = Db.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, bom.productId);
+            statement.setLong(2, bom.materialId);
+            statement.setBigDecimal(3, bom.qtyPerUnit);
+            statement.setString(4, bom.unit);
+            statement.setInt(5, bom.enabled == null ? 1 : bom.enabled);
+            statement.setLong(6, bomId);
+            try (ResultSet rs = statement.executeQuery()) {
+                if (!rs.next()) throw new NotFoundException("bom item not found");
+                return mapBom(rs);
+            }
+        }
+    }
+
+    public void deleteBom(long bomId) throws SQLException {
+        deleteById("delete from mes_product_bom where bom_id = ?", bomId, "bom item not found");
+    }
+
     public List<MesProcessRoute> listProcessRoutes() throws SQLException {
         String sql = """
-                select process_id, product_id, process_code, process_name, process_seq,
-                       required_equipment_type, enabled, null::timestamp as created_at
-                from mes_process_route
-                order by process_seq, process_id
+                select r.process_id, r.product_id, p.product_code, p.product_name, p.product_model,
+                       r.process_code, r.process_name, r.process_seq,
+                       r.required_equipment_type, r.enabled, null::timestamp as created_at
+                from mes_process_route r
+                left join mes_product p on p.product_id = r.product_id
+                order by r.product_id nulls last, r.process_seq, r.process_id
                 """;
         try (Connection connection = Db.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql);
@@ -276,6 +365,48 @@ public class PlanningDao {
         }
     }
 
+    public MesProductionLine updateProductionLine(long lineId, MesProductionLine line) throws SQLException {
+        String sql = """
+                update mes_production_line
+                set line_code = ?, line_name = ?, line_type = ?, daily_capacity = ?,
+                    line_status = ?, enabled = ?
+                where line_id = ?
+                returning line_id, line_code, line_name, line_type, daily_capacity,
+                          line_status, enabled, null::timestamp as created_at
+                """;
+        try (Connection connection = Db.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, line.lineCode);
+            statement.setString(2, line.lineName);
+            statement.setString(3, line.lineType);
+            setInteger(statement, 4, line.capacityPerDay);
+            statement.setString(5, line.lineStatus);
+            statement.setInt(6, line.enabled == null ? 1 : line.enabled);
+            statement.setLong(7, lineId);
+            try (ResultSet rs = statement.executeQuery()) {
+                if (!rs.next()) throw new NotFoundException("production line not found");
+                return mapProductionLine(rs);
+            }
+        }
+    }
+
+    public MesProductionLine disableProductionLine(long lineId) throws SQLException {
+        String sql = """
+                update mes_production_line set enabled = 0, line_status = 'DISABLED'
+                where line_id = ?
+                returning line_id, line_code, line_name, line_type, daily_capacity,
+                          line_status, enabled, null::timestamp as created_at
+                """;
+        try (Connection connection = Db.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, lineId);
+            try (ResultSet rs = statement.executeQuery()) {
+                if (!rs.next()) throw new NotFoundException("production line not found");
+                return mapProductionLine(rs);
+            }
+        }
+    }
+
     public List<MesCustomerOrder> listOrders() throws SQLException {
         String sql = """
                 select order_id, order_no, customer_name, product_id, product_code, product_model,
@@ -354,14 +485,7 @@ public class PlanningDao {
     }
 
     public List<MesProductionTask> listTasks() throws SQLException {
-        String sql = """
-                select task_id, task_no, order_id, planner_id, plan_qty, planned_start_time,
-                       planned_end_time, target_line_id, task_status, kitting_status, release_time,
-                       close_time, remark, created_at, updated_at,
-                       (select o.product_id from mes_customer_order o where o.order_id = t.order_id) as product_id
-                from mes_production_task t
-                order by task_id asc
-                """;
+        String sql = taskSelectSql(false);
         try (Connection connection = Db.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql);
              ResultSet rs = statement.executeQuery()) {
@@ -374,14 +498,7 @@ public class PlanningDao {
     }
 
     public Optional<MesProductionTask> findTask(long taskId) throws SQLException {
-        String sql = """
-                select task_id, task_no, order_id, planner_id, plan_qty, planned_start_time,
-                       planned_end_time, target_line_id, task_status, kitting_status, release_time,
-                       close_time, remark, created_at, updated_at,
-                       (select o.product_id from mes_customer_order o where o.order_id = t.order_id) as product_id
-                from mes_production_task t
-                where task_id = ?
-                """;
+        String sql = taskSelectSql(true);
         try (Connection connection = Db.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setLong(1, taskId);
@@ -389,6 +506,61 @@ public class PlanningDao {
                 return rs.next() ? Optional.of(mapTask(rs)) : Optional.empty();
             }
         }
+    }
+
+    private static String taskSelectSql(boolean singleTask) {
+        String where = singleTask ? "where t.task_id = ?\n" : "";
+        return """
+                select t.task_id, t.task_no, t.order_id, t.planner_id, t.plan_qty,
+                       t.planned_start_time, t.planned_end_time, t.target_line_id,
+                       t.task_status, t.kitting_status, t.release_time, t.close_time,
+                       t.remark, t.created_at, t.updated_at, o.product_id,
+                       readiness.blocked_reason is null as kitting_analyzable,
+                       readiness.blocked_reason as kitting_blocked_reason,
+                       exists(select 1 from mes_shortage_alert a where a.task_id = t.task_id)
+                           as shortage_alert_published,
+                       (select string_agg(s.resource_name || ' 缺口 ' || s.shortage_qty::text, '；'
+                                order by s.shortage_item_id)
+                        from mes_kitting_shortage_item s
+                        where s.task_id = t.task_id
+                          and s.analysis_id = (select max(a.analysis_id) from mes_kitting_analysis a
+                                               where a.task_id = t.task_id)
+                          and s.shortage_type = 'MATERIAL'
+                          and coalesce(s.shortage_qty, 0) > 0) as shortage_summary
+                from mes_production_task t
+                left join mes_customer_order o on o.order_id = t.order_id
+                left join mes_product p on p.product_id = o.product_id
+                cross join lateral (
+                    select case
+                        when o.product_id is null
+                            then '生产任务未关联产品，请先补全客户订单的产品信息'
+                        when p.product_id is null or coalesce(p.enabled, 0) <> 1
+                            then '生产任务关联的产品不存在或已停用，请先修复产品信息'
+                        when coalesce(t.plan_qty, 0) <= 0
+                            then '生产任务计划数量必须大于0，请先修复任务数据'
+                        when not exists (
+                            select 1 from mes_product_bom b
+                            where b.product_id = o.product_id and coalesce(b.enabled, 1) = 1
+                        )
+                            then '产品未配置启用的BOM物料，请先维护产品BOM'
+                        when exists (
+                            select 1
+                            from mes_product_bom b
+                            left join mes_material m on m.material_id = b.material_id
+                            where b.product_id = o.product_id and coalesce(b.enabled, 1) = 1
+                              and (m.material_id is null or coalesce(m.enabled, 0) <> 1)
+                        )
+                            then '产品BOM包含已停用或不存在的物料，请先修复BOM'
+                        when exists (
+                            select 1 from mes_product_bom b
+                            where b.product_id = o.product_id and coalesce(b.enabled, 1) = 1
+                              and coalesce(b.usage_qty, 0) <= 0
+                        )
+                            then '产品BOM物料单耗必须大于0，请先修复BOM'
+                        else null
+                    end as blocked_reason
+                ) readiness
+                """ + where + "order by t.task_id asc";
     }
 
     public MesProductionTask insertTask(MesProductionTask task) throws SQLException {
@@ -471,17 +643,35 @@ public class PlanningDao {
     }
 
     public List<MesProductBom> listBomForProduct(long productId) throws SQLException {
-        return listBom(productId);
+        return listBom(productId).stream()
+                .filter(item -> item.enabled == null || item.enabled == 1)
+                .toList();
     }
 
     public BigDecimal availableQty(long materialId) throws SQLException {
-        String sql = "select coalesce(sum(available_qty), 0) from mes_inventory where material_id = ?";
+        String sql = """
+                select coalesce(sum(available_qty), 0)
+                from mes_inventory
+                where material_id = ? and quality_status = 'QUALIFIED'
+                """;
         try (Connection connection = Db.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setLong(1, materialId);
             try (ResultSet rs = statement.executeQuery()) {
                 rs.next();
                 return rs.getBigDecimal(1);
+            }
+        }
+    }
+
+    public boolean hasPublishedShortageAlert(long taskId) throws SQLException {
+        String sql = "select exists(select 1 from mes_shortage_alert where task_id = ?)";
+        try (Connection connection = Db.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, taskId);
+            try (ResultSet rs = statement.executeQuery()) {
+                rs.next();
+                return rs.getBoolean(1);
             }
         }
     }
@@ -757,6 +947,7 @@ public class PlanningDao {
         item.productCode = rs.getString("product_code");
         item.productName = rs.getString("product_name");
         item.productModel = rs.getString("product_model");
+        item.specification = getOptionalString(rs, "specification");
         item.unit = "条";
         item.enabled = rs.getInt("enabled");
         return item;
@@ -766,6 +957,8 @@ public class PlanningDao {
         MesProductBom item = new MesProductBom();
         item.bomId = rs.getLong("bom_id");
         item.productId = rs.getLong("product_id");
+        item.productCode = getOptionalString(rs, "product_code");
+        item.productName = getOptionalString(rs, "product_name");
         item.materialId = rs.getLong("material_id");
         item.materialCode = rs.getString("material_code");
         item.materialName = rs.getString("material_name");
@@ -780,6 +973,9 @@ public class PlanningDao {
         MesProcessRoute item = new MesProcessRoute();
         item.processId = rs.getLong("process_id");
         item.productId = getLong(rs, "product_id");
+        item.productCode = getOptionalString(rs, "product_code");
+        item.productName = getOptionalString(rs, "product_name");
+        item.productModel = getOptionalString(rs, "product_model");
         item.processCode = rs.getString("process_code");
         item.processName = rs.getString("process_name");
         item.processSeq = rs.getInt("process_seq");
@@ -836,6 +1032,10 @@ public class PlanningDao {
         item.targetLineId = getLong(rs, "target_line_id");
         item.taskStatus = rs.getString("task_status");
         item.kittingStatus = rs.getString("kitting_status");
+        item.kittingAnalyzable = getOptionalBoolean(rs, "kitting_analyzable");
+        item.kittingBlockedReason = getOptionalString(rs, "kitting_blocked_reason");
+        item.shortageAlertPublished = getOptionalBoolean(rs, "shortage_alert_published");
+        item.shortageSummary = getOptionalString(rs, "shortage_summary");
         item.releaseTime = getLocalDateTime(rs, "release_time");
         item.closeTime = getLocalDateTime(rs, "close_time");
         item.remark = rs.getString("remark");
@@ -889,6 +1089,23 @@ public class PlanningDao {
     private static Integer getInteger(ResultSet rs, String column) throws SQLException {
         int value = rs.getInt(column);
         return rs.wasNull() ? null : value;
+    }
+
+    private static String getOptionalString(ResultSet rs, String column) {
+        try {
+            return rs.getString(column);
+        } catch (SQLException ignored) {
+            return null;
+        }
+    }
+
+    private static Boolean getOptionalBoolean(ResultSet rs, String column) {
+        try {
+            boolean value = rs.getBoolean(column);
+            return rs.wasNull() ? null : value;
+        } catch (SQLException ignored) {
+            return null;
+        }
     }
 
     private static LocalDateTime getLocalDateTime(ResultSet rs, String column) throws SQLException {

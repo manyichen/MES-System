@@ -1,0 +1,84 @@
+FILE=C:\Users\Li Hanyu\Desktop\学生成果物-第X组-项目名称\学生成果物-第X组-项目名称\项目路演PPT-第XX组-项目名称.pptx
+SLIDES=1
+SIZE=960x540
+
+=== SLIDE 1 | layout=标题幻灯片 ===
+shape=TextBox 3 type=17 x=48.8 y=32.8 w=878.0 h=492.8 text=PPT的主要内容大概包括： Part1---封面（项目名称，组成员姓名） Part2 ---项目介绍、项目中使用的技术、 Part3 ---人员分工及项目开发计划 Part4 ---项目亮点 Part5 ---需求分析、用例图、原型设计 Part6---系统功能结构图、项目核心界面的截图展示 Part7---项目成果（展示自己的过程文档、记录等） Part8---项目心得/收获（比如代码规范、开发流程规范、技术难点解决、异常代码分享） Last Part---结束语及致谢
+
+=== MASTER SHAPES ===
+shape=Title Placeholder 1 type=14 x=66.0 y=28.8 w=828.0 h=104.4 text=单击此处编辑母版标题样式
+shape=Text Placeholder 2 type=14 x=66.0 y=143.8 w=828.0 h=342.6 text=单击此处编辑母版文本样式 第二级 第三级 第四级 第五级
+shape=Date Placeholder 3 type=14 x=66.0 y=500.5 w=216.0 h=28.8 text=2026/7/16
+shape=Footer Placeholder 4 type=14 x=318.0 y=500.5 w=324.0 h=28.8 text=
+shape=Slide Number Placeholder 5 type=14 x=678.0 y=500.5 w=216.0 h=28.8 text=‹#›
+=== CUSTOM LAYOUTS ===
+-- layout=标题幻灯片 index=1
+shape=Title 1 type=14 x=120.0 y=88.4 w=720.0 h=188.0 text=单击此处编辑母版标题样式
+shape=Subtitle 2 type=14 x=120.0 y=283.6 w=720.0 h=130.4 text=单击此处编辑母版副标题样式
+shape=Date Placeholder 3 type=14 x=66.0 y=500.5 w=216.0 h=28.8 text=2026/7/16
+shape=Footer Placeholder 4 type=14 x=318.0 y=500.5 w=324.0 h=28.8 text=
+shape=Slide Number Placeholder 5 type=14 x=678.0 y=500.5 w=216.0 h=28.8 text=‹#›
+-- layout=标题和内容 index=2
+shape=Title 1 type=14 x=66.0 y=28.8 w=828.0 h=104.4 text=单击此处编辑母版标题样式
+shape=Content Placeholder 2 type=14 x=66.0 y=143.8 w=828.0 h=342.6 text=单击此处编辑母版文本样式 第二级 第三级 第四级 第五级
+shape=Date Placeholder 3 type=14 x=66.0 y=500.5 w=216.0 h=28.8 text=2026/7/16
+shape=Footer Placeholder 4 type=14 x=318.0 y=500.5 w=324.0 h=28.8 text=
+shape=Slide Number Placeholder 5 type=14 x=678.0 y=500.5 w=216.0 h=28.8 text=‹#›
+-- layout=节标题 index=3
+shape=Title 1 type=14 x=65.5 y=134.6 w=828.0 h=224.6 text=单击此处编辑母版标题样式
+shape=Text Placeholder 2 type=14 x=65.5 y=361.4 w=828.0 h=118.1 text=单击此处编辑母版文本样式
+shape=Date Placeholder 3 type=14 x=66.0 y=500.5 w=216.0 h=28.8 text=2026/7/16
+shape=Footer Placeholder 4 type=14 x=318.0 y=500.5 w=324.0 h=28.8 text=
+shape=Slide Number Placeholder 5 type=14 x=678.0 y=500.5 w=216.0 h=28.8 text=‹#›
+-- layout=两栏内容 index=4
+shape=Title 1 type=14 x=66.0 y=28.8 w=828.0 h=104.4 text=单击此处编辑母版标题样式
+shape=Content Placeholder 2 type=14 x=66.0 y=143.8 w=408.0 h=342.6 text=单击此处编辑母版文本样式 第二级 第三级 第四级 第五级
+shape=Content Placeholder 3 type=14 x=486.0 y=143.8 w=408.0 h=342.6 text=单击此处编辑母版文本样式 第二级 第三级 第四级 第五级
+shape=Date Placeholder 4 type=14 x=66.0 y=500.5 w=216.0 h=28.8 text=2026/7/16
+shape=Footer Placeholder 5 type=14 x=318.0 y=500.5 w=324.0 h=28.8 text=
+shape=Slide Number Placeholder 6 type=14 x=678.0 y=500.5 w=216.0 h=28.8 text=‹#›
+-- layout=比较 index=5
+shape=Title 1 type=14 x=66.1 y=28.8 w=828.0 h=104.4 text=单击此处编辑母版标题样式
+shape=Text Placeholder 2 type=14 x=66.1 y=132.4 w=406.1 h=64.9 text=单击此处编辑母版文本样式
+shape=Content Placeholder 3 type=14 x=66.1 y=197.3 w=406.1 h=290.1 text=单击此处编辑母版文本样式 第二级 第三级 第四级 第五级
+shape=Text Placeholder 4 type=14 x=486.0 y=132.4 w=408.1 h=64.9 text=单击此处编辑母版文本样式
+shape=Content Placeholder 5 type=14 x=486.0 y=197.3 w=408.1 h=290.1 text=单击此处编辑母版文本样式 第二级 第三级 第四级 第五级
+shape=Date Placeholder 6 type=14 x=66.0 y=500.5 w=216.0 h=28.8 text=2026/7/16
+shape=Footer Placeholder 7 type=14 x=318.0 y=500.5 w=324.0 h=28.8 text=
+shape=Slide Number Placeholder 8 type=14 x=678.0 y=500.5 w=216.0 h=28.8 text=‹#›
+-- layout=仅标题 index=6
+shape=Title 1 type=14 x=66.0 y=28.8 w=828.0 h=104.4 text=单击此处编辑母版标题样式
+shape=Date Placeholder 2 type=14 x=66.0 y=500.5 w=216.0 h=28.8 text=2026/7/16
+shape=Footer Placeholder 3 type=14 x=318.0 y=500.5 w=324.0 h=28.8 text=
+shape=Slide Number Placeholder 4 type=14 x=678.0 y=500.5 w=216.0 h=28.8 text=‹#›
+-- layout=空白 index=7
+shape=Date Placeholder 1 type=14 x=66.0 y=500.5 w=216.0 h=28.8 text=2026/7/16
+shape=Footer Placeholder 2 type=14 x=318.0 y=500.5 w=324.0 h=28.8 text=
+shape=Slide Number Placeholder 3 type=14 x=678.0 y=500.5 w=216.0 h=28.8 text=‹#›
+-- layout=内容与标题 index=8
+shape=Title 1 type=14 x=66.1 y=36.0 w=309.6 h=126.0 text=单击此处编辑母版标题样式
+shape=Content Placeholder 2 type=14 x=408.1 y=77.8 w=486.0 h=383.8 text=单击此处编辑母版文本样式 第二级 第三级 第四级 第五级
+shape=Text Placeholder 3 type=14 x=66.1 y=162.0 w=309.6 h=300.1 text=单击此处编辑母版文本样式
+shape=Date Placeholder 4 type=14 x=66.0 y=500.5 w=216.0 h=28.8 text=2026/7/16
+shape=Footer Placeholder 5 type=14 x=318.0 y=500.5 w=324.0 h=28.8 text=
+shape=Slide Number Placeholder 6 type=14 x=678.0 y=500.5 w=216.0 h=28.8 text=‹#›
+-- layout=图片与标题 index=9
+shape=Title 1 type=14 x=66.1 y=36.0 w=309.6 h=126.0 text=单击此处编辑母版标题样式
+shape=Picture Placeholder 2 type=14 x=408.1 y=77.8 w=486.0 h=383.8 text=
+shape=Text Placeholder 3 type=14 x=66.1 y=162.0 w=309.6 h=300.1 text=单击此处编辑母版文本样式
+shape=Date Placeholder 4 type=14 x=66.0 y=500.5 w=216.0 h=28.8 text=2026/7/16
+shape=Footer Placeholder 5 type=14 x=318.0 y=500.5 w=324.0 h=28.8 text=
+shape=Slide Number Placeholder 6 type=14 x=678.0 y=500.5 w=216.0 h=28.8 text=‹#›
+-- layout=标题和竖排文字 index=10
+shape=Title 1 type=14 x=66.0 y=28.8 w=828.0 h=104.4 text=单击此处编辑母版标题样式
+shape=Vertical Text Placeholder 2 type=14 x=66.0 y=143.8 w=828.0 h=342.6 text=单击此处编辑母版文本样式 第二级 第三级 第四级 第五级
+shape=Date Placeholder 3 type=14 x=66.0 y=500.5 w=216.0 h=28.8 text=2026/7/16
+shape=Footer Placeholder 4 type=14 x=318.0 y=500.5 w=324.0 h=28.8 text=
+shape=Slide Number Placeholder 5 type=14 x=678.0 y=500.5 w=216.0 h=28.8 text=‹#›
+-- layout=垂直排列标题与
+文本 index=11
+shape=Vertical Title 1 type=14 x=687.0 y=28.8 w=207.0 h=457.6 text=单击此处编辑母版标题样式
+shape=Vertical Text Placeholder 2 type=14 x=66.0 y=28.8 w=609.0 h=457.6 text=单击此处编辑母版文本样式 第二级 第三级 第四级 第五级
+shape=Date Placeholder 3 type=14 x=66.0 y=500.5 w=216.0 h=28.8 text=2026/7/16
+shape=Footer Placeholder 4 type=14 x=318.0 y=500.5 w=324.0 h=28.8 text=
+shape=Slide Number Placeholder 5 type=14 x=678.0 y=500.5 w=216.0 h=28.8 text=‹#›

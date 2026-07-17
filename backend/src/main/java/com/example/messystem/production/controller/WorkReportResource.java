@@ -67,8 +67,10 @@ public class WorkReportResource {
     @POST
     public Response create(MesWorkReport report, @Context ContainerRequestContext context) {
         try {
-            report.operatorId = AuthFilter.currentUser(context).user.userId;
-            return ResourceSupport.created("报工单已提交", service.createWorkReport(report));
+            AuthenticatedUser user = AuthFilter.currentUser(context);
+            report.operatorId = user.user.userId;
+            return ResourceSupport.created("报工单已提交",
+                    service.createWorkReport(report, user.isSuperAdmin()));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }
@@ -80,13 +82,14 @@ public class WorkReportResource {
         try {
             AuthenticatedUser user = AuthFilter.currentUser(context);
             MesWorkReport current = service.getWorkReport(id);
-            if (!user.user.userId.equals(current.operatorId)
+            if ((!user.isSuperAdmin() && !user.user.userId.equals(current.operatorId))
                     || (!"SUBMITTED".equals(current.reportStatus) && !"REJECTED".equals(current.reportStatus))) {
                 throw new BadRequestException("只能修改本人待审核或已驳回的报工单");
             }
             report.operatorId = user.user.userId;
             report.reportStatus = "SUBMITTED";
-            return ResourceSupport.action("报工单已更新", service.updateWorkReport(id, report));
+            return ResourceSupport.action("报工单已更新",
+                    service.updateWorkReport(id, report, user.isSuperAdmin()));
         } catch (RuntimeException ex) {
             return ResourceSupport.handle(ex);
         }

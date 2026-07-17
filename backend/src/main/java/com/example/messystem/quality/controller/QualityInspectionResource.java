@@ -2,6 +2,7 @@ package com.example.messystem.quality.controller;
 
 import com.example.messystem.common.ApiResponse;
 import com.example.messystem.common.BadRequestException;
+import com.example.messystem.common.IdGenerator;
 import com.example.messystem.common.UserRoleValidator;
 import com.example.messystem.auth.AuthFilter;
 import com.example.messystem.auth.AuthenticatedUser;
@@ -93,12 +94,26 @@ public class QualityInspectionResource {
                 throw new BadRequestException("质检单内容不能为空");
             }
             Long workOrderId = inspection.workOrderId();
-            if (workOrderId == null && inspection.workReportId() != null) {
-                workOrderId = productionService.getWorkReport(inspection.workReportId()).workOrderId;
+            Integer sampleQty = inspection.sampleQty();
+            if (inspection.workReportId() != null) {
+                var report = productionService.getWorkReport(inspection.workReportId());
+                if (workOrderId == null) {
+                    workOrderId = report.workOrderId;
+                }
+                if (sampleQty == null || sampleQty <= 0) {
+                    sampleQty = report.qualifiedQty;
+                }
+            }
+            if (sampleQty == null || sampleQty <= 0) {
+                throw new BadRequestException("抽检数量必须大于 0");
+            }
+            String inspectionNo = inspection.inspectionNo();
+            if (inspectionNo == null || inspectionNo.isBlank()) {
+                inspectionNo = IdGenerator.nextCode("QI");
             }
             MesQualityInspection payload = new MesQualityInspection(
-                    null, inspection.inspectionNo(), workOrderId, inspection.workReportId(),
-                    inspection.sampleQty(), "CREATED", null, null, null, null,
+                    null, inspectionNo, workOrderId, inspection.workReportId(),
+                    sampleQty, "CREATED", null, null, null, null,
                     null, null, null, null, null, null);
             long id = service.createInspection(payload);
             return ApiResponse.ok(id);
@@ -168,8 +183,9 @@ public class QualityInspectionResource {
             if (result == null || result.result() == null || result.result().isBlank()) {
                 throw new BadRequestException("质检结果不能为空");
             }
-            return ApiResponse.ok(service.submitInspection(id, AuthFilter.currentUser(context).user.userId,
-                    result.result(), result.note()));
+            AuthenticatedUser user = AuthFilter.currentUser(context);
+            return ApiResponse.ok(service.submitInspection(id, user.user.userId,
+                    result.result(), result.note(), user.isSuperAdmin()));
         } catch (SQLException e) {
             throw new BadRequestException(e.getMessage());
         }

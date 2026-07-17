@@ -8,6 +8,7 @@ tomcat.*/
 .tools/
 .env
 /storage/
+database/backups/
 .env.*
 !.env.example
 

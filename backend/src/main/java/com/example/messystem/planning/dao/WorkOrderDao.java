@@ -201,45 +201,6 @@ public class WorkOrderDao {
         }
     }
 
-    /** 仅允许当前操作工拒绝已派给本人且尚未接收的工单。 */
-    public MesWorkOrder reject(long workOrderId, Long operatorId) {
-        requireId(operatorId, "operatorId is required");
-        String sql = """
-                update mes_work_order
-                set work_order_status = 'REJECTED', updated_at = current_timestamp
-                where work_order_id = ? and work_order_status = 'DISPATCHED' and assigned_to = ?
-                returning work_order_id, work_order_no, task_id, product_id, line_id, process_id,
-                          planned_qty, actual_qty, priority_level, work_order_status, batch_no,
-                          assigned_to, accepted_by,
-                          dispatch_time, receive_time, completed_time, created_at, updated_at
-                """;
-        try (Connection connection = Db.getConnection()) {
-            connection.setAutoCommit(false);
-            try (PreparedStatement statement = connection.prepareStatement(sql)) {
-                statement.setLong(1, workOrderId);
-                statement.setLong(2, operatorId);
-                MesWorkOrder workOrder;
-                try (ResultSet rs = statement.executeQuery()) {
-                    if (!rs.next()) {
-                        getWorkOrder(workOrderId);
-                        throw new BadRequestException("只有被派发给本人且尚未接收的生产工单才能拒绝");
-                    }
-                    workOrder = mapWorkOrder(rs);
-                }
-                addLog(connection, workOrderId, "REJECT", "DISPATCHED", "REJECTED", operatorId, "生产操作工拒绝接收工单");
-                connection.commit();
-                return workOrder;
-            } catch (SQLException | RuntimeException ex) {
-                connection.rollback();
-                throw ex;
-            } finally {
-                connection.setAutoCommit(true);
-            }
-        } catch (SQLException e) {
-            throw new IllegalStateException("database operation failed: " + e.getMessage(), e);
-        }
-    }
-
     public List<MesWorkOrderOperationLog> listLogsForOperator(long userId) {
         String sql = """
                 select l.operation_log_id, l.work_order_id, l.operation_type, l.before_status,
@@ -310,11 +271,22 @@ public class WorkOrderDao {
     /** 以比较并更新方式变更工单状态，并在同一事务中记录操作日志。 */
     public MesWorkOrder changeStatus(long workOrderId, String expectedStatus, String nextStatus,
             String operationType, Long operatorId, Long actorId, String remark) {
+        return changeStatus(workOrderId, expectedStatus, nextStatus, operationType,
+                operatorId, actorId, remark, true);
+    }
+
+    /**
+     * 超级管理员接管派工单时可以跳过“必须是原被派工人”的限制；普通操作工仍严格校验归属。
+     */
+    public MesWorkOrder changeStatus(long workOrderId, String expectedStatus, String nextStatus,
+            String operationType, Long operatorId, Long actorId, String remark,
+            boolean requireAssignedOperator) {
         requireId(operatorId, "operatorId is required");
         requireId(actorId, "actorId is required");
         String timeColumn = "DISPATCHED".equals(nextStatus) ? "dispatch_time" : "receive_time";
         String actorColumn = "DISPATCHED".equals(nextStatus) ? "assigned_to" : "accepted_by";
-        String ownershipCondition = "RECEIVED".equals(nextStatus) ? "and assigned_to = ?" : "";
+        boolean checkOwnership = "RECEIVED".equals(nextStatus) && requireAssignedOperator;
+        String ownershipCondition = checkOwnership ? "and assigned_to = ?" : "";
         String sql = """
                 update mes_work_order
                 set work_order_status = ?,
@@ -335,11 +307,18 @@ public class WorkOrderDao {
                 statement.setLong(2, operatorId);
                 statement.setLong(3, workOrderId);
                 statement.setString(4, expectedStatus);
-                if ("RECEIVED".equals(nextStatus)) statement.setLong(5, operatorId);
+                if (checkOwnership) statement.setLong(5, operatorId);
                 MesWorkOrder workOrder;
                 try (ResultSet rs = statement.executeQuery()) {
                     if (!rs.next()) {
-                        getWorkOrder(workOrderId);
+                        MesWorkOrder current = getWorkOrder(workOrderId);
+                        if (!expectedStatus.equals(current.workOrderStatus)) {
+                            throw new BadRequestException("工单当前状态为 " + current.workOrderStatus
+                                    + "，只有 " + expectedStatus + " 状态才能执行该操作");
+                        }
+                        if (checkOwnership && !operatorId.equals(current.assignedTo)) {
+                            throw new BadRequestException("该工单已派给其他操作工，当前用户不能接单");
+                        }
                         throw new BadRequestException("only " + expectedStatus + " work orders can be changed to " + nextStatus);
                     }
                     workOrder = mapWorkOrder(rs);

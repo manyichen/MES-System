@@ -11,5 +11,9 @@ public class MesMaterial {
     public String unit;
     public Integer shelfLifeDays;
     public Integer enabled;
+    public String defaultWarehouseType;
+    public Long defaultWarehouseId;
+    public String defaultWarehouseCode;
+    public String defaultWarehouseName;
     public LocalDateTime createdAt;
 }

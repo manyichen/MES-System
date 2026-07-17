@@ -44,10 +44,24 @@ export async function request(path, options = {}) {
   return payload?.data ?? payload
 }
 
+export async function requestBlob(path, options = {}) {
+  const headers = new Headers(options.headers || {})
+  const token = currentToken()
+  if (token) headers.set('Authorization', `Bearer ${token}`)
+  headers.set('Accept', options.accept || '*/*')
+  const response = await fetch(`${API_BASE}${path}`, { ...options, headers })
+  if (!response.ok) {
+    const message = await response.text()
+    if (response.status === 401) window.dispatchEvent(new CustomEvent('mes:unauthorized'))
+    throw new ApiError(message || `请求失败 (${response.status})`, response.status, message)
+  }
+  return response.blob()
+}
+
 export const api = {
   get: (path) => request(path),
   post: (path, body) => request(path, { method: 'POST', body }),
   put: (path, body) => request(path, { method: 'PUT', body }),
   delete: (path) => request(path, { method: 'DELETE' }),
-  blob: (path) => request(path, { headers: { Accept: '*/*' } })
+  blob: (path, options) => requestBlob(path, options)
 }

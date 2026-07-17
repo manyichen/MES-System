@@ -55,6 +55,10 @@ public class ProductionDao {
     }
 
     public MesWorkReport insertWorkReport(MesWorkReport report) throws SQLException {
+        return insertWorkReport(report, true);
+    }
+
+    public MesWorkReport insertWorkReport(MesWorkReport report, boolean requireOperatorOwnership) throws SQLException {
         String sql = """
                 insert into mes_work_report
                     (report_no, work_order_id, batch_no, operator_id, report_qty, qualified_qty,
@@ -67,7 +71,7 @@ public class ProductionDao {
              PreparedStatement statement = connection.prepareStatement(sql)) {
             WorkOrderSnapshot workOrder = findExecutableWorkOrder(connection, report.workOrderId, false);
             long operatorId = report.operatorId == null ? 1L : report.operatorId;
-            validateOperatorOwnsWorkOrder(workOrder, operatorId);
+            if (requireOperatorOwnership) validateOperatorOwnsWorkOrder(workOrder, operatorId);
             validateReportQtyAgainstWorkOrder(workOrder, nvl(report.reportQty));
             statement.setString(1, defaultCode(report.reportNo, "WR"));
             statement.setLong(2, report.workOrderId);
@@ -105,6 +109,11 @@ public class ProductionDao {
     }
 
     public MesWorkReport updateWorkReport(long reportId, MesWorkReport report) throws SQLException {
+        return updateWorkReport(reportId, report, true);
+    }
+
+    public MesWorkReport updateWorkReport(long reportId, MesWorkReport report,
+            boolean requireOperatorOwnership) throws SQLException {
         String sql = """
                 update mes_work_report
                 set report_no = ?,
@@ -131,7 +140,7 @@ public class ProductionDao {
                     false
             );
             long operatorId = report.operatorId == null ? current.operatorId : report.operatorId;
-            validateOperatorOwnsWorkOrder(workOrder, operatorId);
+            if (requireOperatorOwnership) validateOperatorOwnsWorkOrder(workOrder, operatorId);
             validateReportQtyAgainstWorkOrder(workOrder, report.reportQty == null ? current.reportQty : report.reportQty);
             statement.setString(1, defaultText(report.reportNo, current.reportNo));
             statement.setLong(2, report.workOrderId == null ? current.workOrderId : report.workOrderId);

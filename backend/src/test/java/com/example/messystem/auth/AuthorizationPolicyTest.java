@@ -14,6 +14,12 @@ class AuthorizationPolicyTest {
         assertFalse(AuthorizationPolicy.requiredPermissions("GET", "warehouses/locations").isEmpty());
         assertTrue(AuthorizationPolicy.requiredPermissions("POST", "inventory/external-purchase")
                 .contains("warehouse.inventory.adjust"));
+        assertTrue(AuthorizationPolicy.requiredPermissions("PUT", "products/12")
+                .contains("master.manage"));
+        assertTrue(AuthorizationPolicy.requiredPermissions("DELETE", "product-boms/12")
+                .contains("master.manage"));
+        assertTrue(AuthorizationPolicy.requiredPermissions("PUT", "production-lines/12")
+                .contains("master.manage"));
         assertTrue(AuthorizationPolicy.requiredPermissions("GET", "planning/reworks")
                 .contains("planning.rework.read"));
         assertTrue(AuthorizationPolicy.requiredPermissions("POST", "planning/reworks/12/tasks")
@@ -29,6 +35,7 @@ class AuthorizationPolicyTest {
         assertTrue(AuthorizationPolicy.requiredPermissions("GET", "warehouse-locations").isEmpty());
         assertTrue(AuthorizationPolicy.requiredPermissions("POST", "equipment/12/status").isEmpty());
         assertTrue(AuthorizationPolicy.requiredPermissions("POST", "production-tasks/12/release").isEmpty());
+        assertTrue(AuthorizationPolicy.requiredPermissions("POST", "work-orders/12/reject").isEmpty());
         assertTrue(AuthorizationPolicy.requiredPermissions("GET", "dashboard/summary").isEmpty());
     }
 }

@@ -60,9 +60,11 @@ public class MaintenanceOrderResource {
     public ApiResponse<Boolean> finish(@PathParam("id") long id, MesMaintenanceOrder order,
             @Context ContainerRequestContext context) {
         try {
+            AuthenticatedUser user = AuthFilter.currentUser(context);
             return ApiResponse.ok(service.finishMaintenanceOrder(id,
-                    AuthFilter.currentUser(context).user.userId,
-                    order == null ? "" : order.resultDesc()));
+                    user.user.userId,
+                    order == null ? "" : order.resultDesc(),
+                    user.isSuperAdmin()));
         } catch (SQLException e) {
             throw new BadRequestException(e.getMessage());
         }

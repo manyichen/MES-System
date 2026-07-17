@@ -5,6 +5,9 @@ import java.time.LocalDateTime;
 public class MesProcessRoute {
     public Long processId;
     public Long productId;
+    public String productCode;
+    public String productName;
+    public String productModel;
     public String processCode;
     public String processName;
     public Integer processSeq;

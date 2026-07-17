@@ -19,6 +19,17 @@ function tone(value) {
   if (/(PENDING|CREATED|SUBMITTED|REPORTED|MEDIUM|IN_PROGRESS)/.test(status)) return 'warn'
   return ''
 }
+
+function isActionDisabled(action, row) {
+  return typeof action.disabled === 'function' ? action.disabled(row) : Boolean(action.disabled)
+}
+
+function actionTitle(action, row) {
+  if (!isActionDisabled(action, row)) return action.title || action.label
+  return typeof action.disabledReason === 'function'
+    ? action.disabledReason(row)
+    : (action.disabledReason || '当前操作暂不可用')
+}
 </script>
 
 <template>
@@ -33,7 +44,10 @@ function tone(value) {
       <tbody>
         <tr v-for="(row, index) in rows" :key="row.id ?? row[Object.keys(row)[0]] ?? index">
           <td v-for="column in visibleColumns" :key="column.key">
-            <span :class="['cell-value', tone(row[column.key])]">{{ businessValue(column.key, row[column.key]) }}</span>
+            <span
+              :class="['cell-value', { wide: column.wide }, tone(row[column.key])]"
+              :title="businessValue(column.key, row[column.key])"
+            >{{ businessValue(column.key, row[column.key]) }}</span>
           </td>
           <td v-if="actions.length" class="row-actions">
             <button
@@ -41,6 +55,8 @@ function tone(value) {
               :key="action.label"
               type="button"
               class="table-action"
+              :disabled="isActionDisabled(action, row)"
+              :title="actionTitle(action, row)"
               @click="emit('action', action, row)"
             >{{ action.label }}</button>
           </td>

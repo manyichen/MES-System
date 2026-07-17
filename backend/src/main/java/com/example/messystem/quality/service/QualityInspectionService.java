@@ -60,11 +60,17 @@ public class QualityInspectionService {
     }
 
     public boolean submitInspection(long inspectionId, long inspectorId, String result, String note) throws SQLException {
+        return submitInspection(inspectionId, inspectorId, result, note, false);
+    }
+
+    public boolean submitInspection(long inspectionId, long inspectorId, String result, String note,
+            boolean allowAdministrativeOverride) throws SQLException {
         String submittedResult = normalizeSubmittedResult(result);
         if (!"PASS".equals(submittedResult) && (note == null || note.isBlank())) {
             throw new BadRequestException("不合格或需返工时必须说明异常项目和原因");
         }
-        if (!inspectionDao.submit(inspectionId, inspectorId, submittedResult, note)) {
+        if (!inspectionDao.submit(
+                inspectionId, inspectorId, submittedResult, note, !allowAdministrativeOverride)) {
             throw new BadRequestException("只能提交分配给本人的未完成质检单");
         }
         return true;

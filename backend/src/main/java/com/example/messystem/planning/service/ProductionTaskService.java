@@ -27,8 +27,11 @@ public class ProductionTaskService {
         requireId(task.plannerId, "plannerId is required");
         MesCustomerOrder order = database(() -> dao.findOrder(task.orderId))
                 .orElseThrow(() -> new BadRequestException("order not found"));
+        if (order.productId == null || order.productId <= 0) {
+            throw new BadRequestException("客户订单未关联产品，不能创建生产任务");
+        }
         task.taskNo = task.taskNo == null || task.taskNo.isBlank() ? IdGenerator.nextCode("TASK") : task.taskNo;
-        task.productId = task.productId == null ? order.productId : task.productId;
+        task.productId = order.productId;
         task.planQty = task.planQty == null || task.planQty <= 0 ? order.orderQty : task.planQty;
         if (task.planQty == null || task.planQty <= 0) throw new BadRequestException("planQty must be greater than 0");
         task.plannedStartTime = task.plannedStartTime == null ? LocalDateTime.now() : task.plannedStartTime;

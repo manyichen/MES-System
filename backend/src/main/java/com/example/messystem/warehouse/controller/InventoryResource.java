@@ -29,8 +29,9 @@ public class InventoryResource {
     private final DataScopeService dataScopeService = new DataScopeService();
 
     @GET
-    public Response list() {
-        return ResourceSupport.ok(service.listInventory());
+    public Response list(@Context ContainerRequestContext context) {
+        var scope = dataScopeService.snapshot(AuthFilter.currentUser(context));
+        return ResourceSupport.ok(service.listInventory().stream().filter(scope::canView).toList());
     }
 
     @GET

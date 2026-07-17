@@ -9,6 +9,7 @@ import com.example.messystem.equipment.entity.MesEquipmentRepairReport;
 import com.example.messystem.equipment.entity.MesMaintenanceOrder;
 import com.example.messystem.equipment.entity.MesMaintenancePlan;
 import com.example.messystem.common.BadRequestException;
+import com.example.messystem.common.IdGenerator;
 import com.example.messystem.common.UserRoleValidator;
 
 import java.sql.SQLException;
@@ -24,7 +25,22 @@ public class EquipmentService {
     private final MaintenancePlanDao maintenancePlanDao = new MaintenancePlanDao();
 
     public long createEquipment(MesEquipment equipment) throws SQLException {
-        return equipmentDao.insert(equipment);
+        if (equipment == null) {
+            throw new BadRequestException("equipment body is required");
+        }
+        requireText(equipment.equipmentName(), "设备名称不能为空");
+        requireText(equipment.equipmentType(), "设备类型不能为空");
+        MesEquipment normalized = new MesEquipment(
+                equipment.equipmentId(),
+                isBlank(equipment.equipmentCode()) ? IdGenerator.nextCode("EQ") : equipment.equipmentCode().trim(),
+                equipment.equipmentName().trim(),
+                equipment.equipmentType().trim(),
+                equipment.lineId(),
+                isBlank(equipment.equipmentStatus()) ? "IDLE" : equipment.equipmentStatus().trim(),
+                equipment.lastMaintenanceTime(),
+                equipment.enabled() == null ? Boolean.TRUE : equipment.enabled()
+        );
+        return equipmentDao.insert(normalized);
     }
 
     public Optional<MesEquipment> getEquipmentById(long equipmentId) throws SQLException {
@@ -44,8 +60,25 @@ public class EquipmentService {
     }
 
     public long createRepairReport(MesEquipmentRepairReport report) throws SQLException {
-        long id = repairReportDao.insert(report);
-        equipmentDao.updateStatus(report.equipmentId(), "FAULT");
+        if (report == null) {
+            throw new BadRequestException("repair report body is required");
+        }
+        requireId(report.equipmentId(), "报修设备不能为空");
+        requireText(report.faultLevel(), "故障级别不能为空");
+        requireText(report.faultDesc(), "故障描述不能为空");
+        MesEquipmentRepairReport normalized = new MesEquipmentRepairReport(
+                report.repairReportId(),
+                isBlank(report.repairReportNo()) ? IdGenerator.nextCode("RR") : report.repairReportNo().trim(),
+                report.equipmentId(),
+                report.workOrderId(),
+                report.faultLevel().trim(),
+                report.faultDesc().trim(),
+                report.reporterId(),
+                report.reportTime() == null ? LocalDateTime.now() : report.reportTime(),
+                isBlank(report.repairStatus()) ? "REPORTED" : report.repairStatus().trim()
+        );
+        long id = repairReportDao.insert(normalized);
+        equipmentDao.updateStatus(normalized.equipmentId(), "FAULT");
         return id;
     }
 
@@ -127,10 +160,18 @@ public class EquipmentService {
     }
 
     public boolean finishMaintenanceOrder(long id, long maintainerId, String resultDesc) throws SQLException {
+        return finishMaintenanceOrder(id, maintainerId, resultDesc, false);
+    }
+
+    public boolean finishMaintenanceOrder(long id, long maintainerId, String resultDesc,
+            boolean allowAdministrativeOverride) throws SQLException {
         if (resultDesc == null || resultDesc.isBlank()) {
             throw new BadRequestException("请填写维修结果、处理措施或故障原因");
         }
-        if (!maintenanceOrderDao.finishOwn(id, maintainerId, resultDesc.trim())) {
+        boolean finished = allowAdministrativeOverride
+                ? maintenanceOrderDao.finishAny(id, resultDesc.trim())
+                : maintenanceOrderDao.finishOwn(id, maintainerId, resultDesc.trim());
+        if (!finished) {
             throw new com.example.messystem.common.BadRequestException("只能完成分配给本人的维修工单");
         }
         return true;
@@ -152,7 +193,20 @@ public class EquipmentService {
     }
 
     public long createMaintenancePlan(MesMaintenancePlan plan) throws SQLException {
-        return maintenancePlanDao.insert(plan);
+        if (plan == null) {
+            throw new BadRequestException("maintenance plan body is required");
+        }
+        requireId(plan.equipmentId(), "维护设备不能为空");
+        requireText(plan.planCycle(), "维护周期不能为空");
+        MesMaintenancePlan normalized = new MesMaintenancePlan(
+                plan.maintenancePlanId(),
+                plan.equipmentId(),
+                plan.planCycle().trim(),
+                plan.nextPlanTime() == null ? LocalDateTime.now().plusDays(7) : plan.nextPlanTime(),
+                isBlank(plan.planStatus()) ? "ACTIVE" : plan.planStatus().trim(),
+                plan.createdAt() == null ? LocalDateTime.now() : plan.createdAt()
+        );
+        return maintenancePlanDao.insert(normalized);
     }
 
     public Optional<MesMaintenancePlan> getMaintenancePlan(long id) throws SQLException {
@@ -177,5 +231,21 @@ public class EquipmentService {
                 LocalDateTime.now()
         );
         return maintenancePlanDao.insert(plan);
+    }
+
+    private static void requireText(String value, String message) {
+        if (isBlank(value)) {
+            throw new BadRequestException(message);
+        }
+    }
+
+    private static void requireId(Long value, String message) {
+        if (value == null || value <= 0) {
+            throw new BadRequestException(message);
+        }
+    }
+
+    private static boolean isBlank(String value) {
+        return value == null || value.isBlank();
     }
 }
