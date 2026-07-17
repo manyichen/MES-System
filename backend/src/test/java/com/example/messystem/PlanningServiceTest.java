@@ -85,14 +85,14 @@ class PlanningServiceTest {
 
         MesWorkOrder workOrder = new MesWorkOrder();
         workOrder.taskId = task.taskId;
-        workOrder.lineId = line.lineId;
-        workOrder.processId = route.processId;
         workOrder = workOrderService.createWorkOrder(workOrder);
         assertEquals("RELEASED", taskService.getTask(task.taskId).taskStatus);
         workOrderService.dispatch(workOrder.workOrderId, 1L);
         workOrderService.receive(workOrder.workOrderId, 1L);
 
         assertEquals("READY", analysis.kittingStatus);
+        assertEquals(line.lineId, workOrder.lineId);
+        assertEquals(route.processId, workOrder.processId);
         assertEquals("RECEIVED", workOrderService.getWorkOrder(workOrder.workOrderId).workOrderStatus);
         assertEquals(3, workOrderService.listLogs(workOrder.workOrderId).size());
     }

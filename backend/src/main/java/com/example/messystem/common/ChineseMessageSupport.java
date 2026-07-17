@@ -5,6 +5,21 @@ import java.util.Locale;
 import java.util.Map;
 
 public final class ChineseMessageSupport {
+    private static final Map<String, String> REQUIRED_FIELDS = Map.ofEntries(
+            Map.entry("taskId", "生产任务"),
+            Map.entry("lineId", "生产产线"),
+            Map.entry("processId", "工序"),
+            Map.entry("actorId", "操作人"),
+            Map.entry("operatorId", "操作工"),
+            Map.entry("productId", "产品"),
+            Map.entry("workOrderId", "生产工单"),
+            Map.entry("warehouseId", "仓库"),
+            Map.entry("locationId", "库位"),
+            Map.entry("materialId", "物料"),
+            Map.entry("inspectionId", "质检单"),
+            Map.entry("reportId", "报工单")
+    );
+
     private static final Map<String, String> EXACT_MESSAGES = Map.ofEntries(
             Map.entry("work order not found", "生产工单不存在"),
             Map.entry("production task not found", "生产任务不存在"),
@@ -68,12 +83,30 @@ public final class ChineseMessageSupport {
         if (exact != null) {
             return exact;
         }
+        String requiredField = translateRequiredField(message);
+        if (requiredField != null) {
+            return requiredField;
+        }
         for (Map.Entry<String, String> entry : CONTAINS_MESSAGES.entrySet()) {
             if (normalized.contains(entry.getKey())) {
                 return entry.getValue();
             }
         }
         return "操作未完成，请检查填写内容或当前业务状态";
+    }
+
+    private static String translateRequiredField(String message) {
+        String trimmed = message == null ? "" : message.trim();
+        int suffix = trimmed.lastIndexOf(" is required");
+        if (suffix <= 0 || suffix != trimmed.length() - " is required".length()) {
+            return null;
+        }
+        String field = trimmed.substring(0, suffix).trim();
+        if (field.contains(" ")) {
+            return null;
+        }
+        String label = REQUIRED_FIELDS.get(field);
+        return label == null ? null : label + "不能为空";
     }
 
     private static boolean containsChinese(String value) {

@@ -171,7 +171,7 @@ onMounted(loadCandidates)
       </ul>
 
       <footer>
-        <p>采用建议后将预填任务、产线和计划数量；工序与批次仍需人工核对。</p>
+        <p>采用建议后将预填任务、产线和计划数量；生产批次仍需人工核对。</p>
         <button type="button" :disabled="!canApply" @click="applyAdvice">采用建议制定工单</button>
       </footer>
     </div>

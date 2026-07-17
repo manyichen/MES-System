@@ -21,7 +21,7 @@ function currentToken() {
 export async function request(path, options = {}) {
   const headers = new Headers(options.headers || {})
   const token = currentToken()
-  if (token) headers.set('Authorization', `Bearer ${token}`)
+  if (token) headers.set('Authorization', 'Bearer ' + token)
   if (options.body !== undefined && !(options.body instanceof FormData)) {
     headers.set('Content-Type', 'application/json')
   }
@@ -47,7 +47,7 @@ export async function request(path, options = {}) {
 export async function requestBlob(path, options = {}) {
   const headers = new Headers(options.headers || {})
   const token = currentToken()
-  if (token) headers.set('Authorization', `Bearer ${token}`)
+  if (token) headers.set('Authorization', 'Bearer ' + token)
   headers.set('Accept', options.accept || '*/*')
   const response = await fetch(`${API_BASE}${path}`, { ...options, headers })
   if (!response.ok) {

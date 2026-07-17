@@ -2,6 +2,7 @@ package com.example.messystem.planning.service;
 
 import com.example.messystem.common.BadRequestException;
 import com.example.messystem.common.IdGenerator;
+import com.example.messystem.master.entity.MesProcessRoute;
 import com.example.messystem.planning.dao.PlanningDao;
 import com.example.messystem.planning.dao.WorkOrderDao;
 import com.example.messystem.planning.entity.MesProductionTask;
@@ -59,9 +60,14 @@ public class WorkOrderService {
             throw new BadRequestException("production task must pass kitting analysis before creating work order");
         }
 
+        workOrder.lineId = workOrder.lineId == null || workOrder.lineId <= 0
+                ? task.targetLineId
+                : workOrder.lineId;
         requireId(workOrder.lineId, "lineId is required");
-        requireId(workOrder.processId, "processId is required");
         requireAvailableLine(workOrder.lineId);
+        workOrder.processId = workOrder.processId == null || workOrder.processId <= 0
+                ? firstEnabledProcessForProduct(task.productId)
+                : workOrder.processId;
         requireProcessForProduct(workOrder.processId, task.productId);
 
         workOrder.workOrderNo = workOrder.workOrderNo == null || workOrder.workOrderNo.isBlank()
@@ -134,6 +140,20 @@ public class WorkOrderService {
                         && route.enabled != null && route.enabled == 1
                         && (route.productId == null || route.productId.equals(productId)));
         if (!matched) throw new BadRequestException("processId must match the production task product");
+    }
+
+    private Long firstEnabledProcessForProduct(Long productId) {
+        List<MesProcessRoute> routes = database(planningDao::listProcessRoutes);
+        return routes.stream()
+                .filter(route -> route.enabled != null && route.enabled == 1)
+                .filter(route -> route.productId != null && route.productId.equals(productId))
+                .findFirst()
+                .or(() -> routes.stream()
+                        .filter(route -> route.enabled != null && route.enabled == 1)
+                        .filter(route -> route.productId == null)
+                        .findFirst())
+                .map(route -> route.processId)
+                .orElseThrow(() -> new BadRequestException("production task product has no enabled process route"));
     }
 
     private static void requireId(Long id, String message) {

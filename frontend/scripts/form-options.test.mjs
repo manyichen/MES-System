@@ -20,7 +20,8 @@ for (const action of actions) {
 const byPath = path => actions.find(action => action.path === path)
 const workOrder = byPath('/work-orders')
 assert.equal(workOrder.fields.find(field => field.key === 'taskId').type, 'lookup')
-assert.equal(workOrder.fields.find(field => field.key === 'processId').source.dependsOn, 'taskId')
+assert.equal(workOrder.fields.find(field => field.key === 'taskId').source.assign.lineId, 'targetLineId')
+assert.equal(workOrder.fields.some(field => field.key === 'processId'), false)
 
 const productionTask = byPath('/production-tasks')
 assert.ok(productionTask)

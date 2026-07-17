@@ -27,6 +27,18 @@ function clone(value) {
   return value == null ? value : JSON.parse(JSON.stringify(value))
 }
 
+function isBlankValue(value) {
+  return value === '' || value === null || value === undefined
+    || (typeof value === 'number' && Number.isNaN(value))
+    || (Array.isArray(value) && value.length === 0)
+}
+
+function numericValue(value) {
+  if (isBlankValue(value)) return null
+  const next = Number(value)
+  return Number.isFinite(next) ? next : null
+}
+
 async function initialize(action) {
   const version = ++loadVersion
   for (const key of Object.keys(values)) delete values[key]
@@ -159,11 +171,13 @@ function submit() {
     let value = values[field.key]
     if (field.type === 'hidden' && (value === '' || value == null) && !field.required) continue
     if (field.type === 'number' || field.type === 'decimal') {
-      value = value === '' || value === null ? null : Number(value)
+      value = numericValue(value)
     } else if (field.type === 'lookup') {
-      value = value === '' || value === null ? null : (field.valueType === 'string' ? String(value) : Number(value))
+      value = isBlankValue(value) ? null : (field.valueType === 'string' ? String(value) : numericValue(value))
     } else if (field.type === 'multi-lookup') {
-      value = (value || []).map(item => field.valueType === 'string' ? String(item) : Number(item))
+      value = (value || [])
+        .map(item => isBlankValue(item) ? null : (field.valueType === 'string' ? String(item) : numericValue(item)))
+        .filter(item => !isBlankValue(item))
     } else if (field.type === 'line-items') {
       const invalidIndex = (value || []).findIndex(line => !line.materialId || !line.requiredQty || Number(line.requiredQty) <= 0)
       if (invalidIndex >= 0) {
@@ -175,7 +189,7 @@ function submit() {
     } else if (field.type === 'json') {
       try { value = JSON.parse(value || 'null') } catch { return window.alert(`${field.label}必须是有效 JSON`) }
     }
-    if (field.required && (value === '' || value === null || value === undefined)) {
+    if (field.required && isBlankValue(value)) {
       return window.alert(`请填写${field.label}`)
     }
     output[field.key] = value
