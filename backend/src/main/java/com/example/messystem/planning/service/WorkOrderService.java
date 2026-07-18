@@ -1,3 +1,9 @@
+/*
+ * 答辩定位：订单、计划、齐套与工单 模块的 WorkOrderService。
+ * 分层职责：业务服务层：实现一个或一组用例，负责必填校验、角色边界、状态机和跨 DAO 编排；数据库细节下沉到 DAO。
+ * 典型调用链：Resource -> 当前 Service -> DAO；外部 AI、文件系统等依赖也由服务边界统一编排。
+ * 阅读提示：公开方法是本类对上层暴露的契约；private 方法只服务于本类内部实现。
+ */
 package com.example.messystem.planning.service;
 
 import com.example.messystem.common.BadRequestException;
@@ -17,9 +23,16 @@ import java.util.List;
  * 主状态流为 CREATED -> DISPATCHED -> RECEIVED；被派工人在接收前可拒绝 DISPATCHED 工单。
  */
 public class WorkOrderService {
+    /** 数据访问依赖，集中封装 JDBC、SQL 参数绑定和结果映射。 */
     private final PlanningDao planningDao = new PlanningDao();
+    /** 数据访问依赖，集中封装 JDBC、SQL 参数绑定和结果映射。 */
     private final WorkOrderDao workOrderDao = new WorkOrderDao();
 
+    /**
+     * 业务用例：查询列表。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public List<MesWorkOrder> listWorkOrders() {
         return workOrderDao.listWorkOrders();
     }
@@ -29,18 +42,38 @@ public class WorkOrderService {
         return workOrderDao.listWorkOrdersForOperator(userId);
     }
 
+    /**
+     * 业务用例：查询列表。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public List<MesUser> listDispatchableOperators() {
         return workOrderDao.listDispatchableOperators();
     }
 
+    /**
+     * 业务用例：查询单条记录或详情。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public MesWorkOrder getWorkOrder(long workOrderId) {
         return workOrderDao.getWorkOrder(workOrderId);
     }
 
+    /**
+     * 业务用例：查询单条记录或详情。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public MesWorkOrder getWorkOrderForOperator(long workOrderId, long userId) {
         return workOrderDao.getWorkOrderForOperator(workOrderId, userId);
     }
 
+    /**
+     * 业务用例：创建业务记录。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public MesWorkOrder createWorkOrder(MesWorkOrder workOrder) {
         return createWorkOrder(workOrder, 1L);
     }
@@ -106,6 +139,11 @@ public class WorkOrderService {
         return receive(workOrderId, operatorId, false);
     }
 
+    /**
+     * 业务用例：接收已派发任务。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public MesWorkOrder receive(long workOrderId, Long operatorId, boolean allowAdministrativeTakeover) {
         requireId(operatorId, "operatorId is required");
         return workOrderDao.changeStatus(workOrderId, "DISPATCHED", "RECEIVED", "RECEIVE",
@@ -113,18 +151,38 @@ public class WorkOrderService {
                 !allowAdministrativeTakeover);
     }
 
+    /**
+     * 业务用例：查询列表。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public List<MesWorkOrderOperationLog> listLogsForOperator(long userId) {
         return workOrderDao.listLogsForOperator(userId);
     }
 
+    /**
+     * 业务用例：查询列表。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public List<MesWorkOrderOperationLog> listAllLogs() {
         return workOrderDao.listAllLogs();
     }
 
+    /**
+     * 业务用例：查询列表。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public List<MesWorkOrderOperationLog> listLogs(long workOrderId) {
         return workOrderDao.listLogs(workOrderId);
     }
 
+    /**
+     * 业务用例：执行 requireAvailableLine 对应的业务步骤。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     private void requireAvailableLine(Long lineId) {
         boolean available = database(planningDao::listProductionLines).stream()
                 .anyMatch(line -> lineId.equals(line.lineId)
@@ -134,6 +192,11 @@ public class WorkOrderService {
         if (!available) throw new BadRequestException("lineId must be an available production line");
     }
 
+    /**
+     * 业务用例：执行 requireProcessForProduct 对应的业务步骤。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     private void requireProcessForProduct(Long processId, Long productId) {
         boolean matched = database(planningDao::listProcessRoutes).stream()
                 .anyMatch(route -> processId.equals(route.processId)
@@ -142,6 +205,11 @@ public class WorkOrderService {
         if (!matched) throw new BadRequestException("processId must match the production task product");
     }
 
+    /**
+     * 业务用例：执行 firstEnabledProcessForProduct 对应的业务步骤。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     private Long firstEnabledProcessForProduct(Long productId) {
         List<MesProcessRoute> routes = database(planningDao::listProcessRoutes);
         return routes.stream()
@@ -156,10 +224,20 @@ public class WorkOrderService {
                 .orElseThrow(() -> new BadRequestException("production task product has no enabled process route"));
     }
 
+    /**
+     * 业务用例：执行 requireId 对应的业务步骤。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     private static void requireId(Long id, String message) {
         if (id == null || id <= 0) throw new BadRequestException(message);
     }
 
+    /**
+     * 业务用例：执行 database 对应的业务步骤。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     private static <T> T database(SqlCall<T> call) {
         try {
             return call.execute();

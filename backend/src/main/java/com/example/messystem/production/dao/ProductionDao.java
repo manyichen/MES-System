@@ -1,3 +1,9 @@
+/*
+ * 答辩定位：生产报工与计件工资 模块的 ProductionDao。
+ * 分层职责：数据访问层：使用 JDBC 和 PreparedStatement 访问 PostgreSQL，集中处理 SQL 参数绑定、结果映射及需要原子性的事务。
+ * 典型调用链：Service -> 当前 DAO -> Db.getConnection() -> PostgreSQL；查询结果再映射为 entity/record。
+ * 阅读提示：公开方法是本类对上层暴露的契约；private 方法只服务于本类内部实现。
+ */
 package com.example.messystem.production.dao;
 
 import com.example.messystem.common.BadRequestException;
@@ -16,9 +22,17 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 生产报工与计件工资 的 ProductionDao，承担当前文件头所述职责，并保持与相邻层的单向依赖。
+ */
 public class ProductionDao {
     private static final BigDecimal DEFAULT_PIECE_RATE = new BigDecimal("2.50");
 
+    /**
+     * 数据访问：查询列表。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public List<MesWorkReport> listWorkReports() throws SQLException {
         String sql = """
                 select report_id, report_no, work_order_id, batch_no, operator_id, report_qty,
@@ -37,6 +51,11 @@ public class ProductionDao {
         }
     }
 
+    /**
+     * 数据访问：查询列表。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public List<MesWorkReport> listWorkReportsByOperator(long operatorId) throws SQLException {
         String sql = """
                 select report_id, report_no, work_order_id, batch_no, operator_id, report_qty,
@@ -54,10 +73,20 @@ public class ProductionDao {
         }
     }
 
+    /**
+     * 数据访问：写入业务记录并返回主键。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public MesWorkReport insertWorkReport(MesWorkReport report) throws SQLException {
         return insertWorkReport(report, true);
     }
 
+    /**
+     * 数据访问：写入业务记录并返回主键。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public MesWorkReport insertWorkReport(MesWorkReport report, boolean requireOperatorOwnership) throws SQLException {
         String sql = """
                 insert into mes_work_report
@@ -89,6 +118,11 @@ public class ProductionDao {
         }
     }
 
+    /**
+     * 数据访问：查询匹配记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public MesWorkReport findWorkReport(long reportId) throws SQLException {
         String sql = """
                 select report_id, report_no, work_order_id, batch_no, operator_id, report_qty,
@@ -108,10 +142,20 @@ public class ProductionDao {
         }
     }
 
+    /**
+     * 数据访问：更新业务记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public MesWorkReport updateWorkReport(long reportId, MesWorkReport report) throws SQLException {
         return updateWorkReport(reportId, report, true);
     }
 
+    /**
+     * 数据访问：更新业务记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public MesWorkReport updateWorkReport(long reportId, MesWorkReport report,
             boolean requireOperatorOwnership) throws SQLException {
         String sql = """
@@ -164,6 +208,11 @@ public class ProductionDao {
         }
     }
 
+    /**
+     * 数据访问：删除业务记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public void deleteWorkReport(long reportId) throws SQLException {
         try (Connection connection = Db.getConnection();
              PreparedStatement statement = connection.prepareStatement("delete from mes_work_report where report_id = ?")) {
@@ -174,6 +223,11 @@ public class ProductionDao {
         }
     }
 
+    /**
+     * 数据访问：查询列表。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public List<MesWorkReport> listWorkReportsByWorkOrder(long workOrderId) throws SQLException {
         String sql = """
                 select report_id, report_no, work_order_id, batch_no, operator_id, report_qty,
@@ -195,6 +249,11 @@ public class ProductionDao {
         }
     }
 
+    /**
+     * 数据访问：审核通过业务事项。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public MesWorkReport approveWorkReport(long reportId) throws SQLException {
         String updateReportSql = """
                 update mes_work_report
@@ -246,10 +305,20 @@ public class ProductionDao {
         }
     }
 
+    /**
+     * 数据访问：驳回业务事项。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public MesWorkReport rejectWorkReport(long reportId) throws SQLException {
         return rejectWorkReport(reportId, null);
     }
 
+    /**
+     * 数据访问：驳回业务事项。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public MesWorkReport rejectWorkReport(long reportId, String reason) throws SQLException {
         String sql = """
                 update mes_work_report
@@ -273,6 +342,11 @@ public class ProductionDao {
         }
     }
 
+    /**
+     * 数据访问：查询列表。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public List<MesPieceworkWage> listWages() throws SQLException {
         String sql = """
                 select wage_id, report_id, operator_id, piece_rate, qualified_qty,
@@ -291,6 +365,11 @@ public class ProductionDao {
         }
     }
 
+    /**
+     * 数据访问：查询列表。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public List<MesWorkReport> listWorkReportsByWorkOrderAndOperator(long workOrderId, long operatorId) throws SQLException {
         String sql = """
                 select report_id, report_no, work_order_id, batch_no, operator_id, report_qty,
@@ -309,6 +388,11 @@ public class ProductionDao {
         }
     }
 
+    /**
+     * 数据访问：查询列表。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public List<MesPieceworkWage> listWagesByOperator(long operatorId) throws SQLException {
         String sql = """
                 select wage_id, report_id, operator_id, piece_rate, qualified_qty,
@@ -326,6 +410,11 @@ public class ProductionDao {
         }
     }
 
+    /**
+     * 数据访问：执行 wageSummary 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public java.util.Map<String, Object> wageSummary() throws SQLException {
         String sql = "select count(*) record_count, count(distinct operator_id) operator_count, coalesce(sum(qualified_qty),0) qualified_qty, coalesce(sum(wage_amount),0) wage_amount from mes_piecework_wage";
         try (Connection connection = Db.getConnection();
@@ -341,6 +430,11 @@ public class ProductionDao {
         }
     }
 
+    /**
+     * 数据访问：执行 wageSummaryForWorkshop 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public java.util.Map<String, Object> wageSummaryForWorkshop(long userId) throws SQLException {
         String sql = """
                 select count(*) record_count, count(distinct w.operator_id) operator_count,
@@ -367,6 +461,11 @@ public class ProductionDao {
         }
     }
 
+    /**
+     * 数据访问：查询匹配记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public MesPieceworkWage findWage(long wageId) throws SQLException {
         String sql = """
                 select wage_id, report_id, operator_id, piece_rate, qualified_qty,
@@ -386,6 +485,11 @@ public class ProductionDao {
         }
     }
 
+    /**
+     * 数据访问：查询列表。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public List<MesPieceworkWage> listWagesByReport(long reportId) throws SQLException {
         String sql = """
                 select wage_id, report_id, operator_id, piece_rate, qualified_qty,
@@ -407,6 +511,11 @@ public class ProductionDao {
         }
     }
 
+    /**
+     * 数据访问：查询列表。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public List<MesPieceworkWage> listWagesByReportAndOperator(long reportId, long operatorId) throws SQLException {
         String sql = """
                 select wage_id, report_id, operator_id, piece_rate, qualified_qty,
@@ -425,6 +534,11 @@ public class ProductionDao {
         }
     }
 
+    /**
+     * 数据访问：执行 ensureReportExistsAndSubmitted 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private void ensureReportExistsAndSubmitted(Connection connection, long reportId) throws SQLException {
         String sql = "select report_status from mes_work_report where report_id = ?";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -437,6 +551,11 @@ public class ProductionDao {
         }
     }
 
+    /**
+     * 数据访问：查询匹配记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private WorkOrderSnapshot findExecutableWorkOrder(Connection connection, long workOrderId, boolean forUpdate) throws SQLException {
         String sql = """
                 select work_order_status, planned_qty, actual_qty, batch_no, assigned_to, accepted_by
@@ -465,6 +584,11 @@ public class ProductionDao {
         }
     }
 
+    /**
+     * 数据访问：校验业务输入与约束。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private void validateOperatorOwnsWorkOrder(WorkOrderSnapshot workOrder, long operatorId) {
         boolean assigned = workOrder.assignedTo() != null && workOrder.assignedTo() == operatorId;
         boolean accepted = workOrder.acceptedBy() != null && workOrder.acceptedBy() == operatorId;
@@ -473,6 +597,11 @@ public class ProductionDao {
         }
     }
 
+    /**
+     * 数据访问：校验业务输入与约束。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private void validateReportQtyAgainstWorkOrder(WorkOrderSnapshot workOrder, int reportQty) {
         int maxAllowed = (int) Math.floor(workOrder.plannedQty() * 1.1);
         if (workOrder.actualQty() + reportQty > maxAllowed) {
@@ -480,6 +609,11 @@ public class ProductionDao {
         }
     }
 
+    /**
+     * 数据访问：更新业务记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private void updateWorkOrderActualQty(Connection connection, long workOrderId, int qualifiedQty) throws SQLException {
         String sql = """
                 update mes_work_order
@@ -504,6 +638,11 @@ public class ProductionDao {
         }
     }
 
+    /**
+     * 数据访问：执行 refreshPlanningCompletion 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private void refreshPlanningCompletion(Connection connection, long workOrderId) throws SQLException {
         String taskSql = """
                 update mes_production_task t
@@ -555,6 +694,11 @@ public class ProductionDao {
         }
     }
 
+    /**
+     * 数据访问：把 JDBC 结果行映射为领域对象。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private MesWorkReport mapWorkReport(ResultSet rs) throws SQLException {
         MesWorkReport item = new MesWorkReport();
         item.reportId = rs.getLong("report_id");
@@ -573,11 +717,21 @@ public class ProductionDao {
         return item;
     }
 
+    /**
+     * 数据访问：执行 nullableLong 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static Long nullableLong(ResultSet rs, String column) throws SQLException {
         long value = rs.getLong(column);
         return rs.wasNull() ? null : value;
     }
 
+    /**
+     * 数据访问：把 JDBC 结果行映射为领域对象。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private MesPieceworkWage mapWage(ResultSet rs) throws SQLException {
         MesPieceworkWage item = new MesPieceworkWage();
         item.wageId = rs.getLong("wage_id");
@@ -591,23 +745,48 @@ public class ProductionDao {
         return item;
     }
 
+    /**
+     * 数据访问：执行 nvl 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static int nvl(Integer value) {
         return value == null ? 0 : value;
     }
 
+    /**
+     * 数据访问：执行 defaultCode 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static String defaultCode(String value, String prefix) {
         return value == null || value.isBlank() ? IdGenerator.nextCode(prefix) : value;
     }
 
+    /**
+     * 数据访问：执行 defaultText 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static String defaultText(String value, String fallback) {
         return value == null || value.isBlank() ? fallback : value;
     }
 
+    /**
+     * 数据访问：查询单条记录或详情。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static LocalDateTime getLocalDateTime(ResultSet rs, String column) throws SQLException {
         Timestamp value = rs.getTimestamp(column);
         return value == null ? null : value.toLocalDateTime();
     }
 
+    /**
+     * 数据访问：执行 WorkOrderSnapshot 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private record WorkOrderSnapshot(String status, int plannedQty, int actualQty, String batchNo,
                                      Long assignedTo, Long acceptedBy) {
     }

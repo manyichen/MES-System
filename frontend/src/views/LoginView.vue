@@ -1,10 +1,16 @@
 <script setup>
+/**
+ * 登录页，对应 POST /api/auth/login。
+ * 用户输入账号密码后由 Pinia session 仓库保存令牌、用户、角色和权限，再跳转到原目标页或首页。
+ * accounts 只是答辩演示账号提示，不包含密码，也不参与认证；真正校验在后端 AuthService/AuthDao。
+ */
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ArrowRight, LockKeyhole, UserRound } from 'lucide-vue-next'
 import { useSessionStore } from '../stores/session'
 import { localizeMessage } from '../utils/display.js'
 
+// 系统预置岗位清单，用于快速选择演示角色；账号是否启用仍由数据库决定。
 const accounts = [
   ['superadmin', '超级管理员'], ['admin', '系统管理员'], ['mes_hr', '人事经理'], ['mes_general', '总经理'],
   ['mes_pmc', 'PMC 计划员'], ['mes_workshop', '车间管理员'], ['mes_operator', '生产操作工'],
@@ -19,6 +25,7 @@ const session = useSessionStore()
 const route = useRoute()
 const router = useRouter()
 
+/** 提交登录并处理按钮忙碌态和后端中文错误，成功后恢复被守卫拦截前的地址。 */
 async function submit() {
   busy.value = true
   error.value = ''

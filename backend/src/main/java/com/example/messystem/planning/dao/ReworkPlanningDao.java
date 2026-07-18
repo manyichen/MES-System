@@ -1,3 +1,9 @@
+/*
+ * 答辩定位：订单、计划、齐套与工单 模块的 ReworkPlanningDao。
+ * 分层职责：数据访问层：使用 JDBC 和 PreparedStatement 访问 PostgreSQL，集中处理 SQL 参数绑定、结果映射及需要原子性的事务。
+ * 典型调用链：Service -> 当前 DAO -> Db.getConnection() -> PostgreSQL；查询结果再映射为 entity/record。
+ * 阅读提示：公开方法是本类对上层暴露的契约；private 方法只服务于本类内部实现。
+ */
 package com.example.messystem.planning.dao;
 
 import com.example.messystem.common.BadRequestException;
@@ -16,6 +22,11 @@ import java.util.List;
 
 /** 持久化 PMC 返工重排查询及原子建任务用例。 */
 public class ReworkPlanningDao {
+    /**
+     * 数据访问：查询列表。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public List<ReworkPlanningDemand> listDemands() throws SQLException {
         String sql = """
                 select rw.rework_order_id, rw.rework_order_no, rw.source_work_order_id,
@@ -78,6 +89,11 @@ public class ReworkPlanningDao {
         }
     }
 
+    /**
+     * 数据访问：执行 lockSource 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static ReworkSource lockSource(Connection connection, long reworkOrderId) throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement("""
                 select rw.rework_status, rw.assigned_line_id, rw.rework_order_no,
@@ -97,6 +113,11 @@ public class ReworkPlanningDao {
         }
     }
 
+    /**
+     * 数据访问：执行 ensureNotPlanned 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static void ensureNotPlanned(Connection connection, long reworkOrderId) throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement(
                 "select 1 from mes_rework_plan_link where rework_order_id = ?")) {
@@ -107,6 +128,11 @@ public class ReworkPlanningDao {
         }
     }
 
+    /**
+     * 数据访问：执行 ensureAvailableLine 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static void ensureAvailableLine(Connection connection, Long lineId) throws SQLException {
         if (lineId == null) return;
         try (PreparedStatement statement = connection.prepareStatement("""
@@ -120,6 +146,11 @@ public class ReworkPlanningDao {
         }
     }
 
+    /**
+     * 数据访问：写入业务记录并返回主键。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static long insertTask(Connection connection, ReworkSource source, long reworkOrderId,
             long plannerId, int qty, LocalDateTime start, LocalDateTime end, Long lineId) throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement("""
@@ -144,6 +175,11 @@ public class ReworkPlanningDao {
         }
     }
 
+    /**
+     * 数据访问：写入业务记录并返回主键。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static void insertLink(Connection connection, long reworkOrderId, long taskId, long plannerId)
             throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement(
@@ -155,6 +191,11 @@ public class ReworkPlanningDao {
         }
     }
 
+    /**
+     * 数据访问：执行 markReworkPlanned 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static void markReworkPlanned(Connection connection, long reworkOrderId, Long lineId)
             throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement(
@@ -165,6 +206,11 @@ public class ReworkPlanningDao {
         }
     }
 
+    /**
+     * 数据访问：更新业务记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static void updateOrderForRework(Connection connection, long orderId) throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement(
                 "update mes_customer_order set order_status = 'PLANNED', updated_at = current_timestamp where order_id = ?")) {
@@ -173,11 +219,21 @@ public class ReworkPlanningDao {
         }
     }
 
+    /**
+     * 数据访问：执行 nullableLong 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static Long nullableLong(ResultSet rs, String column) throws SQLException {
         long value = rs.getLong(column);
         return rs.wasNull() ? null : value;
     }
 
+    /**
+     * 数据访问：执行 ReworkSource 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private record ReworkSource(String status, Long assignedLineId, String reworkOrderNo,
             int sourcePlannedQty, long orderId) {
     }

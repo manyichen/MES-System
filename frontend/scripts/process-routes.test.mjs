@@ -1,3 +1,7 @@
+/**
+ * Node 单元测试：固定工艺与主数据页签结构，以及扁平工序聚合为完整路线的规则。
+ * 不需要浏览器或后端，可由 npm test 快速发现前端配置回归。
+ */
 import assert from 'node:assert/strict'
 import { groupProcessRoutes, modules } from '../src/config/modules.js'
 
@@ -7,6 +11,7 @@ assert.deepEqual(
   '工艺与主数据页签应覆盖产品、BOM、路线总览、工序维护、产线和同步日志'
 )
 
+// 构造两个产品、乱序工序、重复顺序和停用工序，覆盖分组、排序、冲突与启用状态。
 const grouped = groupProcessRoutes([
   { processId: 12, productId: 1, productCode: 'P-001', productName: '全钢轮胎', productModel: '12R22.5', processSeq: 2, processName: '成型', workCenter: 'BUILDING', enabled: 1 },
   { processId: 11, productId: 1, productCode: 'P-001', productName: '全钢轮胎', productModel: '12R22.5', processSeq: 1, processName: '密炼', workCenter: 'MIXING', enabled: 1 },

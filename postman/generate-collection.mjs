@@ -1,3 +1,9 @@
+/**
+ * Postman 全接口集合生成器。
+ * 输入：backend/src/main/java 中所有 *Resource.java 的 @Path 和 HTTP 注解；
+ * 输出：MES-Full-API.postman_collection.json，包含未登录 401、登录只读接口、权限和文件下载场景。
+ * 采用源码扫描可减少手工维护接口清单的遗漏；生成 JSON 本身保持标准格式，不写非法注释。
+ */
 import fs from 'node:fs'
 import path from 'node:path'
 
@@ -6,6 +12,7 @@ const sourceRoot = path.join(root, 'backend', 'src', 'main', 'java', 'com', 'exa
 const output = path.join(root, 'postman', 'MES-Full-API.postman_collection.json')
 const traceStorage = path.join(root, 'storage', 'trace')
 
+/** 递归查找 JAX-RS 控制器文件，忽略 Service/DAO/Entity。 */
 function walk(directory) {
   return fs.readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
     const target = path.join(directory, entry.name)
@@ -14,11 +21,16 @@ function walk(directory) {
   })
 }
 
+/** 合并类级与方法级路径，压缩重复斜杠并去除尾斜杠。 */
 function normalizePath(value) {
   const normalized = `/${value}`.replace(/\/{2,}/g, '/').replace(/\/$/, '')
   return normalized || '/'
 }
 
+/**
+ * 逐行解析 Resource：类声明前的 @Path 是公共前缀，HTTP 注解后的 @Path 属于方法。
+ * 结果保存 method、route、resource，供后续生成请求名称、URL 和分组。
+ */
 function parseResources() {
   const endpoints = []
   for (const file of walk(sourceRoot)) {
@@ -60,6 +72,7 @@ function parseResources() {
   return endpoints.sort((a, b) => a.resource.localeCompare(b.resource) || a.route.localeCompare(b.route) || a.method.localeCompare(b.method))
 }
 
+/** 将路径参数替换为不会误操作真实数据的演示值；公开 token 使用明确不存在的占位符。 */
 function concreteRoute(route) {
   const resourceId = route.startsWith('/tire-labels/') ? '{{resourceId}}' : '1'
   return route
@@ -68,6 +81,7 @@ function concreteRoute(route) {
     .replace(/(?<!\{)\{[^{}]+\}(?!\})/g, '1')
 }
 
+/** 构造 Postman request；按路径识别 PNG/PDF Accept，其余接口使用 JSON。 */
 function jsonRequest(endpoint, { auth = false, namePrefix = '' } = {}) {
   const route = concreteRoute(endpoint.route)
   const binaryMediaType = endpoint.route.endsWith('/qrcode') || endpoint.route.endsWith('/label')
@@ -90,10 +104,12 @@ function jsonRequest(endpoint, { auth = false, namePrefix = '' } = {}) {
   }
 }
 
+/** 把断言代码包装成 Postman event 结构。 */
 function event(lines, listen = 'test') {
   return [{ listen, script: { type: 'text/javascript', exec: lines } }]
 }
 
+// 自动扫描是权威接口清单；仅登录和公开追溯无需 Bearer 令牌。
 const endpoints = parseResources()
 const publicRoutes = new Set([
   'POST /auth/login',
@@ -103,6 +119,7 @@ const publicRoutes = new Set([
 const protectedEndpoints = endpoints.filter(endpoint => !publicRoutes.has(`${endpoint.method} ${endpoint.route}`))
 const authenticatedReads = protectedEndpoints.filter(endpoint => endpoint.method === 'GET')
 
+// 第一组逐一证明所有受保护接口在未登录时返回 JSON 401，而不是泄露业务数据。
 const unauthorizedItems = protectedEndpoints.map(endpoint => ({
   ...jsonRequest(endpoint),
   event: event([
@@ -112,6 +129,7 @@ const unauthorizedItems = protectedEndpoints.map(endpoint => ({
   ])
 }))
 
+// 第二组用超级管理员验证只读接口不出现 401/403/5xx，并检查响应时间。
 const readItems = authenticatedReads.map(endpoint => ({
   ...jsonRequest(endpoint, { auth: true }),
   event: event([

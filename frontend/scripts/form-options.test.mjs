@@ -1,10 +1,16 @@
+/**
+ * 动态表单契约测试：扫描 modules.js 中全部 action，确保关联 ID 使用远程选择而非手填，
+ * 并固定工单、齐套、领料、库存、外采和轮胎标签等关键字段联动。
+ */
 import assert from 'node:assert/strict'
 import { enrichInventoryRows, modules } from '../src/config/modules.js'
 
+// 拉平所有模块的工具栏动作与行动作，形成配置级全量检查。
 const actions = Object.values(modules).flatMap(module =>
   module.sections.flatMap(section => [...(section.actions || []), ...(section.rowActions || [])])
 )
 
+// 所有 *Id 字段必须来自 lookup/hidden；远程控件必须声明接口和值字段。
 for (const action of actions) {
   for (const field of action.fields || []) {
     if (/Id$/.test(field.key)) {
@@ -52,6 +58,7 @@ const purchase = byPath('/inventory/external-purchase')
 assert.equal(purchase.fields.find(field => field.key === 'materialId').source.assign.warehouseId, 'defaultWarehouseId')
 assert.equal(purchase.fields.find(field => field.key === 'warehouseId').source.dependsOn, 'materialId')
 
+// 用内存字典替代真实接口，验证库存行的物料/仓库/库位名称和仓库合计计算。
 const enrichedInventory = await enrichInventoryRows([
   { inventoryId: 1, materialId: 8, warehouseId: 40, locationId: 400, batchNo: 'B-1', availableQty: 30, qualityStatus: 'QUALIFIED' },
   { inventoryId: 2, materialId: 8, warehouseId: 40, locationId: 401, batchNo: 'B-2', availableQty: 45, qualityStatus: 'QUALIFIED' }

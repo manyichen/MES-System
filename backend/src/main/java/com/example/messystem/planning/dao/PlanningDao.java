@@ -1,3 +1,9 @@
+/*
+ * 答辩定位：订单、计划、齐套与工单 模块的 PlanningDao。
+ * 分层职责：数据访问层：使用 JDBC 和 PreparedStatement 访问 PostgreSQL，集中处理 SQL 参数绑定、结果映射及需要原子性的事务。
+ * 典型调用链：Service -> 当前 DAO -> Db.getConnection() -> PostgreSQL；查询结果再映射为 entity/record。
+ * 阅读提示：公开方法是本类对上层暴露的契约；private 方法只服务于本类内部实现。
+ */
 package com.example.messystem.planning.dao;
 
 import com.example.messystem.common.Db;
@@ -26,7 +32,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * 订单、计划、齐套与工单 的 PlanningDao，承担当前文件头所述职责，并保持与相邻层的单向依赖。
+ */
 public class PlanningDao {
+    /**
+     * 数据访问：查询列表。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public List<MesUser> listUsers() throws SQLException {
         String sql = """
                 select user_id, username, real_name, role_code, phone, enabled, created_at
@@ -44,6 +58,11 @@ public class PlanningDao {
         }
     }
 
+    /**
+     * 数据访问：写入业务记录并返回主键。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public MesUser insertUser(MesUser user) throws SQLException {
         String sql = """
                 insert into mes_user (username, real_name, role_code, phone, enabled)
@@ -64,6 +83,11 @@ public class PlanningDao {
         }
     }
 
+    /**
+     * 数据访问：查询列表。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public List<MesProduct> listProducts() throws SQLException {
         String sql = """
                 select product_id, product_code, product_name, product_model, specification, enabled
@@ -81,6 +105,11 @@ public class PlanningDao {
         }
     }
 
+    /**
+     * 数据访问：查询匹配记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public Optional<MesProduct> findProduct(long productId) throws SQLException {
         String sql = """
                 select product_id, product_code, product_name, product_model, specification, enabled
@@ -96,6 +125,11 @@ public class PlanningDao {
         }
     }
 
+    /**
+     * 数据访问：写入业务记录并返回主键。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public MesProduct insertProduct(MesProduct product) throws SQLException {
         String sql = """
                 insert into mes_product (product_code, product_name, product_model, specification, enabled)
@@ -116,6 +150,11 @@ public class PlanningDao {
         }
     }
 
+    /**
+     * 数据访问：更新业务记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public MesProduct updateProduct(long productId, MesProduct product) throws SQLException {
         String sql = """
                 update mes_product
@@ -138,6 +177,11 @@ public class PlanningDao {
         }
     }
 
+    /**
+     * 数据访问：停用业务对象。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public MesProduct disableProduct(long productId) throws SQLException {
         String sql = """
                 update mes_product set enabled = 0 where product_id = ?
@@ -153,6 +197,11 @@ public class PlanningDao {
         }
     }
 
+    /**
+     * 数据访问：查询列表。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public List<MesProductBom> listAllBom() throws SQLException {
         String sql = """
                 select b.bom_id, b.product_id, p.product_code, p.product_name,
@@ -172,6 +221,11 @@ public class PlanningDao {
         }
     }
 
+    /**
+     * 数据访问：查询列表。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public List<MesProductBom> listBom(long productId) throws SQLException {
         String sql = """
                 select b.bom_id, b.product_id, null::varchar as product_code,
@@ -195,6 +249,11 @@ public class PlanningDao {
         }
     }
 
+    /**
+     * 数据访问：写入业务记录并返回主键。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public MesProductBom insertBom(MesProductBom bom) throws SQLException {
         String sql = """
                 insert into mes_product_bom (product_id, material_id, usage_qty, unit, enabled)
@@ -217,6 +276,11 @@ public class PlanningDao {
         }
     }
 
+    /**
+     * 数据访问：更新业务记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public MesProductBom updateBom(long bomId, MesProductBom bom) throws SQLException {
         String sql = """
                 update mes_product_bom
@@ -242,10 +306,20 @@ public class PlanningDao {
         }
     }
 
+    /**
+     * 数据访问：删除业务记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public void deleteBom(long bomId) throws SQLException {
         deleteById("delete from mes_product_bom where bom_id = ?", bomId, "bom item not found");
     }
 
+    /**
+     * 数据访问：查询列表。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public List<MesProcessRoute> listProcessRoutes() throws SQLException {
         String sql = """
                 select r.process_id, r.product_id, p.product_code, p.product_name, p.product_model,
@@ -266,6 +340,11 @@ public class PlanningDao {
         }
     }
 
+    /**
+     * 数据访问：写入业务记录并返回主键。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public MesProcessRoute insertProcessRoute(MesProcessRoute route) throws SQLException {
         String sql = """
                 insert into mes_process_route
@@ -289,6 +368,11 @@ public class PlanningDao {
         }
     }
 
+    /**
+     * 数据访问：更新业务记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public MesProcessRoute updateProcessRoute(long processId, MesProcessRoute route) throws SQLException {
         String sql = """
                 update mes_process_route
@@ -320,10 +404,20 @@ public class PlanningDao {
         }
     }
 
+    /**
+     * 数据访问：删除业务记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public void deleteProcessRoute(long processId) throws SQLException {
         deleteById("delete from mes_process_route where process_id = ?", processId, "process route not found");
     }
 
+    /**
+     * 数据访问：查询列表。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public List<MesProductionLine> listProductionLines() throws SQLException {
         String sql = """
                 select line_id, line_code, line_name, line_type, daily_capacity, line_status, enabled,
@@ -342,6 +436,11 @@ public class PlanningDao {
         }
     }
 
+    /**
+     * 数据访问：写入业务记录并返回主键。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public MesProductionLine insertProductionLine(MesProductionLine line) throws SQLException {
         String sql = """
                 insert into mes_production_line
@@ -365,6 +464,11 @@ public class PlanningDao {
         }
     }
 
+    /**
+     * 数据访问：更新业务记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public MesProductionLine updateProductionLine(long lineId, MesProductionLine line) throws SQLException {
         String sql = """
                 update mes_production_line
@@ -390,6 +494,11 @@ public class PlanningDao {
         }
     }
 
+    /**
+     * 数据访问：停用业务对象。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public MesProductionLine disableProductionLine(long lineId) throws SQLException {
         String sql = """
                 update mes_production_line set enabled = 0, line_status = 'DISABLED'
@@ -407,6 +516,11 @@ public class PlanningDao {
         }
     }
 
+    /**
+     * 数据访问：查询列表。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public List<MesCustomerOrder> listOrders() throws SQLException {
         String sql = """
                 select order_id, order_no, customer_name, product_id, product_code, product_model,
@@ -426,6 +540,11 @@ public class PlanningDao {
         }
     }
 
+    /**
+     * 数据访问：查询匹配记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public Optional<MesCustomerOrder> findOrder(long orderId) throws SQLException {
         String sql = """
                 select order_id, order_no, customer_name, product_id, product_code, product_model,
@@ -443,6 +562,11 @@ public class PlanningDao {
         }
     }
 
+    /**
+     * 数据访问：写入业务记录并返回主键。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public MesCustomerOrder insertOrder(MesCustomerOrder order) throws SQLException {
         String sql = """
                 insert into mes_customer_order
@@ -474,6 +598,11 @@ public class PlanningDao {
         }
     }
 
+    /**
+     * 数据访问：更新业务记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public void updateOrderStatus(long orderId, String status) throws SQLException {
         String sql = "update mes_customer_order set order_status = ?, updated_at = current_timestamp where order_id = ?";
         try (Connection connection = Db.getConnection();
@@ -484,6 +613,11 @@ public class PlanningDao {
         }
     }
 
+    /**
+     * 数据访问：查询列表。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public List<MesProductionTask> listTasks() throws SQLException {
         String sql = taskSelectSql(false);
         try (Connection connection = Db.getConnection();
@@ -497,6 +631,11 @@ public class PlanningDao {
         }
     }
 
+    /**
+     * 数据访问：查询匹配记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public Optional<MesProductionTask> findTask(long taskId) throws SQLException {
         String sql = taskSelectSql(true);
         try (Connection connection = Db.getConnection();
@@ -508,6 +647,11 @@ public class PlanningDao {
         }
     }
 
+    /**
+     * 数据访问：执行 taskSelectSql 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static String taskSelectSql(boolean singleTask) {
         String where = singleTask ? "where t.task_id = ?\n" : "";
         return """
@@ -563,6 +707,11 @@ public class PlanningDao {
                 """ + where + "order by t.task_id asc";
     }
 
+    /**
+     * 数据访问：写入业务记录并返回主键。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public MesProductionTask insertTask(MesProductionTask task) throws SQLException {
         String sql = """
                 insert into mes_production_task
@@ -594,6 +743,11 @@ public class PlanningDao {
         }
     }
 
+    /**
+     * 数据访问：更新业务记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public MesProductionTask updateTaskKitting(long taskId, String taskStatus, String kittingStatus) throws SQLException {
         String sql = """
                 update mes_production_task
@@ -616,6 +770,11 @@ public class PlanningDao {
         }
     }
 
+    /**
+     * 数据访问：执行 firstLineId 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public long firstLineId() throws SQLException {
         String sql = "select line_id from mes_production_line where enabled = 1 order by line_id limit 1";
         try (Connection connection = Db.getConnection();
@@ -625,6 +784,11 @@ public class PlanningDao {
         }
     }
 
+    /**
+     * 数据访问：执行 firstProcessId 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public long firstProcessId(Long productId) throws SQLException {
         String sql = """
                 select process_id from mes_process_route
@@ -642,12 +806,22 @@ public class PlanningDao {
         }
     }
 
+    /**
+     * 数据访问：查询列表。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public List<MesProductBom> listBomForProduct(long productId) throws SQLException {
         return listBom(productId).stream()
                 .filter(item -> item.enabled == null || item.enabled == 1)
                 .toList();
     }
 
+    /**
+     * 数据访问：执行 availableQty 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public BigDecimal availableQty(long materialId) throws SQLException {
         String sql = """
                 select coalesce(sum(available_qty), 0)
@@ -664,6 +838,11 @@ public class PlanningDao {
         }
     }
 
+    /**
+     * 数据访问：执行 hasPublishedShortageAlert 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public boolean hasPublishedShortageAlert(long taskId) throws SQLException {
         String sql = "select exists(select 1 from mes_shortage_alert where task_id = ?)";
         try (Connection connection = Db.getConnection();
@@ -676,6 +855,11 @@ public class PlanningDao {
         }
     }
 
+    /**
+     * 数据访问：写入业务记录并返回主键。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public MesKittingAnalysis insertAnalysis(MesKittingAnalysis analysis, List<MesKittingShortageItem> shortages) throws SQLException {
         String analysisSql = """
                 insert into mes_kitting_analysis
@@ -712,6 +896,11 @@ public class PlanningDao {
         }
     }
 
+    /**
+     * 数据访问：查询列表。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public List<MesKittingAnalysis> listAnalyses() throws SQLException {
         String sql = """
                 select analysis_id, analysis_no, task_id, result_status, snapshot_time
@@ -729,6 +918,11 @@ public class PlanningDao {
         }
     }
 
+    /**
+     * 数据访问：查询列表。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public List<MesShortageAlert> listAlerts() throws SQLException {
         String sql = """
                 select alert_id, alert_no, task_id, analysis_id, material_id, material_code, material_name,
@@ -766,6 +960,11 @@ public class PlanningDao {
         }
     }
 
+    /**
+     * 数据访问：执行 publishShortageAlerts 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public List<MesShortageAlert> publishShortageAlerts(long taskId) throws SQLException {
         String query = """
                 select s.analysis_id,
@@ -804,6 +1003,11 @@ public class PlanningDao {
         return listAlerts();
     }
 
+    /**
+     * 数据访问：受理业务事项。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public MesShortageAlert acceptShortageAlert(long alertId, long userId) throws SQLException {
         String sql = """
                 update mes_shortage_alert set alert_status = 'ACCEPTED', accepted_by = ?, accepted_at = current_timestamp
@@ -825,6 +1029,11 @@ public class PlanningDao {
         }
     }
 
+    /**
+     * 数据访问：执行 resolveRecoveredShortageAlerts 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public int resolveRecoveredShortageAlerts(long taskId) throws SQLException {
         String sql = """
                 update mes_shortage_alert a
@@ -851,6 +1060,11 @@ public class PlanningDao {
         }
     }
 
+    /**
+     * 数据访问：查询列表。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public List<MesSyncLog> listSyncLogs() {
         String sql = """
                 select sync_log_id, sync_object, source_system, business_key, sync_status, error_message, sync_time
@@ -879,6 +1093,11 @@ public class PlanningDao {
         }
     }
 
+    /**
+     * 数据访问：写入业务记录并返回主键。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static void insertShortage(Connection connection, long analysisId, MesKittingShortageItem item) throws SQLException {
         String sql = """
                 insert into mes_kitting_shortage_item
@@ -906,6 +1125,11 @@ public class PlanningDao {
         }
     }
 
+    /**
+     * 数据访问：写入业务记录并返回主键。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static void insertAlert(Connection connection, long taskId, long analysisId, long materialId, String materialCode, String materialName,
             BigDecimal requiredQty, BigDecimal availableQty, BigDecimal shortageQty) throws SQLException {
         String sql = """
@@ -928,6 +1152,11 @@ public class PlanningDao {
         }
     }
 
+    /**
+     * 数据访问：把 JDBC 结果行映射为领域对象。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static MesUser mapUser(ResultSet rs) throws SQLException {
         MesUser item = new MesUser();
         item.userId = rs.getLong("user_id");
@@ -941,6 +1170,11 @@ public class PlanningDao {
         return item;
     }
 
+    /**
+     * 数据访问：把 JDBC 结果行映射为领域对象。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static MesProduct mapProduct(ResultSet rs) throws SQLException {
         MesProduct item = new MesProduct();
         item.productId = rs.getLong("product_id");
@@ -953,6 +1187,11 @@ public class PlanningDao {
         return item;
     }
 
+    /**
+     * 数据访问：把 JDBC 结果行映射为领域对象。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static MesProductBom mapBom(ResultSet rs) throws SQLException {
         MesProductBom item = new MesProductBom();
         item.bomId = rs.getLong("bom_id");
@@ -969,6 +1208,11 @@ public class PlanningDao {
         return item;
     }
 
+    /**
+     * 数据访问：把 JDBC 结果行映射为领域对象。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static MesProcessRoute mapProcessRoute(ResultSet rs) throws SQLException {
         MesProcessRoute item = new MesProcessRoute();
         item.processId = rs.getLong("process_id");
@@ -985,6 +1229,11 @@ public class PlanningDao {
         return item;
     }
 
+    /**
+     * 数据访问：把 JDBC 结果行映射为领域对象。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static MesProductionLine mapProductionLine(ResultSet rs) throws SQLException {
         MesProductionLine item = new MesProductionLine();
         item.lineId = rs.getLong("line_id");
@@ -998,6 +1247,11 @@ public class PlanningDao {
         return item;
     }
 
+    /**
+     * 数据访问：把 JDBC 结果行映射为领域对象。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static MesCustomerOrder mapOrder(ResultSet rs) throws SQLException {
         MesCustomerOrder item = new MesCustomerOrder();
         item.orderId = rs.getLong("order_id");
@@ -1019,6 +1273,11 @@ public class PlanningDao {
         return item;
     }
 
+    /**
+     * 数据访问：把 JDBC 结果行映射为领域对象。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static MesProductionTask mapTask(ResultSet rs) throws SQLException {
         MesProductionTask item = new MesProductionTask();
         item.taskId = rs.getLong("task_id");
@@ -1044,6 +1303,11 @@ public class PlanningDao {
         return item;
     }
 
+    /**
+     * 数据访问：把 JDBC 结果行映射为领域对象。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static MesKittingAnalysis mapAnalysis(ResultSet rs) throws SQLException {
         MesKittingAnalysis item = new MesKittingAnalysis();
         item.analysisId = rs.getLong("analysis_id");
@@ -1055,6 +1319,11 @@ public class PlanningDao {
         return item;
     }
 
+    /**
+     * 数据访问：执行 setLong 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static void setLong(PreparedStatement statement, int index, Long value) throws SQLException {
         if (value == null || value == 0) {
             statement.setNull(index, java.sql.Types.BIGINT);
@@ -1063,6 +1332,11 @@ public class PlanningDao {
         }
     }
 
+    /**
+     * 数据访问：执行 setInteger 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static void setInteger(PreparedStatement statement, int index, Integer value) throws SQLException {
         if (value == null) {
             statement.setNull(index, java.sql.Types.INTEGER);
@@ -1071,6 +1345,11 @@ public class PlanningDao {
         }
     }
 
+    /**
+     * 数据访问：删除业务记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static void deleteById(String sql, long id, String notFoundMessage) throws SQLException {
         try (Connection connection = Db.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -1081,16 +1360,31 @@ public class PlanningDao {
         }
     }
 
+    /**
+     * 数据访问：查询单条记录或详情。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static Long getLong(ResultSet rs, String column) throws SQLException {
         long value = rs.getLong(column);
         return rs.wasNull() ? null : value;
     }
 
+    /**
+     * 数据访问：查询单条记录或详情。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static Integer getInteger(ResultSet rs, String column) throws SQLException {
         int value = rs.getInt(column);
         return rs.wasNull() ? null : value;
     }
 
+    /**
+     * 数据访问：查询单条记录或详情。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static String getOptionalString(ResultSet rs, String column) {
         try {
             return rs.getString(column);
@@ -1099,6 +1393,11 @@ public class PlanningDao {
         }
     }
 
+    /**
+     * 数据访问：查询单条记录或详情。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static Boolean getOptionalBoolean(ResultSet rs, String column) {
         try {
             boolean value = rs.getBoolean(column);
@@ -1108,6 +1407,11 @@ public class PlanningDao {
         }
     }
 
+    /**
+     * 数据访问：查询单条记录或详情。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static LocalDateTime getLocalDateTime(ResultSet rs, String column) throws SQLException {
         Timestamp value = rs.getTimestamp(column);
         return value == null ? null : value.toLocalDateTime();

@@ -1,3 +1,8 @@
+/*
+ * MES 全局样式表。
+ * 设计目标是适合制造现场反复操作的紧凑工作台：高对比导航、稳定表格尺寸、明确状态色和移动端适配。
+ * CSS 只控制呈现，不承载权限或业务状态判断；状态类由 Vue 组件根据接口数据选择。
+ */
 :root {
   font-family: Inter, "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
   color: #18201c;
@@ -18,6 +23,7 @@
   --sidebar-line: #304137;
 }
 
+/* 全局重置与设计变量：统一字体、颜色、边框和盒模型。 */
 * { box-sizing: border-box; }
 html, body, #app { min-height: 100%; margin: 0; }
 body { min-width: 320px; background: #f3f5f3; }
@@ -26,6 +32,7 @@ button { border: 0; cursor: pointer; }
 button:disabled { cursor: wait; opacity: .62; }
 a { color: inherit; }
 
+/* 应用壳与侧边导航：桌面端固定侧栏，可折叠为图标宽度。 */
 .app-shell { min-height: 100vh; display: grid; grid-template-columns: 248px minmax(0, 1fr); transition: grid-template-columns .2s ease; }
 .app-shell.collapsed { grid-template-columns: 76px minmax(0, 1fr); }
 .sidebar { position: sticky; top: 0; height: 100vh; z-index: 20; display: grid; grid-template-rows: auto 1fr auto; color: #edf3ef; background: var(--sidebar); border-right: 1px solid #101713; }
@@ -62,6 +69,7 @@ a { color: inherit; }
 .topbar-meta { display: flex; align-items: center; gap: 18px; font-size: 12px; }
 .topbar-meta strong { color: #29342d; }
 
+/* 通用工作台内容区：约束最大宽度，同时允许表格在窄屏收缩。 */
 .workspace-page { width: min(1500px, 100%); margin: 0 auto; padding: 26px 30px 48px; }
 .page-header { min-height: 59px; display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-bottom: 20px; }
 .page-header > div { display: grid; gap: 4px; }
@@ -74,6 +82,7 @@ a { color: inherit; }
 .section-tabs button { min-height: 43px; padding: 0 17px; color: #69736c; background: transparent; border-bottom: 3px solid transparent; white-space: nowrap; }
 .section-tabs button:hover { color: var(--ink); background: #e9eeea; }
 .section-tabs button.active { color: var(--green-dark); border-bottom-color: var(--green); font-weight: 700; }
+/* 配置驱动业务页面的数据区、工具栏、搜索和表格。 */
 .data-section { background: #fff; border-bottom: 1px solid var(--line); }
 .data-toolbar { min-height: 72px; display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 13px 16px; border-bottom: 1px solid var(--line); }
 .data-toolbar > div:first-child { display: flex; align-items: baseline; gap: 10px; }
@@ -144,6 +153,7 @@ tbody tr:hover { background: #fafcfb; }
 .ai-planning-result footer button { min-height: 37px; flex: 0 0 auto; padding: 0 14px; color: #fff; background: var(--green); border-radius: 4px; font-size: 12px; font-weight: 700; }
 .ai-planning-result footer button:hover { background: #185b3f; }
 
+/* 动态业务表单与文件预览对话框。 */
 .dialog-mask { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 20px; background: rgba(10, 16, 12, .6); }
 .dialog { width: min(600px, 100%); max-height: min(760px, 92vh); overflow: auto; background: #fff; border: 1px solid #bec8c0; border-radius: 6px; box-shadow: 0 24px 70px rgba(0,0,0,.28); }
 .dialog > header { min-height: 70px; display: flex; align-items: center; justify-content: space-between; padding: 13px 17px; border-bottom: 1px solid var(--line); }
@@ -180,6 +190,7 @@ input:focus, select:focus, textarea:focus { border-color: #5e9d7b; box-shadow: 0
 .file-preview-actions a { min-height: 34px; display: inline-flex; align-items: center; gap: 6px; padding: 0 11px; color: #fff; background: var(--green); border-radius: 4px; font-size: 12px; font-weight: 700; text-decoration: none; }
 .file-preview-actions a:hover { background: #185b3f; }
 
+/* 登录页：左侧制造链路品牌区，右侧账号表单。 */
 .login-page { min-height: 100vh; display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(380px, .7fr); background: #17211b; }
 .login-identity { min-height: 100vh; display: flex; flex-direction: column; justify-content: space-between; padding: clamp(30px, 6vw, 84px); color: #fff; background: #17211b; border-right: 1px solid #35463b; }
 .login-brand { display: flex; align-items: center; gap: 13px; font-weight: 700; }
@@ -240,6 +251,7 @@ input:focus, select:focus, textarea:focus { border-color: #5e9d7b; box-shadow: 0
 .profile-form .wide, .profile-form footer, .profile-form .notice { grid-column: 1 / -1; }
 .profile-form footer { display: flex; justify-content: flex-end; }
 
+/* 总经理驾驶舱：深色高对比态势页面，包含指标、趋势、产线和告警区。 */
 .executive-page { min-height: calc(100vh - 52px); padding: 12px; color: #d9f3ff; background: #020a1f; overflow: hidden; }
 .cockpit-frame { position: relative; width: min(1800px, 100%); min-height: calc(100vh - 76px); margin: auto; padding: 0 12px 10px; overflow: hidden; background: radial-gradient(circle at 50% 36%, rgba(10,73,155,.24), transparent 35%), linear-gradient(rgba(5,24,65,.92), rgba(2,10,31,.98)); border: 1px solid rgba(31,126,255,.44); box-shadow: inset 0 0 45px rgba(0,75,190,.2), 0 0 28px rgba(0,59,156,.2); }
 .cockpit-frame::before { content: ''; position: absolute; inset: 0; pointer-events: none; opacity: .24; background-image: linear-gradient(rgba(37,116,216,.18) 1px, transparent 1px), linear-gradient(90deg, rgba(37,116,216,.18) 1px, transparent 1px); background-size: 38px 38px; mask-image: linear-gradient(to bottom, transparent, #000 14%, #000 85%, transparent); }
@@ -421,6 +433,7 @@ input:focus, select:focus, textarea:focus { border-color: #5e9d7b; box-shadow: 0
   }
 }
 
+/* 二维码公开追溯页：不依赖后台应用壳，适配手机扫码查看。 */
 .public-trace-page { min-height: 100vh; padding: 25px; background: #edf1ee; }
 .public-trace-page > header { width: min(800px, 100%); display: flex; align-items: center; gap: 13px; margin: 0 auto 18px; padding: 18px; color: #fff; background: #18271f; }
 .public-trace-page header img { width: 43px; }
@@ -435,6 +448,7 @@ input:focus, select:focus, textarea:focus { border-color: #5e9d7b; box-shadow: 0
 .trace-document dt { color: var(--muted); font-size: 10px; }
 .trace-document dd { margin: 5px 0 0; overflow-wrap: anywhere; font-size: 12px; }
 
+/* 平板断点：驾驶舱和工作台从多列逐步收缩。 */
 @media (max-width: 1100px) {
   .metrics-grid { grid-template-columns: repeat(2, 1fr); }
   .executive-metrics { grid-template-columns: repeat(2, 1fr); }
@@ -456,6 +470,7 @@ input:focus, select:focus, textarea:focus { border-color: #5e9d7b; box-shadow: 0
   .ai-planning-detail article:nth-child(4) { border-right: 0; }
 }
 
+/* 手机断点：侧栏改为抽屉，表格允许横向滚动，登录页切成单列。 */
 @media (max-width: 760px) {
   .app-shell, .app-shell.collapsed { display: block; }
   .sidebar { position: fixed; left: 0; top: 0; width: min(290px, 84vw); transform: translateX(-102%); transition: transform .2s ease; }

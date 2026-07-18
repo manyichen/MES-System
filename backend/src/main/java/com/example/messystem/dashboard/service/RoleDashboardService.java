@@ -1,3 +1,9 @@
+/*
+ * 答辩定位：驾驶舱、反馈与产品追溯 模块的 RoleDashboardService。
+ * 分层职责：业务服务层：实现一个或一组用例，负责必填校验、角色边界、状态机和跨 DAO 编排；数据库细节下沉到 DAO。
+ * 典型调用链：Resource -> 当前 Service -> DAO；外部 AI、文件系统等依赖也由服务边界统一编排。
+ * 阅读提示：公开方法是本类对上层暴露的契约；private 方法只服务于本类内部实现。
+ */
 package com.example.messystem.dashboard.service;
 
 import com.example.messystem.auth.AuthenticatedUser;
@@ -9,8 +15,14 @@ import java.util.Set;
 
 /** 根据角色策略元数据和 DAO 聚合结果构建角色首页。 */
 public class RoleDashboardService {
+    /** 数据访问依赖，集中封装 JDBC、SQL 参数绑定和结果映射。 */
     private final RoleDashboardDao dao = new RoleDashboardDao();
 
+    /**
+     * 业务用例：执行 build 对应的业务步骤。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public RoleDashboard build(AuthenticatedUser currentUser) {
         Profile profile = profileFor(primaryRole(currentUser));
         RoleDashboardDao.DashboardData data = dao.load(profile.roleCode, currentUser.user.userId);
@@ -74,15 +86,30 @@ public class RoleDashboardService {
         };
     }
 
+    /**
+     * 业务用例：执行 profile 对应的业务步骤。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     private static Profile profile(String roleCode, String roleName, String scope, Set<String> modules,
             String... prohibited) {
         return new Profile(roleCode, roleName, scope, modules, List.of(prohibited));
     }
 
+    /**
+     * 业务用例：执行 modules 对应的业务步骤。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     private static Set<String> modules(String... values) {
         return new LinkedHashSet<>(List.of(values));
     }
 
+    /**
+     * 业务用例：执行 Profile 对应的业务步骤。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     private record Profile(String roleCode, String roleName, String scope, Set<String> modules,
             List<String> prohibited) {
     }

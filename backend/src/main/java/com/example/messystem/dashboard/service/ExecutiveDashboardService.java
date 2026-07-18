@@ -1,3 +1,9 @@
+/*
+ * 答辩定位：驾驶舱、反馈与产品追溯 模块的 ExecutiveDashboardService。
+ * 分层职责：业务服务层：实现一个或一组用例，负责必填校验、角色边界、状态机和跨 DAO 编排；数据库细节下沉到 DAO。
+ * 典型调用链：Resource -> 当前 Service -> DAO；外部 AI、文件系统等依赖也由服务边界统一编排。
+ * 阅读提示：公开方法是本类对上层暴露的契约；private 方法只服务于本类内部实现。
+ */
 package com.example.messystem.dashboard.service;
 
 import com.example.messystem.auth.AuthenticatedUser;
@@ -13,6 +19,7 @@ import java.util.Locale;
 
 /** 构建仅供总经理查看的 MES 全流程只读经营视图。 */
 public class ExecutiveDashboardService {
+    /** 数据访问依赖，集中封装 JDBC、SQL 参数绑定和结果映射。 */
     private final ExecutiveDashboardDao dao = new ExecutiveDashboardDao();
 
     /** 校验经营视图权限，并将 DAO 汇总数据转换为可解释的业务指标。 */
@@ -35,6 +42,11 @@ public class ExecutiveDashboardService {
         }
     }
 
+    /**
+     * 业务用例：执行 metrics 对应的业务步骤。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     private static List<ExecutiveDashboard.Metric> metrics(Totals totals) {
         long riskCount = totals.shortageAlerts() + totals.openRework()
                 + totals.equipmentFaults() + totals.pendingRepairs();
@@ -56,6 +68,11 @@ public class ExecutiveDashboardService {
                         "\u7f3a\u6599\u3001\u8fd4\u5de5\u3001\u8bbe\u5907\u4e0e\u7ef4\u4fee\u5f85\u95ed\u73af"));
     }
 
+    /**
+     * 业务用例：执行 departmentReports 对应的业务步骤。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     private static List<ExecutiveDashboard.DepartmentReport> departmentReports(
             Totals totals, long submittedInspections, long activeMaintenance) {
         String period = LocalDate.now().getYear() + " \u5e74\u5ea6 \u00b7 \u622a\u81f3\u5f53\u524d";
@@ -80,6 +97,11 @@ public class ExecutiveDashboardService {
                                 : "\u6545\u969c\u4e0e\u7ef4\u4fee\u5de5\u5355\u5df2\u7eb3\u5165\u7763\u529e"));
     }
 
+    /**
+     * 业务用例：执行 auditFindings 对应的业务步骤。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     private static List<ExecutiveDashboard.AuditFinding> auditFindings(Totals totals) {
         return List.of(
                 finding("\u4ed3\u50a8\u7269\u6d41", "\u7269\u6599\u4fdd\u969c", totals.shortageAlerts(),
@@ -99,28 +121,53 @@ public class ExecutiveDashboardService {
                         "\u5ba1\u89c6\u6545\u969c\u54cd\u5e94\u4e0e\u7ef4\u4fee\u5b8c\u7ed3\u60c5\u51b5"));
     }
 
+    /**
+     * 业务用例：执行 metric 对应的业务步骤。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     private static ExecutiveDashboard.Metric metric(
             String key, String label, long value, String unit, String tone, String detail) {
         return new ExecutiveDashboard.Metric(key, label, String.valueOf(value), unit, tone, detail);
     }
 
+    /**
+     * 业务用例：提交生产或维修报告。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     private static ExecutiveDashboard.DepartmentReport report(String department, String ownerRole, String period,
             String metricLabel, long value, String unit, long riskCount, String summary) {
         return report(department, ownerRole, period, metricLabel, String.valueOf(value), unit, riskCount, summary);
     }
 
+    /**
+     * 业务用例：提交生产或维修报告。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     private static ExecutiveDashboard.DepartmentReport report(String department, String ownerRole, String period,
             String metricLabel, String value, String unit, long riskCount, String summary) {
         return new ExecutiveDashboard.DepartmentReport(
                 department, ownerRole, period, metricLabel, value, unit, riskCount, summary);
     }
 
+    /**
+     * 业务用例：查询匹配记录。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     private static ExecutiveDashboard.AuditFinding finding(
             String department, String title, long riskCount, String detail, String nextStep) {
         String severity = riskCount == 0 ? "NORMAL" : (riskCount >= 3 ? "HIGH" : "MEDIUM");
         return new ExecutiveDashboard.AuditFinding(department, title, severity, detail, nextStep);
     }
 
+    /**
+     * 业务用例：执行 percent 对应的业务步骤。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     private static String percent(long numerator, long denominator) {
         if (denominator <= 0) return "0.0";
         return String.format(Locale.ROOT, "%.1f", numerator * 100D / denominator);

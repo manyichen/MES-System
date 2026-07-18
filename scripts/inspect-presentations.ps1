@@ -1,22 +1,34 @@
-param(
+﻿param(
     [Parameter(Mandatory = $true)][string]$RequirementsPath,
     [Parameter(Mandatory = $true)][string]$TemplatePath,
     [Parameter(Mandatory = $true)][string]$OutputDir
 )
 
+<#
+  PowerPoint 结构清点工具。
+  通过 PowerPoint COM 只读打开需求文档和模板，输出每页/母版/自定义版式的 Shape 文本与坐标，
+  同时导出 1600x900 PNG。输入文件不修改，输出为 UTF-8 inventory.txt 和图片目录。
+#>
 $ErrorActionPreference = 'Stop'
 $output = [IO.Path]::GetFullPath($OutputDir)
 New-Item -ItemType Directory -Path $output -Force | Out-Null
 
+# 安全读取 Shape 文本并把换行压平；无文本或 COM 属性访问失败时返回空串。
 function Shape-Text($shape) {
     try {
         if ($shape.HasTextFrame -and $shape.TextFrame.HasText) {
-            return ($shape.TextFrame.TextRange.Text -replace "`r", ' ' -replace "`n", ' ').Trim()
+            $text = [string]$shape.TextFrame.TextRange.Text
+            $text = $text.Replace("`r", ' ').Replace("`n", ' ')
+            return $text.Trim()
         }
-    } catch {}
+    }
+    catch {
+        return ''
+    }
     return ''
 }
 
+# 清点一份 PPT 的页面尺寸、所有页/母版/自定义版式 Shape，并导出文本清单和 PNG。
 function Inspect-Presentation($app, $path, $name) {
     $presentation = $app.Presentations.Open($path, $true, $true, $false)
     try {
@@ -62,6 +74,7 @@ function Inspect-Presentation($app, $path, $name) {
     }
 }
 
+# 一个 PowerPoint 进程连续处理两份输入，最终统一退出并释放 COM。
 $powerPoint = New-Object -ComObject PowerPoint.Application
 try {
     Inspect-Presentation $powerPoint $RequirementsPath 'requirements'

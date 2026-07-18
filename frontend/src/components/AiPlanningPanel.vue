@@ -1,4 +1,10 @@
 <script setup>
+/**
+ * PMC 的 AI 辅助排产面板。
+ * 先从 GET /api/production-tasks 选择“任务 READY 且齐套 READY”的候选任务，
+ * 再调用 POST /api/ai/planning-advice；结果仅回填创建工单表单，不会绕过人工确认自动落库。
+ * 后端 AiPlanningClient 通过阿里云百炼 OpenAI Compatible API 调用大模型，未启用时返回确定性降级建议。
+ */
 import { computed, onMounted, ref } from 'vue'
 import { BrainCircuit, RefreshCw, Sparkles } from 'lucide-vue-next'
 import { api } from '../api/http'
@@ -15,6 +21,7 @@ const generating = ref(false)
 const error = ref('')
 const result = ref(null)
 
+// 只有已就绪且物料齐套的任务才具备排产前提。
 const candidates = computed(() => tasks.value.filter(task => (
   task.taskStatus === 'READY' && task.kittingStatus === 'READY'
 )))
@@ -27,6 +34,7 @@ const canApply = computed(() => {
   return Boolean(selectedTask.value && Number.isFinite(lineId) && lineId > 0)
 })
 
+/** 兼容后端常见列表包装格式。 */
 function normalize(data) {
   if (Array.isArray(data)) return data
   if (Array.isArray(data?.items)) return data.items
@@ -39,6 +47,7 @@ function formatDateTime(value) {
   return String(value).replace('T', ' ')
 }
 
+/** 加载候选任务，并在当前选择失效时自动选择第一项。 */
 async function loadCandidates() {
   loadingTasks.value = true
   error.value = ''
@@ -56,6 +65,7 @@ async function loadCandidates() {
   }
 }
 
+/** 提交任务、计划周期和优化目标，请求 AI 返回推荐产线、数量和时间窗口。 */
 async function generateAdvice() {
   if (!selectedTask.value) return
   generating.value = true
@@ -74,6 +84,7 @@ async function generateAdvice() {
   }
 }
 
+/** 将经过基本完整性检查的建议通知给 ModuleWorkspace，打开人工确认表单。 */
 function applyAdvice() {
   if (!canApply.value) return
   emit('apply', {

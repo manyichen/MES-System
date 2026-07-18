@@ -1,3 +1,9 @@
+/*
+ * 答辩定位：访问控制与系统维护 模块的 AccessDao。
+ * 分层职责：数据访问层：使用 JDBC 和 PreparedStatement 访问 PostgreSQL，集中处理 SQL 参数绑定、结果映射及需要原子性的事务。
+ * 典型调用链：Service -> 当前 DAO -> Db.getConnection() -> PostgreSQL；查询结果再映射为 entity/record。
+ * 阅读提示：公开方法是本类对上层暴露的契约；private 方法只服务于本类内部实现。
+ */
 package com.example.messystem.access.dao;
 
 import com.example.messystem.auth.AuthenticatedUser;
@@ -17,6 +23,11 @@ import java.time.LocalDateTime;
 
 /** 执行访问控制查询以及角色、权限申请的原子状态变更。 */
 public class AccessDao {
+    /**
+     * 数据访问：查询列表。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public List<RoleInfo> listRoles() {
         String sql = """
                 select r.role_id, r.role_code, r.role_name, r.role_type, r.role_level,
@@ -46,6 +57,11 @@ public class AccessDao {
         }
     }
 
+    /**
+     * 数据访问：查询列表。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public List<PermissionInfo> listPermissions(String roleCode) {
         String sql = """
                 select p.permission_code, p.permission_name, p.module_code, p.resource_type,
@@ -74,6 +90,11 @@ public class AccessDao {
         }
     }
 
+    /**
+     * 数据访问：查询单条记录或详情。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public Set<String> getUserRoles(long userId) {
         String sql = """
                 select r.role_code from mes_user_role ur
@@ -94,6 +115,11 @@ public class AccessDao {
         }
     }
 
+    /**
+     * 数据访问：分配执行人员或资源。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public Set<String> assignUserRoles(long userId, List<String> requestedRoles, AuthenticatedUser actor) {
         if (requestedRoles == null || requestedRoles.isEmpty()) {
             throw new BadRequestException("用户至少需要一个角色");
@@ -158,6 +184,11 @@ public class AccessDao {
         }
     }
 
+    /**
+     * 数据访问：查询列表。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public List<PermissionApplication> listPermissionApplications(AuthenticatedUser actor) {
         boolean all = actor.hasPermission("permission.review") || actor.hasPermission("role.manage");
         String sql = """
@@ -179,6 +210,11 @@ public class AccessDao {
         }
     }
 
+    /**
+     * 数据访问：创建业务记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public PermissionApplication createPermissionApplication(long targetUserId, String toRoleCode,
             String reason, AuthenticatedUser actor) {
         if (toRoleCode == null || toRoleCode.isBlank()) throw new BadRequestException("申请角色不能为空");
@@ -211,6 +247,11 @@ public class AccessDao {
         }
     }
 
+    /**
+     * 数据访问：审核业务申请。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public PermissionApplication reviewPermissionApplication(long applyId, String decision,
             String comment, AuthenticatedUser actor) {
         String status = "REJECTED".equalsIgnoreCase(decision) ? "REJECTED" : "REVIEWED";
@@ -238,6 +279,11 @@ public class AccessDao {
         }
     }
 
+    /**
+     * 数据访问：执行已审核的变更。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public PermissionApplication applyPermissionApplication(long applyId, AuthenticatedUser actor) {
         PermissionApplication application = findApplication(applyId);
         if (!Set.of("SUBMITTED", "REVIEWED").contains(application.applyStatus())) {
@@ -267,6 +313,11 @@ public class AccessDao {
         }
     }
 
+    /**
+     * 数据访问：查询列表。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public List<AccountApplication> listAccountApplications(boolean all, long applicantId) {
         String sql = """
                 select apply_id, apply_no, applicant_id, username, real_name, role_code,
@@ -289,6 +340,11 @@ public class AccessDao {
         }
     }
 
+    /**
+     * 数据访问：创建业务记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public AccountApplication createAccountApplication(AccountApplicationRequest request, long applicantId) {
         if (request == null) throw new BadRequestException("账号申请不能为空");
         String username = normalizeUsername(request.username());
@@ -334,6 +390,11 @@ public class AccessDao {
         }
     }
 
+    /**
+     * 数据访问：审核业务申请。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public AccountApplication reviewAccountApplication(long applyId, String decision,
             String comment, long actorUserId) {
         String normalizedDecision = String.valueOf(decision == null ? "" : decision).trim().toUpperCase();
@@ -382,6 +443,11 @@ public class AccessDao {
         }
     }
 
+    /**
+     * 数据访问：查询匹配记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private PermissionApplication findApplication(long applyId) {
         String sql = """
                 select apply_id, apply_no, applicant_id, target_user_id, from_role_code,
@@ -401,6 +467,11 @@ public class AccessDao {
         }
     }
 
+    /**
+     * 数据访问：把 JDBC 结果行映射为领域对象。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static PermissionApplication mapApplication(ResultSet rs) throws SQLException {
         java.sql.Timestamp reviewed = rs.getTimestamp("reviewed_at");
         java.sql.Timestamp created = rs.getTimestamp("created_at");
@@ -412,6 +483,11 @@ public class AccessDao {
                 rs.getString("review_comment"), created == null ? null : created.toLocalDateTime());
     }
 
+    /**
+     * 数据访问：查询匹配记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static AccountApplication findAccountApplicationForUpdate(Connection connection, long applyId)
             throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement("""
@@ -430,6 +506,11 @@ public class AccessDao {
         }
     }
 
+    /**
+     * 数据访问：更新业务记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static AccountApplication updateAccountApplicationStatus(Connection connection, long applyId,
             String status, long reviewerId, String comment, Long createdUserId) throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement("""
@@ -454,6 +535,11 @@ public class AccessDao {
         }
     }
 
+    /**
+     * 数据访问：创建业务记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static long createUserFromAccountApplication(Connection connection,
             AccountApplication application) throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement("""
@@ -472,6 +558,11 @@ public class AccessDao {
         }
     }
 
+    /**
+     * 数据访问：把 JDBC 结果行映射为领域对象。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static AccountApplication mapAccountApplication(ResultSet rs) throws SQLException {
         java.sql.Timestamp reviewed = rs.getTimestamp("reviewed_at");
         java.sql.Timestamp created = rs.getTimestamp("created_at");
@@ -484,11 +575,21 @@ public class AccessDao {
                 created == null ? null : created.toLocalDateTime());
     }
 
+    /**
+     * 数据访问：执行 nullableLong 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static Long nullableLong(ResultSet rs, String column) throws SQLException {
         long value = rs.getLong(column);
         return rs.wasNull() ? null : value;
     }
 
+    /**
+     * 数据访问：执行 ensureUser 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static void ensureUser(Connection connection, long userId) throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement("select 1 from mes_user where user_id = ?")) {
             statement.setLong(1, userId);
@@ -498,6 +599,11 @@ public class AccessDao {
         }
     }
 
+    /**
+     * 数据访问：执行 ensureAccountApplicationTable 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static void ensureAccountApplicationTable(Connection connection) throws SQLException {
         try (var statement = connection.createStatement()) {
             statement.execute("""
@@ -528,6 +634,11 @@ public class AccessDao {
         }
     }
 
+    /**
+     * 数据访问：规范化输入并补齐默认值。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static String normalizeUsername(String username) {
         String value = requireTextValue(username, "登录账号不能为空");
         if (value.length() < 3 || value.length() > 50) {
@@ -539,15 +650,30 @@ public class AccessDao {
         return value;
     }
 
+    /**
+     * 数据访问：执行 requireTextValue 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static String requireTextValue(String value, String message) {
         if (value == null || value.isBlank()) throw new BadRequestException(message);
         return value.trim();
     }
 
+    /**
+     * 数据访问：执行 trimToNull 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static String trimToNull(String value) {
         return value == null || value.isBlank() ? null : value.trim();
     }
 
+    /**
+     * 数据访问：执行 usernameExists 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static boolean usernameExists(Connection connection, String username) throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement(
                 "select 1 from mes_user where lower(username) = lower(?) limit 1")) {
@@ -558,6 +684,11 @@ public class AccessDao {
         }
     }
 
+    /**
+     * 数据访问：提交业务事项。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static boolean submittedAccountApplicationExists(Connection connection, String username)
             throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement("""
@@ -573,6 +704,11 @@ public class AccessDao {
         }
     }
 
+    /**
+     * 数据访问：执行 ensureRoleExists 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static void ensureRoleExists(Connection connection, String roleCode) throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement(
                 "select 1 from mes_role where role_code = ? and enabled = 1")) {
@@ -583,6 +719,11 @@ public class AccessDao {
         }
     }
 
+    /**
+     * 数据访问：执行 linkRole 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static void linkRole(Connection connection, long userId, String roleCode, long assignedBy)
             throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement("""
@@ -601,6 +742,11 @@ public class AccessDao {
         }
     }
 
+    /**
+     * 数据访问：查询匹配记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static List<Long> findRoleIds(Connection connection, Set<String> roleCodes) throws SQLException {
         String placeholders = String.join(",", roleCodes.stream().map(item -> "?").toList());
         try (PreparedStatement statement = connection.prepareStatement(
@@ -615,6 +761,11 @@ public class AccessDao {
         }
     }
 
+    /**
+     * 数据访问：执行 writeAudit 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static void writeAudit(Connection connection, long targetUserId, Set<String> roles,
             AuthenticatedUser actor) throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement("""
@@ -634,6 +785,11 @@ public class AccessDao {
         }
     }
 
+    /**
+     * 数据访问：执行 writeAccountApplicationAudit 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static void writeAccountApplicationAudit(Connection connection, long actorUserId, String actionCode,
             AccountApplication application, String message) throws SQLException {
         try (PreparedStatement actor = connection.prepareStatement(
@@ -663,30 +819,60 @@ public class AccessDao {
         }
     }
 
+    /**
+     * 数据访问：执行 database 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static IllegalStateException database(SQLException ex) {
         return new IllegalStateException("database operation failed: " + ex.getMessage(), ex);
     }
 
+    /**
+     * 数据访问：执行 RoleInfo 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public record RoleInfo(long roleId, String roleCode, String roleName, String roleType, int roleLevel,
             String dataScope, String description, int permissionCount, int userCount) {
     }
 
+    /**
+     * 数据访问：执行 PermissionInfo 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public record PermissionInfo(String permissionCode, String permissionName, String moduleCode,
             String resourceType, String actionCode, String riskLevel, boolean granted) {
     }
 
+    /**
+     * 数据访问：执行 PermissionApplication 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public record PermissionApplication(long applyId, String applyNo, Long applicantId,
             long targetUserId, String fromRoleCode, String toRoleCode, String applyReason,
             String applyStatus, Long reviewerId, LocalDateTime reviewedAt, String reviewComment,
             LocalDateTime createdAt) {
     }
 
+    /**
+     * 数据访问：执行 AccountApplication 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public record AccountApplication(long applyId, String applyNo, Long applicantId,
             String username, String realName, String roleCode, String department, String phone,
             String applyReason, String applyStatus, Long reviewerId, LocalDateTime reviewedAt,
             String reviewComment, Long createdUserId, LocalDateTime createdAt) {
     }
 
+    /**
+     * 数据访问：执行 AccountApplicationRequest 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public record AccountApplicationRequest(String username, String password, String realName,
             String roleCode, String department, String phone, String reason) {
     }

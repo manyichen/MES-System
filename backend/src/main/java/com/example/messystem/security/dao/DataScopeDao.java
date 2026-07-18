@@ -1,3 +1,9 @@
+/*
+ * 答辩定位：授权策略与数据范围 模块的 DataScopeDao。
+ * 分层职责：数据访问层：使用 JDBC 和 PreparedStatement 访问 PostgreSQL，集中处理 SQL 参数绑定、结果映射及需要原子性的事务。
+ * 典型调用链：Service -> 当前 DAO -> Db.getConnection() -> PostgreSQL；查询结果再映射为 entity/record。
+ * 阅读提示：公开方法是本类对上层暴露的契约；private 方法只服务于本类内部实现。
+ */
 package com.example.messystem.security.dao;
 
 import com.example.messystem.common.BadRequestException;
@@ -11,6 +17,11 @@ import java.util.Set;
 
 /** 集中管理数据范围分配以及全部命名归属查询。 */
 public class DataScopeDao {
+    /**
+     * 数据访问：查询匹配记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public ScopeAssignments findAssignments(long userId) throws SQLException {
         return new ScopeAssignments(
                 queryIds("select line_id from mes_user_line_scope where user_id = ? order by line_id", userId, false),
@@ -38,6 +49,11 @@ public class DataScopeDao {
         }
     }
 
+    /**
+     * 数据访问：分配执行人员或资源。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public void assignWarehouse(long userId, long warehouseId, long assignedBy) throws SQLException {
         try (Connection connection = Db.getConnection();
              PreparedStatement statement = connection.prepareStatement("""
@@ -150,6 +166,11 @@ public class DataScopeDao {
         return queryIds(query.sql(), userId, query.repeatedUserParameter());
     }
 
+    /**
+     * 数据访问：执行 queryIds 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static Set<Long> queryIds(String sql, long userId, boolean repeatedUserParameter) throws SQLException {
         try (Connection connection = Db.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -163,6 +184,11 @@ public class DataScopeDao {
         }
     }
 
+    /**
+     * 数据访问：执行 ensureExists 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static void ensureExists(Connection connection, String sql, long id, String message) throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setLong(1, id);
@@ -172,6 +198,11 @@ public class DataScopeDao {
         }
     }
 
+    /**
+     * 数据访问：执行 ensureIdsExist 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static void ensureIdsExist(Connection connection, String table, String column, Set<Long> ids,
             String label) throws SQLException {
         if (ids.isEmpty()) return;
@@ -187,6 +218,11 @@ public class DataScopeDao {
         }
     }
 
+    /**
+     * 数据访问：执行 replace 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static void replace(Connection connection, String table, String column, long userId,
             Set<Long> ids, long assignedBy) throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement("delete from " + table + " where user_id = ?")) {
@@ -206,9 +242,19 @@ public class DataScopeDao {
         }
     }
 
+    /**
+     * 数据访问：执行 ScopeAssignments 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public record ScopeAssignments(Set<Long> lineIds, Set<Long> warehouseIds) {
     }
 
+    /**
+     * 数据访问：执行 NamedQuery 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private record NamedQuery(String sql, boolean repeatedUserParameter) {
     }
 }

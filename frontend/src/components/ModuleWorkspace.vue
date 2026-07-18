@@ -1,4 +1,10 @@
 <script setup>
+/**
+ * 配置驱动的通用业务工作台。
+ * 调用链：路由 /module/:moduleKey -> modules.js section -> GET 列表接口 -> DataTable；
+ * 用户点击动作 -> ActionDialog -> api.post/put/delete -> 后端 Resource/Service/DAO -> 重新加载列表。
+ * 本组件复用计划、生产、仓储、质量、设备、主数据和系统管理页面的共同交互。
+ */
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { ExternalLink, Plus, RefreshCw, Search, X } from 'lucide-vue-next'
@@ -10,6 +16,7 @@ import ActionDialog from './ActionDialog.vue'
 import AiPlanningPanel from './AiPlanningPanel.vue'
 import DataTable from './DataTable.vue'
 
+// 页面状态分为列表加载 loading、动作提交 busy、用户提示以及对话框/文件预览。
 const route = useRoute()
 const session = useSessionStore()
 const activeSection = ref('')
@@ -22,7 +29,12 @@ const query = ref('')
 const dialog = ref(null)
 const preview = ref(null)
 
+// 根据路由选择模块，再按会话中的角色/权限过滤页签和按钮。
 const module = computed(() => modules[route.params.moduleKey])
+/**
+ * 判断一项配置是否可见。超级管理员跳过前端可见性限制；普通用户依次检查角色和权限点。
+ * 这只是 UI 防误操作，不能当作安全边界，后端仍会独立拒绝越权请求。
+ */
 const allowed = item => {
   if (session.isSuperAdmin) return true
   if (item.roles?.length && !item.roles.some(session.hasRole)) return false
@@ -39,6 +51,7 @@ const showAiPlanning = computed(() => (
   && section.value?.key === 'workOrders'
   && session.hasPermission('planning.work_order.create')
 ))
+// 搜索同时匹配原始 JSON 值和翻译后的业务值，中文状态也能被检索。
 const filteredRows = computed(() => {
   const keyword = query.value.trim().toLowerCase()
   if (!keyword) return rows.value
@@ -48,6 +61,7 @@ const filteredRows = computed(() => {
   })
 })
 
+/** 兼容后端返回数组、PageResult.items、records 或单对象等列表形态。 */
 function normalize(data) {
   if (Array.isArray(data)) return data
   if (Array.isArray(data?.items)) return data.items
@@ -55,6 +69,10 @@ function normalize(data) {
   return data ? [data] : []
 }
 
+/**
+ * 加载当前 section 的 endpoint；dataPath 取嵌套集合，transform/enrich 完成页面专用转换。
+ * preserveNotice 用于动作成功后刷新时保留“操作完成”消息。
+ */
 async function load({ preserveNotice = false } = {}) {
   if (!section.value) return
   loading.value = true
@@ -80,6 +98,10 @@ async function load({ preserveNotice = false } = {}) {
   }
 }
 
+/**
+ * 动作入口：依次处理禁用原因、二次确认、文件预览、无表单直接执行和有表单弹窗。
+ * row=null 表示工具栏新增动作；带 row 表示当前表格行的状态流转动作。
+ */
 function openAction(action, row = null) {
   const disabled = row && (typeof action.disabled === 'function' ? action.disabled(row) : action.disabled)
   if (disabled) {
@@ -94,15 +116,18 @@ function openAction(action, row = null) {
   dialog.value = { action, row }
 }
 
+/** 配置值既可为常量，也可为根据当前行计算的函数。 */
 function resolveActionValue(value, row) {
   return typeof value === 'function' ? value(row) : value
 }
 
+/** 关闭文件预览时释放临时 Blob URL，避免长时间操作后浏览器内存累积。 */
 function closePreview() {
   if (preview.value?.url) URL.revokeObjectURL(preview.value.url)
   preview.value = null
 }
 
+/** 调用二进制接口预览二维码、标签或 PDF，并在可用时给出公开追溯页入口。 */
 async function openPreview(action, row) {
   busy.value = true
   error.value = ''
@@ -128,6 +153,7 @@ async function openPreview(action, row) {
   }
 }
 
+/** 把 AI 排产建议转换为“创建工单”表单默认值，最终保存仍须用户确认。 */
 function applyAiAdvice(defaults) {
   const action = allowedActions.value.find(item => (
     item.path === '/work-orders' && (item.method || 'post') === 'post'
@@ -139,6 +165,10 @@ function applyAiAdvice(defaults) {
   }
 }
 
+/**
+ * 统一执行业务动作：动态计算 URL/请求体，调用配置中的 HTTP method，成功后关闭弹窗并刷新数据。
+ * ApiError 由 display 工具翻译成用户可读中文，原始后端规则仍是最终判断依据。
+ */
 async function execute(action, row, values) {
   busy.value = true
   error.value = ''
@@ -157,6 +187,7 @@ async function execute(action, row, values) {
   }
 }
 
+// 切换业务模块或页签后重置选择并加载数据；首次挂载也执行相同流程。
 watch(() => route.params.moduleKey, () => {
   activeSection.value = sections.value[0]?.key || ''
   load()
@@ -169,6 +200,7 @@ onMounted(() => {
 </script>
 
 <template>
+  <!-- 页面标题、页签、工具栏和数据表都来自 modules.js，不在组件中硬编码业务模块。 -->
   <main v-if="module" class="workspace-page">
     <header class="page-header">
       <div><span>{{ module.eyebrow }}</span><h1>{{ module.title }}</h1></div>

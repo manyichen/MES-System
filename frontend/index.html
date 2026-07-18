@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="zh-CN">
   <head>
+    <!-- Vite 的 HTML 入口：声明 UTF-8、移动端 viewport、浏览器主题色和站点图标。 -->
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#17211b" />
@@ -8,7 +9,9 @@
     <title>双星轮胎 MES</title>
   </head>
   <body>
+    <!-- Vue 根组件最终挂载到此节点；页面实际结构由 App.vue 和当前路由生成。 -->
     <div id="app"></div>
+    <!-- ES Module 入口在开发时直接加载，生产构建时 Vite 会替换为带 hash 的资源。 -->
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

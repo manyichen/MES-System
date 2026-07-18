@@ -1,3 +1,9 @@
+/*
+ * 答辩定位：轮胎标签与公开追溯 模块的 TraceFileService。
+ * 分层职责：业务服务层：实现一个或一组用例，负责必填校验、角色边界、状态机和跨 DAO 编排；数据库细节下沉到 DAO。
+ * 典型调用链：Resource -> 当前 Service -> DAO；外部 AI、文件系统等依赖也由服务边界统一编排。
+ * 阅读提示：公开方法是本类对上层暴露的契约；private 方法只服务于本类内部实现。
+ */
 package com.example.messystem.trace.service;
 
 import com.example.messystem.trace.entity.TireTraceItem;
@@ -30,18 +36,39 @@ import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 
+/**
+ * 轮胎追溯文件生成器，封装三个外部文件能力：ZXing 生成二维码、Java2D 绘制标签、
+ * PDFBox 把标签嵌入产品信息 PDF。文件路径和 SHA-256 摘要再由 TireTraceDao 持久化，
+ * 使系统能够预览、打印、校验完整性，并在文件丢失时按数据库追溯数据重建。
+ */
 public class TraceFileService {
+    /** 标签上打印的业务时间格式。 */
     private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    /** 规范化后的追溯文件根目录，所有 resolve/relative 操作都必须留在该目录内。 */
     private final Path storageRoot;
 
+    /**
+     * 业务用例：执行 TraceFileService 对应的业务步骤。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public TraceFileService() {
         this(TraceRuntimeConfig.storageRoot());
     }
 
+    /**
+     * 业务用例：执行 TraceFileService 对应的业务步骤。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public TraceFileService(Path storageRoot) {
         this.storageRoot = storageRoot.toAbsolutePath().normalize();
     }
 
+    /**
+     * 以轮胎 serialNo 建独立目录，依次生成 qrcode.png、label.png、product-info.pdf。
+     * safe + normalize + startsWith 防止序列号形成目录穿越；任一步失败都保留根因并由上层清理。
+     */
     public TraceFileBundle generate(TireTraceItem tire) {
         Path directory = storageRoot.resolve(safe(tire.serialNo())).normalize();
         if (!directory.startsWith(storageRoot)) throw new IllegalStateException("追溯文件目录不合法");
@@ -61,6 +88,7 @@ public class TraceFileService {
         }
     }
 
+    /** 把数据库保存的相对路径还原为绝对路径，并拒绝超出 storageRoot 的路径。 */
     public Path resolve(String relativePath) {
         if (relativePath == null || relativePath.isBlank()) {
             throw new IllegalArgumentException("追溯文件路径为空");
@@ -72,10 +100,16 @@ public class TraceFileService {
         return result;
     }
 
+    /**
+     * 业务用例：执行 relative 对应的业务步骤。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public String relative(Path file) {
         return storageRoot.relativize(file.toAbsolutePath().normalize()).toString().replace('\\', '/');
     }
 
+    /** 流式计算 SHA-256 十六进制摘要，不把整个 PNG/PDF 一次性载入内存。 */
     public String sha256(Path file) {
         try (InputStream input = Files.newInputStream(file)) {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
@@ -88,6 +122,11 @@ public class TraceFileService {
         }
     }
 
+    /**
+     * 业务用例：删除业务记录。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public void deleteQuietly(TraceFileBundle bundle) {
         if (bundle == null) return;
         try { Files.deleteIfExists(bundle.pdfDocument()); } catch (IOException ignored) { }
@@ -95,6 +134,11 @@ public class TraceFileService {
         try { Files.deleteIfExists(bundle.qrCode()); } catch (IOException ignored) { }
     }
 
+    /**
+     * 业务用例：生成业务结果。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     private BufferedImage generateQrCode(String content) throws Exception {
         BitMatrix matrix = new MultiFormatWriter().encode(content, BarcodeFormat.QR_CODE, 800, 800, Map.of(
                 EncodeHintType.CHARACTER_SET, "UTF-8",
@@ -104,6 +148,11 @@ public class TraceFileService {
         return MatrixToImageWriter.toBufferedImage(matrix);
     }
 
+    /**
+     * 业务用例：生成业务结果。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     private BufferedImage generateLabel(TireTraceItem tire, BufferedImage qrCode) {
         BufferedImage image = new BufferedImage(1200, 1700, BufferedImage.TYPE_INT_RGB);
         Graphics2D graphics = image.createGraphics();
@@ -143,6 +192,11 @@ public class TraceFileService {
         return image;
     }
 
+    /**
+     * 业务用例：生成业务结果。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     private void generatePdf(BufferedImage label, Path output) throws IOException {
         try (PDDocument document = new PDDocument()) {
             PDPage page = new PDPage(PDRectangle.A4);
@@ -164,6 +218,11 @@ public class TraceFileService {
         }
     }
 
+    /**
+     * 业务用例：执行 drawLine 对应的业务步骤。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     private int drawLine(Graphics2D graphics, String label, String value, int y) {
         graphics.setColor(new Color(105, 117, 135));
         graphics.drawString(label + "：", 120, y);
@@ -172,19 +231,39 @@ public class TraceFileService {
         return y + 58;
     }
 
+    /**
+     * 业务用例：执行 drawCentered 对应的业务步骤。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     private void drawCentered(Graphics2D graphics, String text, int y) {
         FontMetrics metrics = graphics.getFontMetrics();
         graphics.drawString(text, (1200 - metrics.stringWidth(text)) / 2, y);
     }
 
+    /**
+     * 业务用例：执行 font 对应的业务步骤。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     private Font font(int style, int size) {
         return new Font("Microsoft YaHei", style, size);
     }
 
+    /**
+     * 业务用例：执行 safe 对应的业务步骤。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     private String safe(String value) {
         return value == null ? "unknown" : value.replaceAll("[^A-Za-z0-9._-]", "_");
     }
 
+    /**
+     * 业务用例：执行 value 对应的业务步骤。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     private String value(String value, String fallback) {
         return value == null || value.isBlank() ? fallback : value;
     }

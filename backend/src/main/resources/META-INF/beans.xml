@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  CDI 4.1 bean archive 标记。文件为空表示使用注解发现，不在 XML 中手工注册业务类；
+  当前项目主要由 Jersey/HK2 创建 Resource，保留本文件用于标准 Jakarta 容器兼容。
+-->
 <beans xmlns="https://jakarta.ee/xml/ns/jakartaee"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/beans_4_1.xsd">

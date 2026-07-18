@@ -1,3 +1,9 @@
+/*
+ * 答辩定位：访问控制与系统维护 模块的 SystemMaintenanceDao。
+ * 分层职责：数据访问层：使用 JDBC 和 PreparedStatement 访问 PostgreSQL，集中处理 SQL 参数绑定、结果映射及需要原子性的事务。
+ * 典型调用链：Service -> 当前 DAO -> Db.getConnection() -> PostgreSQL；查询结果再映射为 entity/record。
+ * 阅读提示：公开方法是本类对上层暴露的契约；private 方法只服务于本类内部实现。
+ */
 package com.example.messystem.access.dao;
 
 import com.example.messystem.common.Db;
@@ -12,6 +18,11 @@ import java.util.List;
 
 /** 执行数据库维护和安全管理事务。 */
 public class SystemMaintenanceDao {
+    /**
+     * 数据访问：装载业务数据。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public SystemMaintenanceSummary loadSummary() {
         try (Connection connection = Db.getConnection()) {
             List<SessionRow> sessions = safeList(() -> listSessions(connection));
@@ -53,10 +64,20 @@ public class SystemMaintenanceDao {
         }
     }
 
+    /**
+     * 数据访问：执行 metric 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static SystemMetric metric(String code, String label, long value, String unit, String level) {
         return new SystemMetric(code, label, value, unit, level);
     }
 
+    /**
+     * 数据访问：执行 count 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static long count(Connection connection, String sql) throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement(sql);
                 ResultSet rs = statement.executeQuery()) {
@@ -67,6 +88,11 @@ public class SystemMaintenanceDao {
         }
     }
 
+    /**
+     * 数据访问：执行 safeList 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static <T> List<T> safeList(SqlListSupplier<T> supplier) {
         try {
             return supplier.get();
@@ -75,6 +101,11 @@ public class SystemMaintenanceDao {
         }
     }
 
+    /**
+     * 数据访问：查询列表。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static List<SessionRow> listSessions(Connection connection) throws SQLException {
         String sql = """
                 select s.session_id, s.user_id, u.username, u.real_name, u.role_code, s.login_ip, s.issued_at as created_at, s.expires_at
@@ -98,6 +129,11 @@ public class SystemMaintenanceDao {
         return rows;
     }
 
+    /**
+     * 数据访问：撤销会话或授权。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public int revokeSession(long sessionId, long actorUserId) {
         if (sessionId <= 0) throw new BadRequestException("会话ID不正确");
         try (Connection connection = Db.getConnection()) {
@@ -132,6 +168,11 @@ public class SystemMaintenanceDao {
         }
     }
 
+    /**
+     * 数据访问：撤销指定用户的全部登录会话。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public int revokeUserSessions(long userId, long actorUserId) {
         if (userId <= 0) throw new BadRequestException("用户ID不正确");
         if (userId == actorUserId) throw new BadRequestException("不能撤销当前自己的登录会话");
@@ -164,6 +205,11 @@ public class SystemMaintenanceDao {
         }
     }
 
+    /**
+     * 数据访问：清理已经过期的登录会话。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public int cleanupExpiredSessions() {
         try (Connection connection = Db.getConnection();
                 PreparedStatement statement = connection.prepareStatement("""
@@ -178,6 +224,11 @@ public class SystemMaintenanceDao {
         }
     }
 
+    /**
+     * 数据访问：查询匹配记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static Long findSessionUserId(Connection connection, long sessionId) throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement("""
                 select user_id
@@ -193,6 +244,11 @@ public class SystemMaintenanceDao {
         }
     }
 
+    /**
+     * 数据访问：执行 lockUser 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static void lockUser(Connection connection, long userId) throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement("""
                 update mes_user
@@ -206,6 +262,11 @@ public class SystemMaintenanceDao {
         }
     }
 
+    /**
+     * 数据访问：解除账号锁定。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public int unlockUser(long userId) {
         if (userId <= 0) throw new BadRequestException("用户ID不正确");
         try (Connection connection = Db.getConnection();
@@ -223,6 +284,11 @@ public class SystemMaintenanceDao {
         }
     }
 
+    /**
+     * 数据访问：停用业务对象。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public int disableUser(long userId, long actorUserId) {
         if (userId <= 0) throw new BadRequestException("用户ID不正确");
         if (userId == actorUserId) throw new BadRequestException("不能删除当前自己的账号");
@@ -265,6 +331,11 @@ public class SystemMaintenanceDao {
         }
     }
 
+    /**
+     * 数据访问：将同步异常标记为已处理。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public int markSyncLogHandled(long syncLogId) {
         if (syncLogId <= 0) throw new BadRequestException("同步日志ID不正确");
         try (Connection connection = Db.getConnection();
@@ -282,6 +353,11 @@ public class SystemMaintenanceDao {
         }
     }
 
+    /**
+     * 数据访问：查询列表。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static List<LockedUserRow> listLockedUsers(Connection connection) throws SQLException {
         String sql = """
                 select user_id, username, real_name, role_code, failed_login_count, locked_until
@@ -302,6 +378,11 @@ public class SystemMaintenanceDao {
         return rows;
     }
 
+    /**
+     * 数据访问：查询列表。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static List<DeletedUserRow> listDeletedUsers(Connection connection) throws SQLException {
         String sql = """
                 select user_id, username, real_name, role_code, department, updated_at, last_login_at
@@ -322,6 +403,11 @@ public class SystemMaintenanceDao {
         return rows;
     }
 
+    /**
+     * 数据访问：查询列表。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static List<LockedSessionRecordRow> listLockedSessionRecords(Connection connection) throws SQLException {
         String sql = """
                 select s.session_id, s.user_id, u.username, u.real_name, u.role_code,
@@ -346,6 +432,11 @@ public class SystemMaintenanceDao {
         return rows;
     }
 
+    /**
+     * 数据访问：查询列表。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static List<AuditRow> listAuditLogs(Connection connection) throws SQLException {
         String sql = """
                 select audit_id, event_type, action_code, resource_type, user_id, username, role_code, result, created_at
@@ -366,6 +457,11 @@ public class SystemMaintenanceDao {
         return rows;
     }
 
+    /**
+     * 数据访问：查询列表。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static List<AuditRow> listFailedLoginLogs(Connection connection) throws SQLException {
         String sql = """
                 select audit_id, event_type, action_code, resource_type, user_id, username, role_code, result, created_at
@@ -388,6 +484,11 @@ public class SystemMaintenanceDao {
         return rows;
     }
 
+    /**
+     * 数据访问：查询列表。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static List<SyncLogRow> listSyncLogs(Connection connection) throws SQLException {
         String sql = """
                 select sync_log_id, sync_object, source_system, business_key, sync_status, error_message, sync_time
@@ -407,6 +508,11 @@ public class SystemMaintenanceDao {
         return rows;
     }
 
+    /**
+     * 数据访问：查询列表。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static List<SyncLogRow> listSyncFailures(Connection connection) throws SQLException {
         String sql = """
                 select sync_log_id, sync_object, source_system, business_key, sync_status, error_message, sync_time
@@ -427,16 +533,31 @@ public class SystemMaintenanceDao {
         return rows;
     }
 
+    /**
+     * 数据访问：执行 time 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static LocalDateTime time(ResultSet rs, String column) throws SQLException {
         var value = rs.getTimestamp(column);
         return value == null ? null : value.toLocalDateTime();
     }
 
+    /**
+     * 数据访问：执行 nullableLong 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static Long nullableLong(ResultSet rs, String column) throws SQLException {
         long value = rs.getLong(column);
         return rs.wasNull() ? null : value;
     }
 
+    /**
+     * 数据访问：恢复已删除的业务记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public int restoreUser(long userId, long actorUserId) {
         if (userId <= 0) throw new BadRequestException("用户ID不正确");
         try (Connection connection = Db.getConnection()) {
@@ -467,6 +588,11 @@ public class SystemMaintenanceDao {
         }
     }
 
+    /**
+     * 数据访问：执行 writeMaintenanceAudit 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static void writeMaintenanceAudit(Connection connection, long actorUserId, String actionCode,
             long targetUserId, String message) throws SQLException {
         try (PreparedStatement actor = connection.prepareStatement(
@@ -496,36 +622,76 @@ public class SystemMaintenanceDao {
         }
     }
 
+    /**
+     * 数据访问：执行 SystemMaintenanceSummary 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public record SystemMaintenanceSummary(List<SystemMetric> metrics, List<SessionRow> sessions,
             List<LockedUserRow> lockedUsers, List<DeletedUserRow> deletedUsers,
             List<LockedSessionRecordRow> lockedSessionRecords, List<AuditRow> auditLogs, List<SyncLogRow> syncLogs,
             List<AuditRow> failedLoginLogs, List<SyncLogRow> syncFailures) {
     }
 
+    /**
+     * 数据访问：执行 SystemMetric 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public record SystemMetric(String code, String label, long value, String unit, String level) {
     }
 
+    /**
+     * 数据访问：执行 SessionRow 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public record SessionRow(long sessionId, long userId, String username, String realName, String roleCode,
             String loginIp, LocalDateTime createdAt, LocalDateTime expiresAt) {
     }
 
+    /**
+     * 数据访问：执行 LockedUserRow 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public record LockedUserRow(long userId, String username, String realName, String roleCode,
             int failedLoginCount, LocalDateTime lockedUntil) {
     }
 
+    /**
+     * 数据访问：删除业务记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public record DeletedUserRow(long userId, String username, String realName, String roleCode,
             String department, LocalDateTime deletedAt, LocalDateTime lastLoginAt) {
     }
 
+    /**
+     * 数据访问：执行 LockedSessionRecordRow 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public record LockedSessionRecordRow(long sessionId, long userId, String username, String realName,
             String roleCode, String loginIp, LocalDateTime issuedAt, LocalDateTime expiresAt,
             LocalDateTime revokedAt, LocalDateTime lockedUntil) {
     }
 
+    /**
+     * 数据访问：执行 AuditRow 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public record AuditRow(long auditId, String eventType, String actionCode, String resourceType, Long actorUserId,
             String actorUsername, String actorRoleCode, String result, LocalDateTime createdAt) {
     }
 
+    /**
+     * 数据访问：执行 SyncLogRow 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public record SyncLogRow(long syncLogId, String syncType, String sourceSystem, String targetTable,
             String syncStatus, String message, LocalDateTime createdAt) {
     }

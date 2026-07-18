@@ -1,3 +1,9 @@
+/*
+ * 答辩定位：轮胎标签与公开追溯 模块的 TireTraceDao。
+ * 分层职责：数据访问层：使用 JDBC 和 PreparedStatement 访问 PostgreSQL，集中处理 SQL 参数绑定、结果映射及需要原子性的事务。
+ * 典型调用链：Service -> 当前 DAO -> Db.getConnection() -> PostgreSQL；查询结果再映射为 entity/record。
+ * 阅读提示：公开方法是本类对上层暴露的契约；private 方法只服务于本类内部实现。
+ */
 package com.example.messystem.trace.dao;
 
 import com.example.messystem.common.BadRequestException;
@@ -15,6 +21,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * 轮胎标签与公开追溯 的 TireTraceDao，承担当前文件头所述职责，并保持与相邻层的单向依赖。
+ */
 public class TireTraceDao {
     private static final String SELECT_ITEM = """
             select ti.tire_id, ti.serial_no, ti.trace_code, ti.work_order_id, wo.work_order_no,
@@ -50,11 +59,21 @@ public class TireTraceDao {
         }
     }
 
+    /**
+     * 数据访问：执行 lockGenerationContext 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public TireGenerationContext lockGenerationContext(TraceTransaction transaction, long workOrderId,
             long inspectionId, long warehouseId, Long locationId) throws SQLException {
         return lockGenerationContext(transaction.connection, workOrderId, inspectionId, warehouseId, locationId);
     }
 
+    /**
+     * 数据访问：执行 lockGenerationContext 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public TireGenerationContext lockGenerationContext(Connection connection, long workOrderId,
             long inspectionId, long warehouseId, Long locationId) throws SQLException {
         String sql = """
@@ -103,6 +122,11 @@ public class TireTraceDao {
         }
     }
 
+    /**
+     * 数据访问：写入业务记录并返回主键。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public TireTraceItem insertTire(Connection connection, TireGenerationContext context, String serialNo,
             String traceCode, long createdBy) throws SQLException {
         String sql = """
@@ -138,11 +162,21 @@ public class TireTraceDao {
         }
     }
 
+    /**
+     * 数据访问：写入业务记录并返回主键。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public TireTraceItem insertTire(TraceTransaction transaction, TireGenerationContext context, String serialNo,
             String traceCode, long createdBy) throws SQLException {
         return insertTire(transaction.connection, context, serialNo, traceCode, createdBy);
     }
 
+    /**
+     * 数据访问：写入业务记录并返回主键。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public void insertQrCode(Connection connection, long tireId, String token, String targetUrl,
             String storagePath) throws SQLException {
         String sql = """
@@ -158,11 +192,21 @@ public class TireTraceDao {
         }
     }
 
+    /**
+     * 数据访问：写入业务记录并返回主键。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public void insertQrCode(TraceTransaction transaction, long tireId, String token, String targetUrl,
             String storagePath) throws SQLException {
         insertQrCode(transaction.connection, tireId, token, targetUrl, storagePath);
     }
 
+    /**
+     * 数据访问：写入业务记录并返回主键。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public void insertDocument(Connection connection, long tireId, String type, String fileName,
             String storagePath, String hash) throws SQLException {
         String sql = """
@@ -179,11 +223,21 @@ public class TireTraceDao {
         }
     }
 
+    /**
+     * 数据访问：写入业务记录并返回主键。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public void insertDocument(TraceTransaction transaction, long tireId, String type, String fileName,
             String storagePath, String hash) throws SQLException {
         insertDocument(transaction.connection, tireId, type, fileName, storagePath, hash);
     }
 
+    /**
+     * 数据访问：查询全部可见记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public List<TireTraceItem> findAll() throws SQLException {
         try (Connection connection = Db.getConnection();
              PreparedStatement statement = connection.prepareStatement(SELECT_ITEM + " order by ti.tire_id desc");
@@ -192,10 +246,20 @@ public class TireTraceDao {
         }
     }
 
+    /**
+     * 数据访问：按主键查询记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public Optional<TireTraceItem> findById(long tireId) throws SQLException {
         return findOne(SELECT_ITEM + " where ti.tire_id = ?", tireId);
     }
 
+    /**
+     * 数据访问：按业务条件查询记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public Optional<TireTraceItem> findByToken(String token) throws SQLException {
         String sql = SELECT_ITEM + " where qr.access_token = ? and qr.qrcode_status = 'ACTIVE'";
         try (Connection connection = Db.getConnection(); PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -206,10 +270,20 @@ public class TireTraceDao {
         }
     }
 
+    /**
+     * 数据访问：查询匹配记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public String findQrPath(long tireId) throws SQLException {
         return findPath("select storage_path from mes_tire_qrcode where tire_id = ? and qrcode_status = 'ACTIVE'", tireId);
     }
 
+    /**
+     * 数据访问：查询匹配记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public String findDocumentPath(long tireId, String documentType) throws SQLException {
         String sql = """
                 select storage_path from mes_trace_document
@@ -226,6 +300,11 @@ public class TireTraceDao {
         }
     }
 
+    /**
+     * 数据访问：更新业务记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public void updateGeneratedFiles(long tireId, String qrPath, String labelPath, String labelHash,
             String pdfPath, String pdfHash) throws SQLException {
         try (Connection connection = Db.getConnection()) {
@@ -252,6 +331,11 @@ public class TireTraceDao {
         }
     }
 
+    /**
+     * 数据访问：执行 recordPrint 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public void recordPrint(long tireId, long printedBy, String remark) throws SQLException {
         try (Connection connection = Db.getConnection()) {
             connection.setAutoCommit(false);
@@ -273,6 +357,11 @@ public class TireTraceDao {
         }
     }
 
+    /**
+     * 数据访问：装载业务数据。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private Location loadLocation(Connection connection, long warehouseId, Long locationId) throws SQLException {
         if (locationId == null) return new Location(null, null);
         try (PreparedStatement statement = connection.prepareStatement(
@@ -286,6 +375,11 @@ public class TireTraceDao {
         }
     }
 
+    /**
+     * 数据访问：查询匹配记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private Optional<TireTraceItem> findOne(String sql, long id) throws SQLException {
         try (Connection connection = Db.getConnection(); PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setLong(1, id);
@@ -295,6 +389,11 @@ public class TireTraceDao {
         }
     }
 
+    /**
+     * 数据访问：查询匹配记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private String findPath(String sql, long tireId) throws SQLException {
         try (Connection connection = Db.getConnection(); PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setLong(1, tireId);
@@ -305,6 +404,11 @@ public class TireTraceDao {
         }
     }
 
+    /**
+     * 数据访问：更新业务记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private void updateDocument(Connection connection, long tireId, String type, String fileName,
             String storagePath, String hash) throws SQLException {
         try (PreparedStatement update = connection.prepareStatement("""
@@ -337,12 +441,22 @@ public class TireTraceDao {
         }
     }
 
+    /**
+     * 数据访问：把 JDBC 结果行映射为领域对象。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private List<TireTraceItem> mapItems(ResultSet rs) throws SQLException {
         List<TireTraceItem> items = new ArrayList<>();
         while (rs.next()) items.add(mapItem(rs));
         return items;
     }
 
+    /**
+     * 数据访问：把 JDBC 结果行映射为领域对象。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private TireTraceItem mapItem(ResultSet rs) throws SQLException {
         return new TireTraceItem(
                 rs.getLong("tire_id"), rs.getString("serial_no"), rs.getString("trace_code"),
@@ -357,16 +471,31 @@ public class TireTraceDao {
         );
     }
 
+    /**
+     * 数据访问：查询单条记录或详情。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static Long getLong(ResultSet rs, String name) throws SQLException {
         long value = rs.getLong(name);
         return rs.wasNull() ? null : value;
     }
 
+    /**
+     * 数据访问：执行 setLong 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static void setLong(PreparedStatement statement, int index, Long value) throws SQLException {
         if (value == null) statement.setNull(index, java.sql.Types.BIGINT);
         else statement.setLong(index, value);
     }
 
+    /**
+     * 数据访问：执行 toLocalDateTime 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static LocalDateTime toLocalDateTime(Timestamp value) {
         return value == null ? null : value.toLocalDateTime();
     }
@@ -374,6 +503,11 @@ public class TireTraceDao {
     public static final class TraceTransaction {
         private final Connection connection;
 
+        /**
+         * 数据访问：执行 TraceTransaction 对应的业务步骤。
+         * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+         * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+         */
         private TraceTransaction(Connection connection) {
             this.connection = connection;
         }
@@ -384,5 +518,10 @@ public class TireTraceDao {
         T execute(TraceTransaction transaction) throws SQLException;
     }
 
+    /**
+     * 数据访问：执行 Location 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private record Location(Long id, String name) { }
 }

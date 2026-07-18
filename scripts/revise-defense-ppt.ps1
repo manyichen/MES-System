@@ -3,8 +3,14 @@
     [string]$ExportDir = (Join-Path $PSScriptRoot "..\tmp\ppt-revised-output")
 )
 
+<#
+  答辩 PPT 二次修订器。
+  外部依赖为 Microsoft PowerPoint COM。脚本打开现有 PPTX，按页查找/重建指定内容，
+  插入最新系统截图，保存后导出 PNG 检查。输入文件会原地更新，finally 负责释放 COM。
+#>
 $ErrorActionPreference = "Stop"
 
+# PowerPoint 使用 BGR 整数，统一转换避免直接书写难读颜色常量。
 function Color([int]$r, [int]$g, [int]$b) { $r + ($g * 256) + ($b * 65536) }
 
 $C = @{
@@ -24,6 +30,7 @@ $C = @{
     Purple = Color 109 83 224
 }
 
+# 设置形状填充。
 function Set-Fill($shape, [int]$color, [double]$transparency = 0) {
     $shape.Fill.Visible = -1
     $shape.Fill.Solid()
@@ -31,6 +38,7 @@ function Set-Fill($shape, [int]$color, [double]$transparency = 0) {
     $shape.Fill.Transparency = $transparency
 }
 
+# 设置形状边框。
 function Set-Line($shape, [int]$color, [double]$weight = 1, [double]$transparency = 0) {
     $shape.Line.Visible = -1
     $shape.Line.ForeColor.RGB = $color
@@ -38,6 +46,7 @@ function Set-Line($shape, [int]$color, [double]$weight = 1, [double]$transparenc
     $shape.Line.Transparency = $transparency
 }
 
+# 添加可配置矩形，作为修订卡片和背景的基础。
 function Add-Rect($slide, [double]$x, [double]$y, [double]$w, [double]$h,
                   [int]$fill, [int]$line = -1, [int]$shapeType = 1, [double]$transparency = 0) {
     $s = $slide.Shapes.AddShape($shapeType, $x, $y, $w, $h)
@@ -46,6 +55,7 @@ function Add-Rect($slide, [double]$x, [double]$y, [double]$w, [double]$h,
     $s
 }
 
+# 添加并格式化文本框。
 function Add-Text($slide, [string]$text, [double]$x, [double]$y, [double]$w, [double]$h,
                   [double]$size = 18, [int]$color = 0, [bool]$bold = $false,
                   [int]$align = 1, [double]$margin = 0) {
@@ -68,6 +78,7 @@ function Add-Text($slide, [string]$text, [double]$x, [double]$y, [double]$w, [do
     $s
 }
 
+# 添加普通线或箭头连接线。
 function Add-Line($slide, [double]$x1, [double]$y1, [double]$x2, [double]$y2,
                   [int]$color, [double]$weight = 1.5, [bool]$arrow = $false, [double]$transparency = 0) {
     $s = $slide.Shapes.AddLine($x1, $y1, $x2, $y2)
@@ -76,17 +87,20 @@ function Add-Line($slide, [double]$x1, [double]$y1, [double]$x2, [double]$y2,
     $s
 }
 
+# 添加胶囊标签。
 function Add-Pill($slide, [string]$text, [double]$x, [double]$y, [double]$w,
                   [int]$fill, [int]$textColor, [double]$size = 11) {
     [void](Add-Rect $slide $x $y $w 25 $fill -1 5 0)
     [void](Add-Text $slide $text $x ($y + 3) $w 18 $size $textColor $true 2)
 }
 
+# 添加编号徽章。
 function Add-Badge($slide, [string]$text, [double]$x, [double]$y, [int]$fill) {
     [void](Add-Rect $slide $x $y 32 32 $fill -1 9 0)
     [void](Add-Text $slide $text $x ($y + 5) 32 20 12 $C.White $true 2)
 }
 
+# 重绘修订页的统一浅色背景与装饰。
 function Add-Background($slide) {
     $slide.Background.Fill.Visible = -1
     $slide.Background.Fill.Solid()
@@ -103,6 +117,7 @@ function Add-Background($slide) {
     }
 }
 
+# 重绘标准页眉、页码与页脚。
 function Add-Header($slide, [int]$number, [string]$section, [string]$title, [string]$subtitle) {
     Add-Background $slide
     [void](Add-Rect $slide 48 28 8 34 $C.Blue -1 1 0)
@@ -114,6 +129,7 @@ function Add-Header($slide, [int]$number, [string]$section, [string]$title, [str
     [void](Add-Text $slide "双星轮胎 MES · 项目答辩" 690 514 220 16 8.5 $C.Gray $false 3)
 }
 
+# 将截图等比缩放到目标区域，保持原始比例。
 function Add-PictureContain($slide, [string]$path, [double]$x, [double]$y, [double]$w, [double]$h) {
     Add-Type -AssemblyName System.Drawing
     $img = [System.Drawing.Image]::FromFile($path)
@@ -128,6 +144,7 @@ function Add-PictureContain($slide, [string]$path, [double]$x, [double]$y, [doub
     finally { $img.Dispose() }
 }
 
+# 遍历当前页文本框，返回第一个包含目标文字的 Shape，避免依赖脆弱的 Shape 索引。
 function Find-TextShape($slide, [string]$text) {
     foreach ($shape in $slide.Shapes) {
         try {
@@ -145,6 +162,7 @@ $path = [System.IO.Path]::GetFullPath($PresentationPath)
 $export = [System.IO.Path]::GetFullPath($ExportDir)
 $dashboard = Join-Path $root "backend\target\vue-dashboard-desktop.png"
 
+# 打开现有演示文稿；finally 中关闭并释放 COM。
 $ppt = New-Object -ComObject PowerPoint.Application
 $ppt.Visible = -1
 $p = $ppt.Presentations.Open($path, 0, 0, 0)

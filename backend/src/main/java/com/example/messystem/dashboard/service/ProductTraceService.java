@@ -1,3 +1,9 @@
+/*
+ * 答辩定位：驾驶舱、反馈与产品追溯 模块的 ProductTraceService。
+ * 分层职责：业务服务层：实现一个或一组用例，负责必填校验、角色边界、状态机和跨 DAO 编排；数据库细节下沉到 DAO。
+ * 典型调用链：Resource -> 当前 Service -> DAO；外部 AI、文件系统等依赖也由服务边界统一编排。
+ * 阅读提示：公开方法是本类对上层暴露的契约；private 方法只服务于本类内部实现。
+ */
 package com.example.messystem.dashboard.service;
 
 import com.example.messystem.common.BadRequestException;
@@ -14,11 +20,20 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+/**
+ * 驾驶舱、反馈与产品追溯 的 ProductTraceService，承担当前文件头所述职责，并保持与相邻层的单向依赖。
+ */
 public class ProductTraceService {
 
     private static final Set<String> TRACE_STATUSES = Set.of("NORMAL", "QUALITY_RISK", "REWORKED");
+    /** 数据访问依赖，集中封装 JDBC、SQL 参数绑定和结果映射。 */
     private final ProductTraceDao traceDao;
 
+    /**
+     * 业务用例：执行 ProductTraceService 对应的业务步骤。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public ProductTraceService() {
         this(new ProductTraceDao());
     }
@@ -27,10 +42,20 @@ public class ProductTraceService {
         this.traceDao = traceDao;
     }
 
+    /**
+     * 业务用例：创建业务记录。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public long createProductTrace(MesProductTrace trace) throws SQLException {
         return traceDao.insert(normalize(trace));
     }
 
+    /**
+     * 业务用例：查询单条记录或详情。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public Optional<MesProductTrace> getProductTrace(String traceIdOrCode) throws SQLException {
         if (traceIdOrCode == null || traceIdOrCode.isBlank()) {
             throw new BadRequestException("产品追溯标识不能为空");
@@ -52,14 +77,29 @@ public class ProductTraceService {
         return traceDao.findTraceChain(trace);
     }
 
+    /**
+     * 业务用例：查询列表。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public List<MesProductTrace> listProductTraces() throws SQLException {
         return traceDao.findAll();
     }
 
+    /**
+     * 业务用例：查询列表。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public List<MesProductTrace> listTracesByWorkOrder(long workOrderId) throws SQLException {
         return traceDao.findByWorkOrderId(workOrderId);
     }
 
+    /**
+     * 业务用例：创建业务记录。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public long createDefaultProductTrace(long orderId, long taskId, long workOrderId, String batchNo, String status) throws SQLException {
         MesProductTrace trace = new MesProductTrace(
                 null,
@@ -75,6 +115,11 @@ public class ProductTraceService {
         return createProductTrace(trace);
     }
 
+    /**
+     * 业务用例：规范化输入并补齐默认值。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     private MesProductTrace normalize(MesProductTrace trace) throws SQLException {
         if (trace == null) throw new BadRequestException("产品追溯信息不能为空");
         requirePositive(trace.orderId(), "客户订单ID");
@@ -101,10 +146,20 @@ public class ProductTraceService {
                 batchNo, status, trace.createdAt() == null ? LocalDateTime.now() : trace.createdAt());
     }
 
+    /**
+     * 业务用例：执行 requirePositive 对应的业务步骤。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     private static void requirePositive(Long value, String fieldName) {
         if (value == null || value <= 0) throw new BadRequestException(fieldName + "不能为空");
     }
 
+    /**
+     * 业务用例：执行 firstNonBlank 对应的业务步骤。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     private static String firstNonBlank(String value, String fallback) {
         return value == null || value.isBlank() ? fallback : value.trim();
     }

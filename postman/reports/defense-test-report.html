@@ -21,13 +21,13 @@
   </style>
 </head>
 <body><main class="page">
-  <header><div><h1>双星轮胎 MES 自动化测试报告</h1><p>Postman 全量接口契约测试 + JUnit 单元与架构测试</p></div><div><div class="pass">全部通过</div><div class="date">2026/7/17 18:30:39</div></div></header>
+  <header><div><h1>双星轮胎 MES 自动化测试报告</h1><p>Postman 全量接口契约测试 + JUnit 单元与架构测试</p></div><div><div class="pass">全部通过</div><div class="date">2026/7/17 23:58:11</div></div></header>
   <section class="metrics">
     <div class="metric"><div class="number">266</div><div class="label">Postman 请求</div></div>
-    <div class="metric"><div class="number">958</div><div class="label">接口断言</div></div>
+    <div class="metric"><div class="number">957</div><div class="label">接口断言</div></div>
     <div class="metric good"><div class="number">0</div><div class="label">失败断言</div></div>
-    <div class="metric"><div class="number">13</div><div class="label">JUnit 测试</div></div>
-    <div class="metric warn"><div class="number">332 ms</div><div class="label">平均响应时间</div></div>
+    <div class="metric"><div class="number">17</div><div class="label">JUnit 测试</div></div>
+    <div class="metric warn"><div class="number">357 ms</div><div class="label">平均响应时间</div></div>
   </section>
   <section class="content">
     <div class="section"><h2>覆盖范围</h2><ul>
@@ -36,11 +36,11 @@
       <li><strong>88 个</strong>登录后只读接口完成权限、5xx、响应结构与性能验证。</li>
       <li>系统管理员访问生产工单返回 403，超级管理员成功覆盖全量只读业务接口。</li>
       <li>二维码 PNG、标签 PNG、产品 PDF 均完成真实文件下载验证。</li>
-      <li>JUnit：13 项执行，0 失败，0 错误，0 跳过。</li>
+      <li>JUnit：17 项执行，0 失败，0 错误，0 跳过。</li>
     </ul></div>
-    <div class="section"><h2>HTTP 状态分布</h2><table><thead><tr><th>状态码</th><th>次数</th><th>含义</th></tr></thead><tbody><tr><td>200</td><td>87</td><td>成功</td></tr><tr><td>400</td><td>1</td><td>异常场景</td></tr><tr><td>401</td><td>171</td><td>认证拦截</td></tr><tr><td>403</td><td>1</td><td>权限拦截</td></tr><tr><td>404</td><td>6</td><td>异常场景</td></tr></tbody></table>
+    <div class="section"><h2>HTTP 状态分布</h2><table><thead><tr><th>状态码</th><th>次数</th><th>含义</th></tr></thead><tbody><tr><td>200</td><td>86</td><td>成功</td></tr><tr><td>400</td><td>1</td><td>异常场景</td></tr><tr><td>401</td><td>171</td><td>认证拦截</td></tr><tr><td>403</td><td>1</td><td>权限拦截</td></tr><tr><td>404</td><td>7</td><td>异常场景</td></tr></tbody></table>
       <div class="note"><strong>测试数据保护：</strong>当前连接远程演示数据库。POST、PUT、DELETE 已全量验证认证边界，但成功写入流程未批量执行，避免污染答辩数据；写库集成场景只允许在独立测试数据库运行。</div>
     </div>
   </section>
-  <footer><span>总耗时 119.4 秒 · 最快 1 ms · 最慢 3307 ms</span><span>报告不包含密码、令牌、请求体或响应体</span></footer>
+  <footer><span>总耗时 125.2 秒 · 最快 2 ms · 最慢 2138 ms</span><span>报告不包含密码、令牌、请求体或响应体</span></footer>
 </main></body></html>

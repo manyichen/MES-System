@@ -1,3 +1,7 @@
+/**
+ * 前端展示翻译层：把数据库/接口使用的稳定英文编码转换为中文业务词汇。
+ * 后端仍传原始编码用于状态机和权限判断，翻译只作用于表格、驾驶舱和错误消息的显示。
+ */
 export const ROLE_LABELS = Object.freeze({
   SUPER_ADMIN: '超级管理员', SYSTEM_ADMIN: '系统管理员', SYSTEM_MAINTAINER: '系统维护员',
   HR_MANAGER: '人事经理', GENERAL_MANAGER: '总经理', PMC_PLANNER: 'PMC 计划员',
@@ -7,6 +11,7 @@ export const ROLE_LABELS = Object.freeze({
   EQUIPMENT_MAINTAINER: '设备维护员', VIEWER: '只读用户'
 })
 
+// 状态编码跨计划、生产、质量、设备、仓储模块复用，在这里维护统一中文口径。
 const STATUS_LABELS = Object.freeze({
   CREATED: '已创建', PENDING: '待处理', PENDING_PLAN: '待排产', PLANNED: '已纳入计划',
   READY: '已就绪', SHORTAGE: '缺料', RELEASED: '已发布', DISPATCHED: '已派工',
@@ -87,6 +92,7 @@ const CONTEXT_LABELS = Object.freeze({
   faultLevel: { LOW: '低级', MEDIUM: '中级', HIGH: '高级', URGENT: '紧急', GENERAL: '一般' }
 })
 
+/** 翻译单个枚举编码；未知值保留原文，便于发现后端新增状态而不是显示空白。 */
 export function codeLabel(value, key = '') {
   if (value === null || value === undefined || value === '') return '—'
   const text = String(value)
@@ -98,6 +104,7 @@ export function codeLabel(value, key = '') {
   return CONTEXT_LABELS[key]?.[code] || VALUE_LABELS[code] || text
 }
 
+/** 翻译一段可能包含下划线编码的普通文本。 */
 export function localizeText(value) {
   if (value === null || value === undefined) return ''
   return String(value).replace(/[A-Za-z][A-Za-z0-9_]*/g, token => {
@@ -107,6 +114,10 @@ export function localizeText(value) {
   })
 }
 
+/**
+ * 按字段和值类型格式化表格单元格：空值、布尔值、日期、数组、对象和业务编码分别处理。
+ * 搜索功能也复用该结果，因此用户可以用中文状态检索英文编码数据。
+ */
 export function businessValue(key, value) {
   if (value === null || value === undefined || value === '') return '—'
   if (Array.isArray(value)) return value.map(item => codeLabel(item, key)).join('、') || '—'
@@ -119,6 +130,7 @@ export function businessValue(key, value) {
   return codeLabel(value, key)
 }
 
+/** 将公开追溯对象的字段名转换为中文标签，未知字段使用可读的驼峰拆分。 */
 export function fieldLabel(key) {
   return FIELD_LABELS[key] || key
 }
@@ -134,6 +146,7 @@ const MESSAGE_REPLACEMENTS = [
   [/only .* can /i, '当前角色不能执行该操作'], [/database operation failed/i, '数据库操作未完成']
 ]
 
+/** 依次执行错误消息替换规则，把数据库/后端英文异常转换为答辩演示可读中文。 */
 export function localizeMessage(message) {
   const text = String(message || '').trim()
   if (!text) return '请检查当前业务状态和填写内容'
@@ -144,10 +157,12 @@ export function localizeMessage(message) {
   return '请检查当前业务状态、操作权限和填写内容'
 }
 
+/** 生成统一的动作成功提示。 */
 export function completedMessage(actionLabel) {
   return `操作已完成：${actionLabel}`
 }
 
+/** 生成统一的动作失败提示，并保留经过翻译的后端具体原因。 */
 export function incompleteMessage(actionLabel, cause) {
   return `操作未完成：${actionLabel}。${localizeMessage(cause?.message || cause)}`
 }

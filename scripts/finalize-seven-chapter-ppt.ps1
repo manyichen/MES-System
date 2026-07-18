@@ -3,10 +3,16 @@
     [string]$CheckDir = (Join-Path $PSScriptRoot "..\tmp\ppt-seven-final-check")
 )
 
+<#
+  七章答辩 PPT 最终检查器。
+  依赖 Microsoft PowerPoint COM；要求最终稿恰好 20 页，修复指定文字，扫描全稿确保没有
+  遗留无关学校标识，保存后导出 3/9/19/20 页 PNG 作为人工验收证据。
+#>
 $ErrorActionPreference = "Stop"
 $path = [System.IO.Path]::GetFullPath($PresentationPath)
 $check = [System.IO.Path]::GetFullPath($CheckDir)
 
+# 在单页 Shape 中精确替换完整文本，避免模糊匹配误改正文内相同词语。
 function Replace-ExactText($slide, [string]$oldText, [string]$newText) {
     foreach ($shape in $slide.Shapes) {
         try {
@@ -20,6 +26,7 @@ function Replace-ExactText($slide, [string]$oldText, [string]$newText) {
     return $false
 }
 
+# PowerPoint COM 对象必须在 finally 中按“文稿 -> 应用”顺序关闭并释放。
 $ppt = New-Object -ComObject PowerPoint.Application
 $ppt.Visible = -1
 $p = $ppt.Presentations.Open($path, 0, 0, 0)
@@ -59,6 +66,7 @@ try {
 
     [void](Replace-ExactText $p.Slides.Item(20) "18 / 18" "20 / 20")
 
+    # 全稿品牌检查：任何残留无关学校文本都会终止脚本，防止错误文件进入答辩。
     foreach ($slide in $p.Slides) {
         foreach ($shape in $slide.Shapes) {
             try {
@@ -72,6 +80,7 @@ try {
         }
     }
 
+    # 保存最终稿并只导出发生关键修改的页面，缩短复核时间。
     $p.Save()
     if (Test-Path $check) { Remove-Item -LiteralPath $check -Recurse -Force }
     [System.IO.Directory]::CreateDirectory($check) | Out-Null

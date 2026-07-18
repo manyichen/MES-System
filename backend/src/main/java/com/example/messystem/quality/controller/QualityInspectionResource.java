@@ -1,3 +1,9 @@
+/*
+ * 答辩定位：质检、质量追溯与返工 模块的 QualityInspectionResource。
+ * 分层职责：HTTP 接口层：解析路径、查询参数和 JSON 请求体，取得登录用户，调用 Service，并统一包装响应。它不直接执行 SQL。
+ * 典型调用链：浏览器/Vue -> /api -> AuthFilter -> Resource -> Service -> DAO -> PostgreSQL。
+ * 阅读提示：公开方法是本类对上层暴露的契约；private 方法只服务于本类内部实现。
+ */
 package com.example.messystem.quality.controller;
 
 import com.example.messystem.common.ApiResponse;
@@ -27,9 +33,16 @@ import jakarta.ws.rs.core.Context;
 @Consumes(MediaType.APPLICATION_JSON)
 public class QualityInspectionResource {
 
+    /** 业务服务依赖；控制器只通过它编排用例，不直接访问数据库。 */
     private final QualityInspectionService service = new QualityInspectionService();
+    /** 业务服务依赖；控制器只通过它编排用例，不直接访问数据库。 */
     private final ProductionService productionService = new ProductionService();
 
+    /**
+     * 接口：GET /api/quality-inspections/create-options。
+     * 用例：创建业务记录；请求先经过 AuthFilter 的登录、权限校验，本方法再处理参数和数据范围。
+     * 返回：成功时由 ResourceSupport/ApiResponse 形成统一 JSON；业务异常转换为 4xx，未知异常转换为 5xx。
+     */
     @GET
     @Path("/create-options")
     public ApiResponse<Map<String, Object>> createOptions() {
@@ -48,6 +61,11 @@ public class QualityInspectionResource {
         }
     }
 
+    /**
+     * 接口：GET /api/quality-inspections/inspectors。
+     * 用例：检查运行状态；请求先经过 AuthFilter 的登录、权限校验，本方法再处理参数和数据范围。
+     * 返回：成功时由 ResourceSupport/ApiResponse 形成统一 JSON；业务异常转换为 4xx，未知异常转换为 5xx。
+     */
     @GET
     @Path("/inspectors")
     public ApiResponse<List<UserRoleValidator.AssignableUser>> inspectors() {
@@ -58,6 +76,11 @@ public class QualityInspectionResource {
         }
     }
 
+    /**
+     * 接口：GET /api/quality-inspections。
+     * 用例：查询列表；请求先经过 AuthFilter 的登录、权限校验，本方法再处理参数和数据范围。
+     * 返回：成功时由 ResourceSupport/ApiResponse 形成统一 JSON；业务异常转换为 4xx，未知异常转换为 5xx。
+     */
     @GET
     public ApiResponse<List<MesQualityInspection>> list(@Context ContainerRequestContext context) {
         try {
@@ -70,6 +93,11 @@ public class QualityInspectionResource {
         }
     }
 
+    /**
+     * 接口：GET /api/quality-inspections/{id}。
+     * 用例：查询单条记录或详情；请求先经过 AuthFilter 的登录、权限校验，本方法再处理参数和数据范围。
+     * 返回：成功时由 ResourceSupport/ApiResponse 形成统一 JSON；业务异常转换为 4xx，未知异常转换为 5xx。
+     */
     @GET
     @Path("/{id}")
     public ApiResponse<MesQualityInspection> get(@PathParam("id") long id,
@@ -87,6 +115,11 @@ public class QualityInspectionResource {
         }
     }
 
+    /**
+     * 接口：POST /api/quality-inspections。
+     * 用例：创建业务记录；请求先经过 AuthFilter 的登录、权限校验，本方法再处理参数和数据范围。
+     * 返回：成功时由 ResourceSupport/ApiResponse 形成统一 JSON；业务异常转换为 4xx，未知异常转换为 5xx。
+     */
     @POST
     public ApiResponse<Long> create(MesQualityInspection inspection) {
         try {
@@ -122,6 +155,11 @@ public class QualityInspectionResource {
         }
     }
 
+    /**
+     * 接口：GET /api/quality-inspections/{id}/items。
+     * 用例：查询列表；请求先经过 AuthFilter 的登录、权限校验，本方法再处理参数和数据范围。
+     * 返回：成功时由 ResourceSupport/ApiResponse 形成统一 JSON；业务异常转换为 4xx，未知异常转换为 5xx。
+     */
     @GET
     @Path("/{id}/items")
     public ApiResponse<List<MesQualityInspectionItem>> listItems(@PathParam("id") long id,
@@ -137,6 +175,11 @@ public class QualityInspectionResource {
         }
     }
 
+    /**
+     * 接口：POST /api/quality-inspections/{id}/items。
+     * 用例：执行 addItem 对应的业务步骤；请求先经过 AuthFilter 的登录、权限校验，本方法再处理参数和数据范围。
+     * 返回：成功时由 ResourceSupport/ApiResponse 形成统一 JSON；业务异常转换为 4xx，未知异常转换为 5xx。
+     */
     @POST
     @Path("/{id}/items")
     public ApiResponse<Long> addItem(@PathParam("id") long id, MesQualityInspectionItem item,
@@ -165,6 +208,11 @@ public class QualityInspectionResource {
         }
     }
 
+    /**
+     * 接口：POST /api/quality-inspections/{id}/assign。
+     * 用例：分配执行人员或资源；请求先经过 AuthFilter 的登录、权限校验，本方法再处理参数和数据范围。
+     * 返回：成功时由 ResourceSupport/ApiResponse 形成统一 JSON；业务异常转换为 4xx，未知异常转换为 5xx。
+     */
     @POST
     @Path("/{id}/assign")
     public ApiResponse<Boolean> assign(@PathParam("id") long id, @QueryParam("inspectorId") long inspectorId) {
@@ -175,6 +223,11 @@ public class QualityInspectionResource {
         }
     }
 
+    /**
+     * 接口：POST /api/quality-inspections/{id}/submit。
+     * 用例：提交业务事项；请求先经过 AuthFilter 的登录、权限校验，本方法再处理参数和数据范围。
+     * 返回：成功时由 ResourceSupport/ApiResponse 形成统一 JSON；业务异常转换为 4xx，未知异常转换为 5xx。
+     */
     @POST
     @Path("/{id}/submit")
     public ApiResponse<Boolean> submit(@PathParam("id") long id, QualitySubmitResult result,
@@ -191,6 +244,11 @@ public class QualityInspectionResource {
         }
     }
 
+    /**
+     * 接口：POST /api/quality-inspections/{id}/judge。
+     * 用例：执行 judge 对应的业务步骤；请求先经过 AuthFilter 的登录、权限校验，本方法再处理参数和数据范围。
+     * 返回：成功时由 ResourceSupport/ApiResponse 形成统一 JSON；业务异常转换为 4xx，未知异常转换为 5xx。
+     */
     @POST
     @Path("/{id}/judge")
     public ApiResponse<Boolean> judge(@PathParam("id") long id, QualityJudgement judgement,
@@ -206,9 +264,17 @@ public class QualityInspectionResource {
         }
     }
 
+    /**
+     * 公共能力：执行 QualityJudgement 对应的业务步骤。
+     * 由 QualityInspectionResource 的上层调用者使用；返回值或异常继续遵循当前类的职责边界。
+     */
     public record QualityJudgement(String status, String result) {
     }
 
+    /**
+     * 公共能力：执行 QualitySubmitResult 对应的业务步骤。
+     * 由 QualityInspectionResource 的上层调用者使用；返回值或异常继续遵循当前类的职责边界。
+     */
     public record QualitySubmitResult(String result, String note) {
     }
 }

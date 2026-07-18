@@ -3,8 +3,15 @@
     [string]$ExportDir = (Join-Path $PSScriptRoot "..\tmp\ppt-output")
 )
 
+<#
+  答辩 PPT 主生成器。
+  外部依赖：Windows Microsoft PowerPoint COM、System.Drawing，以及 docs/backend/target 中的图片。
+  输入为代码和演示截图，输出为 960x540 PPTX 与逐页 PNG。先定义版式原语，再按章节创建页面；
+  任何 COM 或文件错误立即终止，finally 负责关闭 PowerPoint，避免残留 POWERPNT.EXE。
+#>
 $ErrorActionPreference = "Stop"
 
+# PowerPoint COM 使用 BGR 整数而非 CSS 十六进制，本函数统一完成 RGB 到整数的换算。
 function Color([int]$r, [int]$g, [int]$b) {
     return $r + ($g * 256) + ($b * 65536)
 }
@@ -26,6 +33,7 @@ $C = @{
     Purple = Color 109 83 224
 }
 
+# 设置形状实色填充和透明度；所有形状通过此入口保持视觉口径一致。
 function Set-Fill($shape, [int]$color, [double]$transparency = 0) {
     $shape.Fill.Visible = -1
     $shape.Fill.Solid()
@@ -33,6 +41,7 @@ function Set-Fill($shape, [int]$color, [double]$transparency = 0) {
     $shape.Fill.Transparency = $transparency
 }
 
+# 设置边框颜色、粗细与透明度。
 function Set-Line($shape, [int]$color, [double]$weight = 1, [double]$transparency = 0) {
     $shape.Line.Visible = -1
     $shape.Line.ForeColor.RGB = $color
@@ -40,6 +49,7 @@ function Set-Line($shape, [int]$color, [double]$weight = 1, [double]$transparenc
     $shape.Line.Transparency = $transparency
 }
 
+# 添加矩形/圆角矩形并返回 COM Shape，供卡片、背景和标签继续组合。
 function Add-Rect($slide, [double]$x, [double]$y, [double]$w, [double]$h, [int]$fill, [int]$line = -1, [double]$radiusType = 1, [double]$transparency = 0) {
     $shapeType = if ($radiusType -eq 5) { 5 } else { 1 }
     $s = $slide.Shapes.AddShape($shapeType, $x, $y, $w, $h)
@@ -48,6 +58,7 @@ function Add-Rect($slide, [double]$x, [double]$y, [double]$w, [double]$h, [int]$
     return $s
 }
 
+# 添加文本框并集中配置字体、字号、颜色、粗体、对齐和边距。
 function Add-Text($slide, [string]$text, [double]$x, [double]$y, [double]$w, [double]$h,
                   [double]$size = 18, [int]$color = 0, [bool]$bold = $false,
                   [int]$align = 1, [string]$font = "Microsoft YaHei", [double]$margin = 0) {
@@ -70,6 +81,7 @@ function Add-Text($slide, [string]$text, [double]$x, [double]$y, [double]$w, [do
     return $s
 }
 
+# 添加连接线，可选择箭头，用于架构调用链、业务流程和章节分隔。
 function Add-Line($slide, [double]$x1, [double]$y1, [double]$x2, [double]$y2,
                   [int]$color, [double]$weight = 1.5, [bool]$arrow = $false, [double]$transparency = 0) {
     $s = $slide.Shapes.AddLine($x1, $y1, $x2, $y2)
@@ -78,6 +90,7 @@ function Add-Line($slide, [double]$x1, [double]$y1, [double]$x2, [double]$y2,
     return $s
 }
 
+# 创建胶囊标签，用于章节号、技术栈和状态短语。
 function Add-Pill($slide, [string]$text, [double]$x, [double]$y, [double]$w,
                   [int]$fill, [int]$textColor = 0, [double]$size = 12) {
     $s = Add-Rect $slide $x $y $w 25 $fill -1 5 0
@@ -85,6 +98,7 @@ function Add-Pill($slide, [string]$text, [double]$x, [double]$y, [double]$w,
     return $s
 }
 
+# 创建固定尺寸编号徽章，常用于步骤或亮点序号。
 function Add-Badge($slide, [string]$text, [double]$x, [double]$y, [int]$fill = 0) {
     $s = $slide.Shapes.AddShape(9, $x, $y, 30, 30)
     Set-Fill $s $fill 0
@@ -93,6 +107,7 @@ function Add-Badge($slide, [string]$text, [double]$x, [double]$y, [int]$fill = 0
     return $s
 }
 
+# 组合背景、标题、正文和强调色生成信息卡片。
 function Add-Card($slide, [double]$x, [double]$y, [double]$w, [double]$h,
                   [string]$title, [string]$body, [int]$accent = 0, [string]$tag = "") {
     $shadow = Add-Rect $slide ($x + 4) ($y + 5) $w $h $C.Blue -1 5 0.88
@@ -110,6 +125,7 @@ function Add-Card($slide, [double]$x, [double]$y, [double]$w, [double]$h,
     return $card
 }
 
+# 绘制浅色或深色统一背景及装饰图形，是每页内容之前的第一步。
 function Add-Background($slide, [bool]$dark = $false) {
     $bg = $slide.Background.Fill
     $bg.Visible = -1
@@ -130,6 +146,7 @@ function Add-Background($slide, [bool]$dark = $false) {
     }
 }
 
+# 创建标准页眉、页码和页脚，使内容页具有一致章节层级。
 function Add-Header($slide, [int]$number, [string]$section, [string]$title, [string]$subtitle = "") {
     Add-Background $slide $false
     [void](Add-Rect $slide 48 28 8 34 $C.Blue -1 1 0)
@@ -141,6 +158,7 @@ function Add-Header($slide, [int]$number, [string]$section, [string]$title, [str
     [void](Add-Text $slide "双星轮胎 MES · 项目答辩" 690 514 220 16 8.5 $C.Gray $false 3)
 }
 
+# 按 contain 规则等比缩放图片到目标框，读取像素尺寸后居中，避免截图或架构图变形。
 function Add-PictureContain($slide, [string]$path, [double]$x, [double]$y, [double]$w, [double]$h,
                             [bool]$border = $true, [int]$borderColor = 0) {
     if (-not (Test-Path $path)) { return $null }
@@ -159,6 +177,7 @@ function Add-PictureContain($slide, [string]$path, [double]$x, [double]$y, [doub
     finally { $img.Dispose() }
 }
 
+# 创建带序号、标题和副说明的流程节点，供需求到部署的阶段流程复用。
 function Add-FlowNode($slide, [int]$n, [string]$title, [string]$sub,
                       [double]$x, [double]$y, [double]$w, [int]$accent) {
     [void](Add-Rect $slide $x $y $w 72 $C.White $C.Line 5 0)
@@ -167,6 +186,7 @@ function Add-FlowNode($slide, [int]$n, [string]$title, [string]$sub,
     [void](Add-Text $slide $sub ($x + 52) ($y + 38) ($w - 62) 25 10.5 $C.Gray $false 1)
 }
 
+# 从脚本目录定位仓库资源与输出，不依赖调用者当前工作目录。
 $root = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $assets = @{
     Logo = Join-Path $root "frontend\assets\mes-icon.png"
@@ -187,6 +207,7 @@ $exportFull = [System.IO.Path]::GetFullPath($ExportDir)
 if (Test-Path $exportFull) { Remove-Item -LiteralPath $exportFull -Recurse -Force }
 [System.IO.Directory]::CreateDirectory($exportFull) | Out-Null
 
+# 创建 PowerPoint COM 进程；后续 finally 必须关闭演示文稿并释放 COM。
 $ppt = New-Object -ComObject PowerPoint.Application
 $ppt.Visible = -1
 $presentation = $ppt.Presentations.Add()

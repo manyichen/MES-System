@@ -1,3 +1,9 @@
+/*
+ * 答辩定位：驾驶舱、反馈与产品追溯 模块的 ExecutiveDashboardDao。
+ * 分层职责：数据访问层：使用 JDBC 和 PreparedStatement 访问 PostgreSQL，集中处理 SQL 参数绑定、结果映射及需要原子性的事务。
+ * 典型调用链：Service -> 当前 DAO -> Db.getConnection() -> PostgreSQL；查询结果再映射为 entity/record。
+ * 阅读提示：公开方法是本类对上层暴露的契约；private 方法只服务于本类内部实现。
+ */
 package com.example.messystem.dashboard.dao;
 
 import com.example.messystem.common.Db;
@@ -12,6 +18,11 @@ import java.util.List;
 
 /** 读取总经理经营看板所需的跨部门聚合数据。 */
 public class ExecutiveDashboardDao {
+    /**
+     * 数据访问：装载业务数据。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public DashboardData load() throws SQLException {
         try (Connection connection = Db.getConnection()) {
             return new DashboardData(
@@ -24,6 +35,11 @@ public class ExecutiveDashboardDao {
         }
     }
 
+    /**
+     * 数据访问：执行 readTotals 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static Totals readTotals(Connection connection) throws SQLException {
         String sql = """
                 select
@@ -56,6 +72,11 @@ public class ExecutiveDashboardDao {
         }
     }
 
+    /**
+     * 数据访问：执行 productionTrend 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static List<ExecutiveDashboard.TrendPoint> productionTrend(Connection connection) throws SQLException {
         String sql = """
                 select to_char(days.day, 'MM-DD') as day,
@@ -81,6 +102,11 @@ public class ExecutiveDashboardDao {
         return points;
     }
 
+    /**
+     * 数据访问：执行 productionLines 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static List<ExecutiveDashboard.LineSnapshot> productionLines(Connection connection) throws SQLException {
         String sql = """
                 with work_orders as (
@@ -121,6 +147,11 @@ public class ExecutiveDashboardDao {
         return lines;
     }
 
+    /**
+     * 数据访问：执行 alerts 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static List<ExecutiveDashboard.Alert> alerts(Connection connection) throws SQLException {
         String sql = """
                 select domain, title, detail, severity, occurred_at
@@ -151,6 +182,11 @@ public class ExecutiveDashboardDao {
         return alerts;
     }
 
+    /**
+     * 数据访问：执行 scalar 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static long scalar(Connection connection, String sql) throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement(sql);
              ResultSet rs = statement.executeQuery()) {
@@ -158,11 +194,21 @@ public class ExecutiveDashboardDao {
         }
     }
 
+    /**
+     * 数据访问：执行 DashboardData 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public record DashboardData(Totals totals, List<ExecutiveDashboard.TrendPoint> productionTrend,
             List<ExecutiveDashboard.LineSnapshot> productionLines, List<ExecutiveDashboard.Alert> alerts,
             long submittedInspections, long activeMaintenance) {
     }
 
+    /**
+     * 数据访问：执行 Totals 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public record Totals(long orderCount, long orderQty, long activeWorkOrders, long completedWorkOrders,
             long workOrderCount, long reportedQty, long qualifiedQty, long defectQty,
             long equipmentTotal, long equipmentFaults, long shortageAlerts, long openRework,

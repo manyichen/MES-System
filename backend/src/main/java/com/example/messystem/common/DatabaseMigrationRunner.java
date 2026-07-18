@@ -1,3 +1,9 @@
+/*
+ * 答辩定位：公共基础设施 模块的 DatabaseMigrationRunner。
+ * 分层职责：公共支撑代码：提供多个业务模块共享的响应、异常、编码或工具能力。
+ * 典型调用链：由应用启动、HTTP 过滤器或各业务模块按需调用。
+ * 阅读提示：公开方法是本类对上层暴露的契约；private 方法只服务于本类内部实现。
+ */
 package com.example.messystem.common;
 
 import java.nio.charset.StandardCharsets;
@@ -10,6 +16,9 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 公共基础设施 的 DatabaseMigrationRunner，承担当前文件头所述职责，并保持与相邻层的单向依赖。
+ */
 public class DatabaseMigrationRunner {
     private static final String DEFAULT_ADMIN_USERNAME = "admin";
     private static final String DEFAULT_ADMIN_PASSWORD = "123456";
@@ -17,6 +26,10 @@ public class DatabaseMigrationRunner {
     private static final String DEFAULT_SUPER_ADMIN_USERNAME = "superadmin";
     private static final String SUPER_ADMIN_ROLE = "SUPER_ADMIN";
 
+    /**
+     * 公共能力：执行 main 对应的业务步骤。
+     * 由 DatabaseMigrationRunner 的上层调用者使用；返回值或异常继续遵循当前类的职责边界。
+     */
     public static void main(String[] args) throws Exception {
         Path migrationFile = args.length > 0
                 ? Path.of(args[0])
@@ -54,6 +67,10 @@ public class DatabaseMigrationRunner {
         System.out.println("Migration completed.");
     }
 
+    /**
+     * 公共能力：执行 columnExists 对应的业务步骤。
+     * 由 DatabaseMigrationRunner 的上层调用者使用；返回值或异常继续遵循当前类的职责边界。
+     */
     public static boolean columnExists(Connection connection, String tableName, String columnName) throws Exception {
         String sql = """
                 select 1
@@ -67,6 +84,10 @@ public class DatabaseMigrationRunner {
         }
     }
 
+    /**
+     * 内部实现步骤：执行 ensureSystemAdmin 对应的业务步骤。
+     * 该方法不构成外部接口，只用于收拢重复细节并保持主流程可读。
+     */
     private static void ensureSystemAdmin(Connection connection) throws Exception {
         String passwordHash = PasswordHasher.hash(DEFAULT_ADMIN_PASSWORD);
         String sql = """
@@ -162,6 +183,10 @@ public class DatabaseMigrationRunner {
         System.out.println("Super admin ensured: username=" + username + ", user_id=" + userId);
     }
 
+    /**
+     * 内部实现步骤：登记标签打印。
+     * 该方法不构成外部接口，只用于收拢重复细节并保持主流程可读。
+     */
     private static void printUserTableSummary(Connection connection) throws Exception {
         System.out.println("mes_user primary key: " + primaryKeyColumns(connection, "mes_user"));
         String[] coreColumns = {
@@ -182,6 +207,10 @@ public class DatabaseMigrationRunner {
         }
     }
 
+    /**
+     * 内部实现步骤：执行 primaryKeyColumns 对应的业务步骤。
+     * 该方法不构成外部接口，只用于收拢重复细节并保持主流程可读。
+     */
     private static String primaryKeyColumns(Connection connection, String tableName) throws Exception {
         String sql = """
                 select kcu.column_name
@@ -206,6 +235,10 @@ public class DatabaseMigrationRunner {
         return columns.isEmpty() ? "(none)" : String.join(", ", columns);
     }
 
+    /**
+     * 内部实现步骤：执行 splitSql 对应的业务步骤。
+     * 该方法不构成外部接口，只用于收拢重复细节并保持主流程可读。
+     */
     private static List<String> splitSql(String rawSql) {
         List<String> statements = new ArrayList<>();
         StringBuilder current = new StringBuilder();
@@ -228,6 +261,10 @@ public class DatabaseMigrationRunner {
         return statements;
     }
 
+    /**
+     * 内部实现步骤：执行 firstLine 对应的业务步骤。
+     * 该方法不构成外部接口，只用于收拢重复细节并保持主流程可读。
+     */
     private static String firstLine(String sql) {
         String[] lines = sql.split("\\R", 2);
         return lines[0].trim();

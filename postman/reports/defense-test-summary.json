@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026/7/17 18:30:39",
+  "generatedAt": "2026/7/17 23:58:11",
   "outcome": "PASS",
   "coverage": {
     "declaredEndpoints": 173,
@@ -9,28 +9,28 @@
   "postman": {
     "requests": 266,
     "failedRequests": 0,
-    "assertions": 958,
+    "assertions": 957,
     "failed": 0
   },
   "junit": {
-    "tests": 13,
+    "tests": 17,
     "failures": 0,
     "errors": 0,
     "skipped": 0
   },
   "performance": {
-    "durationSeconds": 119.4,
-    "averageMs": 332,
-    "minMs": 1,
-    "maxMs": 3307,
-    "responseBytes": 600469
+    "durationSeconds": 125.2,
+    "averageMs": 357,
+    "minMs": 2,
+    "maxMs": 2138,
+    "responseBytes": 627055
   },
   "httpStatus": {
-    "200": 87,
+    "200": 86,
     "400": 1,
     "401": 171,
     "403": 1,
-    "404": 6
+    "404": 7
   },
   "limitation": "远程演示数据库上不执行成功写入流程；写接口已完成认证边界覆盖。"
 }

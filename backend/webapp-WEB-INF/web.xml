@@ -8,6 +8,10 @@
         https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
         version="6.0">
 
+    <!--
+      标准 WAR 部署入口。Jersey Servlet 扫描 MesApplication 注册的 Resource/Filter/Mapper，
+      并把所有 /api/* 请求交给后端；这与内嵌 Tomcat 启动类的映射保持一致。
+    -->
     <servlet>
         <servlet-name>Jersey</servlet-name>
         <servlet-class>org.glassfish.jersey.servlet.ServletContainer</servlet-class>
@@ -18,11 +22,13 @@
         <load-on-startup>1</load-on-startup>
     </servlet>
 
+    <!-- REST API 统一前缀，避免与 Vue 静态资源和 history 路由冲突。 -->
     <servlet-mapping>
         <servlet-name>Jersey</servlet-name>
         <url-pattern>/api/*</url-pattern>
     </servlet-mapping>
 
+    <!-- 访问站点根路径时默认返回 Vite 构建生成的 index.html。 -->
     <welcome-file-list>
         <welcome-file>index.html</welcome-file>
     </welcome-file-list>

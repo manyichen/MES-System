@@ -1,3 +1,9 @@
+/*
+ * 答辩定位：登录认证与会话 模块的 AuthDao。
+ * 分层职责：数据访问层：使用 JDBC 和 PreparedStatement 访问 PostgreSQL，集中处理 SQL 参数绑定、结果映射及需要原子性的事务。
+ * 典型调用链：Service -> 当前 DAO -> Db.getConnection() -> PostgreSQL；查询结果再映射为 entity/record。
+ * 阅读提示：公开方法是本类对上层暴露的契约；private 方法只服务于本类内部实现。
+ */
 package com.example.messystem.auth.dao;
 
 import com.example.messystem.auth.AuthenticatedUser;
@@ -22,6 +28,11 @@ public class AuthDao {
     private static final int SESSION_HOURS = 8;
     private static final Set<String> DEPRECATED_LOGIN_USERNAMES = Set.of("mes_sysmaint", "mes_viewer");
 
+    /**
+     * 数据访问：校验账号密码并创建会话。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public LoginSession login(LoginRequest request, String loginIp, String userAgent) {
         if (request == null || request.username == null || request.username.isBlank()
                 || request.password == null || request.password.isBlank()) {
@@ -58,6 +69,11 @@ public class AuthDao {
         }
     }
 
+    /**
+     * 数据访问：校验访问令牌并还原当前用户。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public AuthenticatedUser authenticate(String token) {
         String sql = """
                 select u.user_id, u.username, u.real_name, u.role_code, u.department, u.phone,
@@ -88,6 +104,11 @@ public class AuthDao {
         }
     }
 
+    /**
+     * 数据访问：注销当前会话。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public void logout(String token, AuthenticatedUser currentUser) {
         String sql = "update mes_user_session set revoked_at = current_timestamp where token_hash = ? and revoked_at is null";
         try (Connection connection = Db.getConnection();
@@ -100,6 +121,11 @@ public class AuthDao {
         }
     }
 
+    /**
+     * 数据访问：查询匹配记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static MesUser findLoginUser(Connection connection, String username) throws SQLException {
         String sql = """
                 select user_id, username, real_name, role_code, department, phone, enabled,
@@ -123,6 +149,11 @@ public class AuthDao {
         }
     }
 
+    /**
+     * 数据访问：校验输入与已保存摘要是否匹配。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static void verifyLogin(Connection connection, MesUser user, String password) throws SQLException {
         if (user.enabled == null || user.enabled != 1) {
             throw new BadRequestException("账号已停用，请联系系统管理员");
@@ -145,6 +176,11 @@ public class AuthDao {
         throw new BadRequestException("账号或密码错误");
     }
 
+    /**
+     * 数据访问：执行 resetLoginState 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static void resetLoginState(Connection connection, long userId) throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement("""
                 update mes_user set last_login_at = current_timestamp, failed_login_count = 0,
@@ -155,6 +191,11 @@ public class AuthDao {
         }
     }
 
+    /**
+     * 数据访问：创建业务记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static void createSession(Connection connection, long userId, String token, String loginIp,
             String userAgent, LocalDateTime expiresAt) throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement("""
@@ -170,6 +211,11 @@ public class AuthDao {
         }
     }
 
+    /**
+     * 数据访问：装载业务数据。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static AuthenticatedUser loadAccess(Connection connection, MesUser user, LocalDateTime expiresAt) throws SQLException {
         Set<String> roles = new LinkedHashSet<>();
         try (PreparedStatement statement = connection.prepareStatement("""
@@ -253,6 +299,11 @@ public class AuthDao {
                 || permission.equals("demo.seed");
     }
 
+    /**
+     * 数据访问：装载业务数据。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static Set<Long> loadScopeIds(Connection connection, String table, String column, long userId)
             throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement(
@@ -266,6 +317,11 @@ public class AuthDao {
         }
     }
 
+    /**
+     * 数据访问：执行 writeAudit 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static void writeAudit(Connection connection, String eventType, MesUser user, String result, String message)
             throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement("""
@@ -286,6 +342,11 @@ public class AuthDao {
         }
     }
 
+    /**
+     * 数据访问：把 JDBC 结果行映射为领域对象。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static MesUser mapUser(ResultSet rs) throws SQLException {
         MesUser user = new MesUser();
         user.userId = rs.getLong("user_id");
@@ -301,11 +362,21 @@ public class AuthDao {
         return user;
     }
 
+    /**
+     * 数据访问：查询单条记录或详情。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static LocalDateTime getLocalDateTime(ResultSet rs, String column) throws SQLException {
         Timestamp value = rs.getTimestamp(column);
         return value == null ? null : value.toLocalDateTime();
     }
 
+    /**
+     * 数据访问：执行 trim 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static String trim(String value, int maxLength) {
         if (value == null) return null;
         return value.length() <= maxLength ? value : value.substring(0, maxLength);

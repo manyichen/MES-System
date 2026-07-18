@@ -1,4 +1,9 @@
 <script setup>
+/**
+ * 通用动态动作对话框。
+ * 输入是 modules.js 中的 action/fields；输出是经过类型转换的 JSON 请求体，由 ModuleWorkspace 执行接口。
+ * 支持普通输入、枚举选择、远程单/多选、依赖联动和领料明细行，是配置驱动 CRUD 的表单引擎。
+ */
 import { reactive, ref, watch } from 'vue'
 import { Plus, Trash2, X } from 'lucide-vue-next'
 import { api } from '../api/http'
@@ -6,12 +11,14 @@ import { businessValue, localizeMessage, localizeText } from '../utils/display.j
 
 const props = defineProps({ action: Object, row: Object, busy: Boolean })
 const emit = defineEmits(['close', 'submit'])
+// values 保存待提交值；optionRows/optionLoading 保存每个远程字段的候选项和加载状态。
 const values = reactive({})
 const optionRows = reactive({})
 const optionLoading = reactive({})
 const optionsError = ref('')
 let loadVersion = 0
 
+/** 将数组、items、records 和单对象统一成候选项数组。 */
 function normalize(data) {
   if (Array.isArray(data)) return data
   if (Array.isArray(data?.items)) return data.items
@@ -19,26 +26,34 @@ function normalize(data) {
   return data ? [data] : []
 }
 
+/** 按 a.b.c 路径读取嵌套响应，供系统维护等复合接口复用。 */
 function dataAtPath(data, path) {
   return path ? path.split('.').reduce((value, key) => value?.[key], data) : data
 }
 
+/** 深拷贝表单默认值，防止编辑时直接修改 action 配置或当前表格行。 */
 function clone(value) {
   return value == null ? value : JSON.parse(JSON.stringify(value))
 }
 
+/** 统一判断必填值；0 和 false 是合法值，空数组不是。 */
 function isBlankValue(value) {
   return value === '' || value === null || value === undefined
     || (typeof value === 'number' && Number.isNaN(value))
     || (Array.isArray(value) && value.length === 0)
 }
 
+/** 把 number/decimal 控件值转换为有限 Number，非法输入返回 null 交给校验处理。 */
 function numericValue(value) {
   if (isBlankValue(value)) return null
   const next = Number(value)
   return Number.isFinite(next) ? next : null
 }
 
+/**
+ * 每次打开/切换动作时重建表单，填入默认值或当前行值，并加载远程选项。
+ * loadVersion 防止用户快速切换对话框时旧请求覆盖新动作的数据。
+ */
 async function initialize(action) {
   const version = ++loadVersion
   for (const key of Object.keys(values)) delete values[key]
@@ -82,6 +97,7 @@ async function initialize(action) {
 
 watch(() => props.action, initialize, { immediate: true })
 
+/** 按 dependsOn、filter 等配置得到当前字段真正可选的远程记录。 */
 function availableOptions(field) {
   const rows = optionRows[field.key] || []
   return field.source?.filter
@@ -121,6 +137,7 @@ function selectedSelectOption(field) {
   return (field.options || []).find(option => String(selectOptionValue(option)) === String(values[field.key]))
 }
 
+/** 远程选择变化后执行 assign 映射，并重新协调依赖字段。 */
 function onLookupChange(field) {
   const selected = selectedOption(field)
   const assignedKeys = []
@@ -139,6 +156,7 @@ function onSelectChange(field) {
   }
 }
 
+/** 上游字段变化时清除已经不在候选范围内的下游值，防止提交失效关联。 */
 function reconcileDependentValues(changedKey = null) {
   for (const field of props.action?.fields || []) {
     if (!field.source?.dependsOn || optionLoading[field.key]) continue
@@ -151,6 +169,7 @@ function reconcileDependentValues(changedKey = null) {
   }
 }
 
+/** 为领料等主从表单增加一条空明细。 */
 function addLine(field) {
   values[field.key].push({ materialId: '', requiredQty: '', unit: '', batchNo: '' })
 }
@@ -160,11 +179,16 @@ function removeLine(field, index) {
   if (!values[field.key].length) addLine(field)
 }
 
+/** 选中物料后自动回填单位，减少数量单位录入错误。 */
 function onLineMaterialChange(field, line) {
   const material = availableOptions(field).find(row => String(optionValue(field, row)) === String(line.materialId))
   line.unit = material?.unit || ''
 }
 
+/**
+ * 前端提交前校验必填项和明细行，并完成 number、decimal、JSON、多选等类型转换。
+ * 该校验用于即时反馈；后端 Service 必须再次校验，因为客户端数据可以被绕过或伪造。
+ */
 function submit() {
   const output = {}
   for (const field of props.action?.fields || []) {
@@ -199,6 +223,7 @@ function submit() {
 </script>
 
 <template>
+  <!-- 字段 type 决定渲染控件；所有控件最终都写入同一个 values 对象。 -->
   <div class="dialog-mask" @mousedown.self="emit('close')">
     <section class="dialog" role="dialog" aria-modal="true">
       <header>

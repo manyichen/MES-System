@@ -1,3 +1,9 @@
+/*
+ * 答辩定位：驾驶舱、反馈与产品追溯 模块的 ProductTraceDao。
+ * 分层职责：数据访问层：使用 JDBC 和 PreparedStatement 访问 PostgreSQL，集中处理 SQL 参数绑定、结果映射及需要原子性的事务。
+ * 典型调用链：Service -> 当前 DAO -> Db.getConnection() -> PostgreSQL；查询结果再映射为 entity/record。
+ * 阅读提示：公开方法是本类对上层暴露的契约；private 方法只服务于本类内部实现。
+ */
 package com.example.messystem.dashboard.dao;
 
 import com.example.messystem.common.Db;
@@ -15,11 +21,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+/**
+ * 驾驶舱、反馈与产品追溯 的 ProductTraceDao，承担当前文件头所述职责，并保持与相邻层的单向依赖。
+ */
 public class ProductTraceDao {
 
     private static final String COLUMNS = "product_trace_id, trace_code, order_id, task_id, work_order_id, "
             + "product_id, batch_no, trace_status, created_at";
 
+    /**
+     * 数据访问：写入业务记录并返回主键。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public long insert(MesProductTrace trace) throws SQLException {
         String sql = "INSERT INTO mes_product_trace (trace_code, order_id, task_id, work_order_id, product_id, batch_no, trace_status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = Db.getConnection(); PreparedStatement ps = conn.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
@@ -41,6 +55,11 @@ public class ProductTraceDao {
         }
     }
 
+    /**
+     * 数据访问：按主键查询记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public Optional<MesProductTrace> findById(long id) throws SQLException {
         String sql = "SELECT " + COLUMNS + " FROM mes_product_trace WHERE product_trace_id = ?";
         try (Connection conn = Db.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -54,6 +73,11 @@ public class ProductTraceDao {
         return Optional.empty();
     }
 
+    /**
+     * 数据访问：按业务条件查询记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public Optional<MesProductTrace> findByTraceCode(String traceCode) throws SQLException {
         String sql = "SELECT " + COLUMNS + " FROM mes_product_trace WHERE trace_code = ?";
         try (Connection conn = Db.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -67,6 +91,11 @@ public class ProductTraceDao {
         return Optional.empty();
     }
 
+    /**
+     * 数据访问：按业务条件查询记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public List<MesProductTrace> findByWorkOrderId(long workOrderId) throws SQLException {
         String sql = "SELECT " + COLUMNS + " FROM mes_product_trace WHERE work_order_id = ? "
                 + "ORDER BY created_at DESC, product_trace_id DESC";
@@ -82,6 +111,11 @@ public class ProductTraceDao {
         }
     }
 
+    /**
+     * 数据访问：查询全部可见记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public List<MesProductTrace> findAll() throws SQLException {
         String sql = "SELECT " + COLUMNS + " FROM mes_product_trace "
                 + "ORDER BY created_at DESC, product_trace_id DESC";
@@ -94,6 +128,11 @@ public class ProductTraceDao {
         }
     }
 
+    /**
+     * 数据访问：查询匹配记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public Optional<TraceContext> findContext(long orderId, long taskId, long workOrderId) throws SQLException {
         String sql = """
                 select co.product_id as order_product_id, wo.product_id as work_order_product_id, wo.batch_no
@@ -142,11 +181,21 @@ public class ProductTraceDao {
         }
     }
 
+    /**
+     * 数据访问：查询匹配记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private Map<String, Object> findOne(Connection connection, String sql, Long id) throws SQLException {
         List<Map<String, Object>> rows = findMany(connection, sql, id);
         return rows.isEmpty() ? Map.of() : rows.get(0);
     }
 
+    /**
+     * 数据访问：查询匹配记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private List<Map<String, Object>> findMany(Connection connection, String sql, Long id) throws SQLException {
         if (id == null) return List.of();
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -166,6 +215,11 @@ public class ProductTraceDao {
         }
     }
 
+    /**
+     * 数据访问：把 JDBC 结果行映射为领域对象。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private MesProductTrace mapRow(ResultSet rs) throws SQLException {
         return new MesProductTrace(
                 getLong(rs, "product_trace_id"),
@@ -180,15 +234,30 @@ public class ProductTraceDao {
         );
     }
 
+    /**
+     * 数据访问：查询单条记录或详情。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static Long getLong(ResultSet rs, String column) throws SQLException {
         long value = rs.getLong(column);
         return rs.wasNull() ? null : value;
     }
 
+    /**
+     * 数据访问：执行 setLong 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static void setLong(PreparedStatement statement, int index, Long value) throws SQLException {
         if (value == null) statement.setNull(index, Types.BIGINT);
         else statement.setLong(index, value);
     }
 
+    /**
+     * 数据访问：执行 TraceContext 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public record TraceContext(Long productId, String batchNo) { }
 }

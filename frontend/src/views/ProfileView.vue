@@ -1,4 +1,8 @@
 <script setup>
+/**
+ * 个人资料页：GET /api/profile 查询当前用户，PUT /api/profile 更新姓名、电话等可编辑字段。
+ * userId、账号、角色等安全字段由后端从会话确定，不能通过本表单越权修改。
+ */
 import { onMounted, reactive, ref } from 'vue'
 import { Save } from 'lucide-vue-next'
 import { api } from '../api/http'
@@ -11,6 +15,7 @@ const notice = ref('')
 const error = ref('')
 const busy = ref(false)
 
+/** 只把允许编辑/展示的字段复制到响应式表单，避免直接绑定 Pinia 会话对象。 */
 function assign(value) {
   Object.assign(form, {
     realName: value.realName || '', phone: value.phone || '', email: value.email || '',
@@ -18,10 +23,12 @@ function assign(value) {
   })
 }
 
+/** 从后端加载权威个人资料。 */
 async function load() {
   try { assign(await api.get('/profile')) } catch (cause) { error.value = `个人资料加载未完成：${localizeMessage(cause.message)}` }
 }
 
+/** 提交可编辑资料，成功后用服务器返回值回填，确保显示的是最终规范化结果。 */
 async function save() {
   busy.value = true; error.value = ''; notice.value = ''
   try {

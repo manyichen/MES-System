@@ -1,10 +1,17 @@
+/**
+ * 自动化测试答辩报告生成器。
+ * 输入 Newman summary、Postman collection 和 backend/target/surefire-reports；
+ * 输出脱敏 JSON 与单页 HTML，只保留覆盖数、断言数、状态码和性能，不写密码、令牌、请求/响应体。
+ */
 import fs from 'node:fs'
 import path from 'node:path'
 
+/** 将 testsuite XML 起始标签的属性解析为键值对。 */
 function attributes(tag) {
   return Object.fromEntries([...tag.matchAll(/([\w-]+)="([^"]*)"/g)].map(match => [match[1], match[2]]))
 }
 
+/** 汇总所有 Maven Surefire TEST-*.xml 中的测试、失败、错误和跳过数量。 */
 function junitSummary(root) {
   const directory = path.join(root, 'backend', 'target', 'surefire-reports')
   const total = { tests: 0, failures: 0, errors: 0, skipped: 0 }
@@ -19,12 +26,14 @@ function junitSummary(root) {
   return total
 }
 
+/** 转义动态报告值，防止接口信息破坏 HTML 或形成注入。 */
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, char => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   })[char])
 }
 
+/** 用内联 CSS 生成可离线打开、可截图的 1600x900 答辩报告。 */
 function htmlReport(result) {
   const statusRows = Object.entries(result.httpStatus)
     .map(([code, count]) => `<tr><td>${escapeHtml(code)}</td><td>${count}</td><td>${code.startsWith('2') ? '成功' : code === '401' ? '认证拦截' : code === '403' ? '权限拦截' : '异常场景'}</td></tr>`)
@@ -77,18 +86,24 @@ function htmlReport(result) {
 </main></body></html>`
 }
 
+/**
+ * 合并 Postman 与 JUnit 统计并写入四类报告文件。
+ * 远程演示数据库不批量执行成功写入用例，避免答辩数据被自动化测试污染；写接口仍全量验证 401 边界。
+ */
 export function writeDefenseReport(summary, reportDirectory) {
   const root = path.resolve(reportDirectory, '..', '..')
   const collection = JSON.parse(fs.readFileSync(path.join(root, 'postman', 'MES-Full-API.postman_collection.json'), 'utf8'))
   const protectedFolder = collection.item.find(item => item.name.startsWith('01 -'))
   const readFolder = collection.item.find(item => item.name.startsWith('02 -'))
   const run = summary.run ?? summary
+  // 从每次执行响应聚合 HTTP 状态分布，ERROR 代表请求未取得响应。
   const status = {}
   for (const execution of run.executions ?? []) {
     const code = String(execution.response?.code ?? 'ERROR')
     status[code] = (status[code] || 0) + 1
   }
   const junit = junitSummary(root)
+  // 结果对象是 JSON 与 HTML 的共同数据源，保证两份报告口径一致。
   const result = {
     generatedAt: new Date(run.timings.completed).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false }),
     outcome: run.stats.assertions.failed === 0 ? 'PASS' : 'FAIL',

@@ -1,3 +1,9 @@
+/*
+ * 答辩定位：MES 应用基础 模块的 ArchitectureLayerTest。
+ * 分层职责：自动化回归测试：固定关键业务规则、接口契约和架构边界，防止重构时出现静默回归。
+ * 典型调用链：Maven Surefire -> JUnit 5 -> 被测类；测试替身用于隔离远程数据库或文件系统。
+ * 阅读提示：公开方法是本类对上层暴露的契约；private 方法只服务于本类内部实现。
+ */
 package com.example.messystem;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -19,6 +25,10 @@ class ArchitectureLayerTest {
     private static final Pattern PATH_ANNOTATION = Pattern.compile("@Path\\(\\\"([^\\\"]*)\\\"\\)");
     private static final Pattern HTTP_ANNOTATION = Pattern.compile("@(GET|POST|PUT|DELETE|PATCH)\\b");
 
+    /**
+     * 回归场景：验证 httpEndpointsMustLiveInControllerPackages 所描述的行为。
+     * 测试只固定可观察结果和关键边界，失败表示接口契约、权限规则、状态流或架构约束发生变化。
+     */
     @Test
     void httpEndpointsMustLiveInControllerPackages() throws IOException {
         for (Path source : javaSources()) {
@@ -30,6 +40,10 @@ class ArchitectureLayerTest {
         }
     }
 
+    /**
+     * 回归场景：验证 controllersMustNotAccessSqlOrDaosDirectly 所描述的行为。
+     * 测试只固定可观察结果和关键边界，失败表示接口契约、权限规则、状态流或架构约束发生变化。
+     */
     @Test
     void controllersMustNotAccessSqlOrDaosDirectly() throws IOException {
         for (Path source : javaSources()) {
@@ -70,6 +84,10 @@ class ArchitectureLayerTest {
         }
     }
 
+    /**
+     * 回归场景：验证 daosMustNotDependOnHttpTypes 所描述的行为。
+     * 测试只固定可观察结果和关键边界，失败表示接口契约、权限规则、状态流或架构约束发生变化。
+     */
     @Test
     void daosMustNotDependOnHttpTypes() throws IOException {
         for (Path source : javaSources()) {
@@ -114,16 +132,28 @@ class ArchitectureLayerTest {
         }
     }
 
+    /**
+     * 回归场景：验证 javaSources 所描述的行为。
+     * 测试只固定可观察结果和关键边界，失败表示接口契约、权限规则、状态流或架构约束发生变化。
+     */
     private static List<Path> javaSources() throws IOException {
         try (var paths = Files.walk(SOURCE_ROOT)) {
             return paths.filter(path -> path.toString().endsWith(".java")).toList();
         }
     }
 
+    /**
+     * 回归场景：验证 normalize 所描述的行为。
+     * 测试只固定可观察结果和关键边界，失败表示接口契约、权限规则、状态流或架构约束发生变化。
+     */
     private static String normalize(Path path) {
         return path.toString().replace('\\', '/');
     }
 
+    /**
+     * 回归场景：验证 normalizeRoute 所描述的行为。
+     * 测试只固定可观察结果和关键边界，失败表示接口契约、权限规则、状态流或架构约束发生变化。
+     */
     private static String normalizeRoute(String classPath, String methodPath) {
         String route = ("/" + classPath + "/" + methodPath).replaceAll("/+", "/");
         if (route.length() > 1 && route.endsWith("/")) route = route.substring(0, route.length() - 1);

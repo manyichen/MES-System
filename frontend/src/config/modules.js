@@ -1,11 +1,19 @@
+/**
+ * MES 前端“页面 -> 接口 -> 表单”用例总表。
+ * modules 中每个 section 定义列表接口、表格列、权限点，以及新增/审核/状态流转等动作；
+ * ModuleWorkspace 读取这些元数据生成页面，ActionDialog 根据 fields 生成表单并调用对应 path。
+ * 这种配置驱动方式让多个业务模块复用同一套加载、校验、提交和错误展示代码。
+ */
 import { codeLabel } from '../utils/display.js'
 
+// 字段工厂：把常见控件规范成统一结构，required 会在 ActionDialog.submit 中再次检查。
 const text = (key, label, required = true) => ({ key, label, type: 'text', required })
 const password = (key, label, required = true) => ({ key, label, type: 'password', required })
 const number = (key, label, required = true) => ({ key, label, type: 'number', required })
 const decimal = (key, label, required = true) => ({ key, label, type: 'decimal', required })
 const date = (key, label, required = true) => ({ key, label, type: 'date', required })
 const dateTime = (key, label, required = true) => ({ key, label, type: 'datetime-local', required })
+/** 枚举下拉框；assign 可把选中项的其他字段同步到表单。 */
 const select = (key, label, options, config = true) => ({
   key,
   label,
@@ -15,14 +23,17 @@ const select = (key, label, options, config = true) => ({
   assign: typeof config === 'object' ? config.assign : undefined
 })
 const json = (key, label, example, required = true) => ({ key, label, type: 'json', example, required })
+/** 远程单选：打开对话框时从 endpoint 加载业务实体，提交时只传 valueKey。 */
 const lookup = (key, label, endpoint, valueKey, optionLabel, config = {}) => ({
   key, label, type: 'lookup', required: config.required ?? true, valueType: config.valueType || 'number',
   source: { endpoint, valueKey, optionLabel, dataPath: config.dataPath, filter: config.filter, assign: config.assign, dependsOn: config.dependsOn }
 })
+/** 远程多选：用于角色、生产线和仓库等多值授权关系。 */
 const multiLookup = (key, label, endpoint, valueKey, optionLabel, config = {}) => ({
   key, label, type: 'multi-lookup', required: config.required ?? true, valueType: config.valueType || 'number',
   source: { endpoint, valueKey, optionLabel, dataPath: config.dataPath, filter: config.filter }
 })
+/** 动态明细行：领料申请等主从结构可添加多条物料及数量。 */
 const lineItems = (key, label, endpoint, dataPath) => ({
   key, label, type: 'line-items', required: true,
   source: { endpoint, dataPath, valueKey: 'materialId', optionLabel: row => `${row.materialCode || row.materialId} · ${row.materialName} · ${row.specification || '无规格'}`, filter: isEnabled }
@@ -30,6 +41,7 @@ const lineItems = (key, label, endpoint, dataPath) => ({
 const hidden = (key, required = true) => ({ key, label: key, type: 'hidden', required })
 const col = (key, label, config = {}) => ({ key, label, ...config })
 
+// 这些过滤规则防止下拉框选到停用主数据、故障产线或已结束工单。
 const isEnabled = row => row?.enabled === true || Number(row?.enabled ?? 1) === 1
 const isSchedulableLine = row => isEnabled(row) && !['FAULT', 'DISABLED'].includes(row.lineStatus)
 const isOpenWorkOrder = row => !['FINISHED', 'COMPLETED', 'CLOSED', 'CANCELLED'].includes(row.workOrderStatus)
@@ -38,6 +50,7 @@ const isMaterialWarehouse = (warehouse, values, sources) => {
   return isEnabled(warehouse)
     && (!material?.defaultWarehouseType || warehouse.warehouseType === material.defaultWarehouseType)
 }
+// 远程选项标签同时展示编码、名称和关键状态，避免只看到难辨认的数据库 ID。
 const labels = {
   product: row => `${row.productCode || row.productId} · ${row.productName}${row.productModel ? ` · ${row.productModel}` : ''}`,
   order: row => `${row.orderNo || row.orderId} · ${row.customerName} · 数量 ${row.orderQty}`,
@@ -67,6 +80,10 @@ const qualityInspectionItems = [
   { code: 'QC-010', value: '包装检查' }
 ]
 
+/**
+ * 将工艺路线的扁平工序记录按 routeId 分组，转换为“路线主记录 + operations 明细”。
+ * 对应主数据页面的一对多展示，不改变后端保存结构。
+ */
 export function groupProcessRoutes(items = []) {
   const groups = new Map()
   for (const item of items) {
@@ -110,6 +127,10 @@ export function groupProcessRoutes(items = []) {
   }).sort((left, right) => String(left.productCode).localeCompare(String(right.productCode), 'zh-CN'))
 }
 
+/**
+ * 并行加载物料、仓库、库位字典，为库存行补充可读名称。
+ * 任一辅助接口失败时保留原始库存数据，页面仍可用 ID 展示，避免整个列表因辅助信息失败而不可见。
+ */
 export async function enrichInventoryRows(items = [], load) {
   const loadRows = async endpoint => {
     try {
@@ -152,6 +173,7 @@ export async function enrichInventoryRows(items = [], load) {
   })
 }
 
+/** 应用壳的导航配置；permissions/roles 决定不同岗位看到的入口。 */
 export const navigation = [
   { key: 'dashboard', label: '工作台', icon: 'LayoutDashboard', to: '/' },
   { key: 'executive', label: '经营驾驶舱', icon: 'ChartNoAxesCombined', to: '/executive', roles: ['GENERAL_MANAGER'] },
@@ -167,6 +189,10 @@ export const navigation = [
   { key: 'profile', label: '个人资料', icon: 'UserRound', to: '/profile' }
 ]
 
+/**
+ * 模块注册表。每个动作的 method/path 必须与后端 Resource 的 @HTTP/@Path 组合一致；
+ * permission/roles 仅控制可见性，真正授权由后端 AuthorizationPolicy 决定。
+ */
 export const modules = {
   planning: {
     title: '计划与工单', eyebrow: '生产计划',

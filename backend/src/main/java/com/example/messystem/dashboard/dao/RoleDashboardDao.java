@@ -1,3 +1,9 @@
+/*
+ * 答辩定位：驾驶舱、反馈与产品追溯 模块的 RoleDashboardDao。
+ * 分层职责：数据访问层：使用 JDBC 和 PreparedStatement 访问 PostgreSQL，集中处理 SQL 参数绑定、结果映射及需要原子性的事务。
+ * 典型调用链：Service -> 当前 DAO -> Db.getConnection() -> PostgreSQL；查询结果再映射为 entity/record。
+ * 阅读提示：公开方法是本类对上层暴露的契约；private 方法只服务于本类内部实现。
+ */
 package com.example.messystem.dashboard.dao;
 
 import com.example.messystem.common.Db;
@@ -12,6 +18,11 @@ import java.util.List;
 
 /** 执行角色首页所需的分角色聚合查询。 */
 public class RoleDashboardDao {
+    /**
+     * 数据访问：装载业务数据。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public DashboardData load(String role, long userId) {
         try (Connection connection = Db.getConnection()) {
             List<DashboardCard> metrics = metrics(connection, role, userId);
@@ -23,6 +34,11 @@ public class RoleDashboardDao {
         }
     }
 
+    /**
+     * 数据访问：执行 metrics 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static List<DashboardCard> metrics(Connection c, String role, long userId) throws SQLException {
         List<DashboardCard> cards = new ArrayList<>();
         switch (role) {
@@ -120,6 +136,11 @@ public class RoleDashboardDao {
         return cards;
     }
 
+    /**
+     * 数据访问：执行 todos 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static List<DashboardTodo> todos(Connection c, String role, long userId) throws SQLException {
         List<DashboardTodo> todos = new ArrayList<>();
         switch (role) {
@@ -203,6 +224,11 @@ public class RoleDashboardDao {
         return todos;
     }
 
+    /**
+     * 数据访问：执行 addNotifications 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static void addNotifications(Connection c, List<DashboardTodo> todos, long userId, String role)
             throws SQLException {
         long count = count(c, """
@@ -213,17 +239,32 @@ public class RoleDashboardDao {
                 count, "MEDIUM", "dashboard", "dashboard-todos", "dashboard.read");
     }
 
+    /**
+     * 数据访问：执行 card 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static void card(List<DashboardCard> cards, String code, String label, long value,
             String unit, String level, String targetTab) {
         cards.add(new DashboardCard(code, label, String.valueOf(value), unit, level, targetTab));
     }
 
+    /**
+     * 数据访问：执行 todo 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static void todo(List<DashboardTodo> todos, String code, String title, String description,
             long count, String priority, String targetTab, String targetAnchor, String permission) {
         if (count > 0) todos.add(new DashboardTodo(code, title, description, count, priority,
                 targetTab, targetAnchor, permission));
     }
 
+    /**
+     * 数据访问：执行 count 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static long count(Connection connection, String sql, Object... args) throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             for (int i = 0; i < args.length; i++) statement.setObject(i + 1, args[i]);
@@ -243,6 +284,11 @@ public class RoleDashboardDao {
         }
     }
 
+    /**
+     * 数据访问：执行 DashboardData 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public record DashboardData(List<DashboardCard> metrics, List<DashboardTodo> todos) {
     }
 }

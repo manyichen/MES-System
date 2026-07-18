@@ -1,9 +1,18 @@
+/*
+ * 答辩定位：公共基础设施 模块的 ChineseMessageSupport。
+ * 分层职责：公共支撑代码：提供多个业务模块共享的响应、异常、编码或工具能力。
+ * 典型调用链：由应用启动、HTTP 过滤器或各业务模块按需调用。
+ * 阅读提示：公开方法是本类对上层暴露的契约；private 方法只服务于本类内部实现。
+ */
 package com.example.messystem.common;
 
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 
+/**
+ * 公共基础设施 的 ChineseMessageSupport，承担当前文件头所述职责，并保持与相邻层的单向依赖。
+ */
 public final class ChineseMessageSupport {
     private static final Map<String, String> REQUIRED_FIELDS = Map.ofEntries(
             Map.entry("taskId", "生产任务"),
@@ -68,9 +77,17 @@ public final class ChineseMessageSupport {
         CONTAINS_MESSAGES.put("must be between", "填写的数值超出允许范围");
     }
 
+    /**
+     * 内部实现步骤：执行 ChineseMessageSupport 对应的业务步骤。
+     * 该方法不构成外部接口，只用于收拢重复细节并保持主流程可读。
+     */
     private ChineseMessageSupport() {
     }
 
+    /**
+     * 公共能力：执行 translate 对应的业务步骤。
+     * 由 ChineseMessageSupport 的上层调用者使用；返回值或异常继续遵循当前类的职责边界。
+     */
     public static String translate(String message) {
         if (message == null || message.isBlank()) {
             return "操作失败，请稍后重试";
@@ -95,6 +112,10 @@ public final class ChineseMessageSupport {
         return "操作未完成，请检查填写内容或当前业务状态";
     }
 
+    /**
+     * 内部实现步骤：执行 translateRequiredField 对应的业务步骤。
+     * 该方法不构成外部接口，只用于收拢重复细节并保持主流程可读。
+     */
     private static String translateRequiredField(String message) {
         String trimmed = message == null ? "" : message.trim();
         int suffix = trimmed.lastIndexOf(" is required");
@@ -109,6 +130,10 @@ public final class ChineseMessageSupport {
         return label == null ? null : label + "不能为空";
     }
 
+    /**
+     * 内部实现步骤：执行 containsChinese 对应的业务步骤。
+     * 该方法不构成外部接口，只用于收拢重复细节并保持主流程可读。
+     */
     private static boolean containsChinese(String value) {
         return value.codePoints().anyMatch(codePoint -> codePoint >= 0x4E00 && codePoint <= 0x9FFF);
     }

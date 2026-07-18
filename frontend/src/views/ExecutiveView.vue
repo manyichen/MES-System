@@ -1,4 +1,9 @@
 <script setup>
+/**
+ * 总经理驾驶舱与实时运行页，共用 GET /api/dashboard/executive 聚合接口。
+ * ExecutiveDashboardService/Dao 在后端汇总产量、质量、产线、告警、部门报告和审计发现；
+ * 本页完成图表坐标、进度、状态颜色和数字缓动，不在浏览器重新计算业务统计口径。
+ */
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import {
@@ -8,6 +13,7 @@ import {
 import { api } from '../api/http'
 import { codeLabel, localizeMessage } from '../utils/display.js'
 
+// 保持与 ExecutiveDashboard JSON 的六个聚合区一致，加载前使用空集合稳定布局。
 const data = ref({
   metrics: [], productionTrend: [], productionLines: [], alerts: [],
   departmentReports: [], auditFindings: []
@@ -30,6 +36,7 @@ const iconMap = {
   'management-risks': TriangleAlert
 }
 
+// 高频指标从 metrics 的稳定 key 派生；显示值缺失时回退到 0。
 const qualityRate = computed(() => data.value.metrics.find(item => item.key === 'quality-rate')?.value || '0.0')
 const outputValue = computed(() => data.value.metrics.find(item => item.key === 'qualified-output')?.value || '0')
 const riskTotal = computed(() => data.value.metrics.find(item => item.key === 'management-risks')?.value || '0')
@@ -53,6 +60,7 @@ const trendSeries = computed(() => [
   { key: 'defectQty', label: '不良数量', color: '#ff6b7c', points: chartPoints('defectQty') }
 ])
 
+// 把最多六条生产线投影到工厂态势示意区的固定位置，保证布局不会随数据抖动。
 const factoryNodes = computed(() => {
   const positions = [
     { left: '11%', top: '18%' }, { left: '67%', top: '14%' },
@@ -62,6 +70,7 @@ const factoryNodes = computed(() => {
   return data.value.productionLines.slice(0, 6).map((line, index) => ({ ...line, ...positions[index] }))
 })
 
+/** 将每日趋势值按 SVG viewBox 转换为折线坐标，maxTrend 防止除零。 */
 function chartPoints(key) {
   const list = data.value.productionTrend
   if (!list.length) return ''
@@ -72,16 +81,19 @@ function chartPoints(key) {
   }).join(' ')
 }
 
+/** 计算产线实际数量相对计划数量的展示进度，并限制在 0..100。 */
 function lineProgress(line) {
   const planned = Number(line.plannedQty) || 0
   return planned > 0 ? Math.min(100, Math.round((Number(line.actualQty) || 0) / planned * 100)) : 0
 }
 
+/** 将百分比或风险数转换为部门卡片的进度条宽度。 */
 function reportProgress(report) {
   if (report.unit === '%') return Math.min(100, Math.max(0, Number(report.metricValue) || 0))
   return Math.max(8, 100 - Math.min(80, Number(report.riskCount) * 16))
 }
 
+/** 将告警严重度映射为 CSS 类，不改变后端原始等级。 */
 function severityClass(value) {
   const severity = String(value || '').toUpperCase()
   if (['HIGH', 'CRITICAL', 'DANGER', 'FAULT'].includes(severity)) return 'danger'
@@ -98,10 +110,12 @@ function formatTime(value) {
   return new Date(value).toLocaleString('zh-CN', { hour12: false, month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
 }
 
+/** 数字动画期间展示中间值，动画结束后回到接口原值。 */
 function displayMetricValue(item) {
   return animatedMetricValues.value[item.key] ?? item.value
 }
 
+/** 使用 requestAnimationFrame 做纯展示数字缓动；系统启用“减少动画”时直接显示最终值。 */
 function animateMetricValues(metrics) {
   window.cancelAnimationFrame(counterFrame)
   overviewAnimationKey.value += 1
@@ -130,6 +144,7 @@ function animateMetricValues(metrics) {
   counterFrame = window.requestAnimationFrame(tick)
 }
 
+/** 手动拉取驾驶舱聚合快照，并在成功后启动指标入场动画。 */
 async function load() {
   loading.value = true
   error.value = ''
@@ -144,10 +159,12 @@ async function load() {
   }
 }
 
+// 首次进入加载数据；每秒只更新时间显示，业务数据由右上角刷新按钮重新请求。
 onMounted(() => {
   load()
   clockTimer = window.setInterval(() => { now.value = new Date() }, 1000)
 })
+// 页面离开时清除时钟和动画帧，避免更新已销毁组件。
 onBeforeUnmount(() => {
   window.clearInterval(clockTimer)
   window.cancelAnimationFrame(counterFrame)

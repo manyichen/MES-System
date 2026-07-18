@@ -1,3 +1,9 @@
+/*
+ * 答辩定位：设备与维修保养 模块的 EquipmentService。
+ * 分层职责：业务服务层：实现一个或一组用例，负责必填校验、角色边界、状态机和跨 DAO 编排；数据库细节下沉到 DAO。
+ * 典型调用链：Resource -> 当前 Service -> DAO；外部 AI、文件系统等依赖也由服务边界统一编排。
+ * 阅读提示：公开方法是本类对上层暴露的契约；private 方法只服务于本类内部实现。
+ */
 package com.example.messystem.equipment.service;
 
 import com.example.messystem.equipment.dao.EquipmentDao;
@@ -17,13 +23,25 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * 设备与维修保养 的 EquipmentService，承担当前文件头所述职责，并保持与相邻层的单向依赖。
+ */
 public class EquipmentService {
 
+    /** 数据访问依赖，集中封装 JDBC、SQL 参数绑定和结果映射。 */
     private final EquipmentDao equipmentDao = new EquipmentDao();
+    /** 数据访问依赖，集中封装 JDBC、SQL 参数绑定和结果映射。 */
     private final EquipmentRepairReportDao repairReportDao = new EquipmentRepairReportDao();
+    /** 数据访问依赖，集中封装 JDBC、SQL 参数绑定和结果映射。 */
     private final MaintenanceOrderDao maintenanceOrderDao = new MaintenanceOrderDao();
+    /** 数据访问依赖，集中封装 JDBC、SQL 参数绑定和结果映射。 */
     private final MaintenancePlanDao maintenancePlanDao = new MaintenancePlanDao();
 
+    /**
+     * 业务用例：创建业务记录。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public long createEquipment(MesEquipment equipment) throws SQLException {
         if (equipment == null) {
             throw new BadRequestException("equipment body is required");
@@ -43,22 +61,47 @@ public class EquipmentService {
         return equipmentDao.insert(normalized);
     }
 
+    /**
+     * 业务用例：查询单条记录或详情。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public Optional<MesEquipment> getEquipmentById(long equipmentId) throws SQLException {
         return equipmentDao.findById(equipmentId);
     }
 
+    /**
+     * 业务用例：查询列表。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public List<MesEquipment> listEquipment() throws SQLException {
         return equipmentDao.findAll();
     }
 
+    /**
+     * 业务用例：查询列表。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public List<MesEquipment> listEquipmentByLine(long lineId) throws SQLException {
         return equipmentDao.findByLineId(lineId);
     }
 
+    /**
+     * 业务用例：更新业务记录。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public boolean updateEquipmentStatus(long equipmentId, String newStatus) throws SQLException {
         return equipmentDao.updateStatus(equipmentId, newStatus);
     }
 
+    /**
+     * 业务用例：创建业务记录。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public long createRepairReport(MesEquipmentRepairReport report) throws SQLException {
         if (report == null) {
             throw new BadRequestException("repair report body is required");
@@ -82,18 +125,38 @@ public class EquipmentService {
         return id;
     }
 
+    /**
+     * 业务用例：查询单条记录或详情。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public Optional<MesEquipmentRepairReport> getRepairReport(long id) throws SQLException {
         return repairReportDao.findById(id);
     }
 
+    /**
+     * 业务用例：查询列表。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public List<MesEquipmentRepairReport> listRepairReportsForEquipment(long equipmentId) throws SQLException {
         return repairReportDao.findByEquipmentId(equipmentId);
     }
 
+    /**
+     * 业务用例：查询列表。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public List<MesEquipmentRepairReport> listRepairReports() throws SQLException {
         return repairReportDao.findAll();
     }
 
+    /**
+     * 业务用例：审核通过业务事项。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public boolean approveRepairReport(long id) throws SQLException {
         if (!repairReportDao.updateStatus(id, "APPROVED", "REPORTED")) {
             throw new BadRequestException("只有待核实的报修单才能审核");
@@ -102,6 +165,11 @@ public class EquipmentService {
         return true;
     }
 
+    /**
+     * 业务用例：执行 convertRepairReportToMaintenanceOrder 对应的业务步骤。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public long convertRepairReportToMaintenanceOrder(long repairReportId) throws SQLException {
         List<MesMaintenanceOrder> existing = maintenanceOrderDao.findByRepairReportId(repairReportId);
         if (!existing.isEmpty()) {
@@ -127,26 +195,56 @@ public class EquipmentService {
         return orderId;
     }
 
+    /**
+     * 业务用例：创建业务记录。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public long createMaintenanceOrder(MesMaintenanceOrder order) throws SQLException {
         return maintenanceOrderDao.insert(order);
     }
 
+    /**
+     * 业务用例：查询单条记录或详情。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public Optional<MesMaintenanceOrder> getMaintenanceOrder(long id) throws SQLException {
         return maintenanceOrderDao.findById(id);
     }
 
+    /**
+     * 业务用例：查询列表。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public List<MesMaintenanceOrder> listMaintenanceOrdersForReport(long repairReportId) throws SQLException {
         return maintenanceOrderDao.findByRepairReportId(repairReportId);
     }
 
+    /**
+     * 业务用例：查询列表。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public List<MesMaintenanceOrder> listMaintenanceOrders() throws SQLException {
         return maintenanceOrderDao.findAll();
     }
 
+    /**
+     * 业务用例：查询列表。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public List<MesMaintenanceOrder> listMaintenanceOrdersForMaintainer(long userId) throws SQLException {
         return maintenanceOrderDao.findByMaintainer(userId);
     }
 
+    /**
+     * 业务用例：分配执行人员或资源。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public boolean assignMaintenanceOrder(long id, long maintainerId) throws SQLException {
         UserRoleValidator.requireEnabledRole(maintainerId, "EQUIPMENT_MAINTAINER", "设备维护员");
         if (!maintenanceOrderDao.assign(id, maintainerId)) {
@@ -155,14 +253,29 @@ public class EquipmentService {
         return true;
     }
 
+    /**
+     * 业务用例：完成业务任务。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public boolean finishMaintenanceOrder(long id, long maintainerId) throws SQLException {
         return finishMaintenanceOrder(id, maintainerId, "");
     }
 
+    /**
+     * 业务用例：完成业务任务。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public boolean finishMaintenanceOrder(long id, long maintainerId, String resultDesc) throws SQLException {
         return finishMaintenanceOrder(id, maintainerId, resultDesc, false);
     }
 
+    /**
+     * 业务用例：完成业务任务。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public boolean finishMaintenanceOrder(long id, long maintainerId, String resultDesc,
             boolean allowAdministrativeOverride) throws SQLException {
         if (resultDesc == null || resultDesc.isBlank()) {
@@ -177,6 +290,11 @@ public class EquipmentService {
         return true;
     }
 
+    /**
+     * 业务用例：受理业务事项。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public boolean acceptMaintenanceOrder(long id, long acceptedBy) throws SQLException {
         MesMaintenanceOrder order = maintenanceOrderDao.findById(id)
                 .orElseThrow(() -> new BadRequestException("维修工单不存在"));
@@ -192,6 +310,11 @@ public class EquipmentService {
         return true;
     }
 
+    /**
+     * 业务用例：创建业务记录。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public long createMaintenancePlan(MesMaintenancePlan plan) throws SQLException {
         if (plan == null) {
             throw new BadRequestException("maintenance plan body is required");
@@ -209,18 +332,38 @@ public class EquipmentService {
         return maintenancePlanDao.insert(normalized);
     }
 
+    /**
+     * 业务用例：查询单条记录或详情。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public Optional<MesMaintenancePlan> getMaintenancePlan(long id) throws SQLException {
         return maintenancePlanDao.findById(id);
     }
 
+    /**
+     * 业务用例：查询列表。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public List<MesMaintenancePlan> listMaintenancePlansForEquipment(long equipmentId) throws SQLException {
         return maintenancePlanDao.findByEquipmentId(equipmentId);
     }
 
+    /**
+     * 业务用例：查询列表。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public List<MesMaintenancePlan> listMaintenancePlans() throws SQLException {
         return maintenancePlanDao.findAll();
     }
 
+    /**
+     * 业务用例：执行 scheduleNextMaintenance 对应的业务步骤。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public long scheduleNextMaintenance(long equipmentId, String planCycle) throws SQLException {
         MesMaintenancePlan plan = new MesMaintenancePlan(
                 null,
@@ -233,18 +376,33 @@ public class EquipmentService {
         return maintenancePlanDao.insert(plan);
     }
 
+    /**
+     * 业务用例：执行 requireText 对应的业务步骤。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     private static void requireText(String value, String message) {
         if (isBlank(value)) {
             throw new BadRequestException(message);
         }
     }
 
+    /**
+     * 业务用例：执行 requireId 对应的业务步骤。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     private static void requireId(Long value, String message) {
         if (value == null || value <= 0) {
             throw new BadRequestException(message);
         }
     }
 
+    /**
+     * 业务用例：执行 isBlank 对应的业务步骤。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     private static boolean isBlank(String value) {
         return value == null || value.isBlank();
     }

@@ -1,6 +1,10 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <!--
+      根 Maven 聚合工程：统一 Java/JUnit 版本并声明 backend 子模块。
+      前端由 npm/Vite 独立构建；backend 打 WAR 时再把 frontend/dist 作为 Web 根目录打包。
+    -->
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.mes</groupId>
@@ -9,12 +13,14 @@
     <packaging>pom</packaging>
     <name>MES System Parent</name>
 
+    <!-- Java 21 是编译和生产运行基线；所有源码、测试和资源统一使用 UTF-8。 -->
     <properties>
         <maven.compiler.release>21</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <junit.jupiter.version>5.10.3</junit.jupiter.version>
     </properties>
 
+    <!-- 父工程只提供测试公共依赖，业务和运行依赖在 backend/pom.xml。 -->
     <dependencies>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -24,10 +30,12 @@
         </dependency>
     </dependencies>
 
+    <!-- 当前 Maven Reactor 只有 Java 后端模块。 -->
     <modules>
         <module>backend</module>
     </modules>
 
+    <!-- compiler 固定字节码版本，surefire 发现并运行 JUnit 5 测试。 -->
     <build>
         <plugins>
             <plugin>

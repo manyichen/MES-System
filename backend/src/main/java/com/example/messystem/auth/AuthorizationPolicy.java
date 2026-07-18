@@ -1,10 +1,26 @@
+/*
+ * 答辩定位：登录认证与会话 模块的 AuthorizationPolicy。
+ * 分层职责：安全边界：在业务方法执行前完成身份、权限或数据范围判断，避免只依赖前端隐藏按钮。
+ * 典型调用链：由应用启动、HTTP 过滤器或各业务模块按需调用。
+ * 阅读提示：公开方法是本类对上层暴露的契约；private 方法只服务于本类内部实现。
+ */
 package com.example.messystem.auth;
 
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+/**
+ * 接口级 RBAC 权限白名单。
+ * 每条 Rule 由 HTTP 方法正则、去掉 /api 前缀后的路径正则、一个或多个可接受权限点组成；
+ * AuthFilter 采用 any-match，因此 {@code any(...)} 表示多个岗位权限满足任意一个即可访问。
+ * 列表未命中的接口返回空集合并被默认拒绝，新接口必须同步登记并补 AuthorizationPolicyTest。
+ */
 final class AuthorizationPolicy {
+    /**
+     * 权限规则按模块排列，便于从业务接口反查权限点。路径中的数字 ID 用 {@code \d+} 限定，
+     * 避免过宽正则把相似但未授权的接口一起放行。
+     */
     private static final List<Rule> RULES = List.of(
             rule("GET", "db/ping", "system.health.read"),
 
@@ -112,6 +128,10 @@ final class AuthorizationPolicy {
             rule("GET|PUT", "access/users/\\d+/data-scopes", "data_scope.manage")
     );
 
+    /**
+     * 内部实现步骤：执行 AuthorizationPolicy 对应的业务步骤。
+     * 该方法不构成外部接口，只用于收拢重复细节并保持主流程可读。
+     */
     private AuthorizationPolicy() {
     }
 
@@ -123,14 +143,26 @@ final class AuthorizationPolicy {
                 .orElse(Set.of());
     }
 
+    /**
+     * 内部实现步骤：执行 rule 对应的业务步骤。
+     * 该方法不构成外部接口，只用于收拢重复细节并保持主流程可读。
+     */
     private static Rule rule(String methods, String path, String permission) {
         return new Rule(Pattern.compile("^(?:" + methods + ")$"), Pattern.compile("^(?:" + path + ")$"), Set.of(permission));
     }
 
+    /**
+     * 内部实现步骤：执行 any 对应的业务步骤。
+     * 该方法不构成外部接口，只用于收拢重复细节并保持主流程可读。
+     */
     private static Rule any(String methods, String path, String... permissions) {
         return new Rule(Pattern.compile("^(?:" + methods + ")$"), Pattern.compile("^(?:" + path + ")$"), Set.of(permissions));
     }
 
+    /**
+     * 内部实现步骤：执行 Rule 对应的业务步骤。
+     * 该方法不构成外部接口，只用于收拢重复细节并保持主流程可读。
+     */
     private record Rule(Pattern methods, Pattern path, Set<String> permissions) {
         boolean matches(String method, String requestPath) {
             return methods.matcher(method).matches() && path.matcher(requestPath).matches();

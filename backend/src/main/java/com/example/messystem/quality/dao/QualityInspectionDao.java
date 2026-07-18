@@ -1,3 +1,9 @@
+/*
+ * 答辩定位：质检、质量追溯与返工 模块的 QualityInspectionDao。
+ * 分层职责：数据访问层：使用 JDBC 和 PreparedStatement 访问 PostgreSQL，集中处理 SQL 参数绑定、结果映射及需要原子性的事务。
+ * 典型调用链：Service -> 当前 DAO -> Db.getConnection() -> PostgreSQL；查询结果再映射为 entity/record。
+ * 阅读提示：公开方法是本类对上层暴露的契约；private 方法只服务于本类内部实现。
+ */
 package com.example.messystem.quality.dao;
 
 import com.example.messystem.common.Db;
@@ -12,8 +18,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * 质检、质量追溯与返工 的 QualityInspectionDao，承担当前文件头所述职责，并保持与相邻层的单向依赖。
+ */
 public class QualityInspectionDao {
 
+    /**
+     * 数据访问：写入业务记录并返回主键。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public long insert(MesQualityInspection inspection) throws SQLException {
         String sql = "INSERT INTO mes_quality_inspection (inspection_no, work_order_id, work_report_id, sample_qty, inspection_status, inspector_id, assigned_to, inspection_time, judgement_result) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = Db.getConnection(); PreparedStatement ps = conn.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
@@ -41,6 +55,11 @@ public class QualityInspectionDao {
         }
     }
 
+    /**
+     * 数据访问：按主键查询记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public Optional<MesQualityInspection> findById(long id) throws SQLException {
         String sql = SELECT_COLUMNS + " WHERE inspection_id = ?";
         try (Connection conn = Db.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -54,6 +73,11 @@ public class QualityInspectionDao {
         return Optional.empty();
     }
 
+    /**
+     * 数据访问：查询全部可见记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public List<MesQualityInspection> findAll() throws SQLException {
         String sql = SELECT_COLUMNS + " ORDER BY inspection_id ASC";
         try (Connection conn = Db.getConnection(); PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
@@ -65,6 +89,11 @@ public class QualityInspectionDao {
         }
     }
 
+    /**
+     * 数据访问：查询匹配记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public List<MesQualityInspection> findAssignedTo(long userId) throws SQLException {
         String sql = SELECT_COLUMNS + " WHERE assigned_to = ? OR inspector_id = ? ORDER BY inspection_id ASC";
         try (Connection conn = Db.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -78,6 +107,11 @@ public class QualityInspectionDao {
         }
     }
 
+    /**
+     * 数据访问：分配执行人员或资源。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public boolean assign(long inspectionId, long inspectorId) throws SQLException {
         String sql = """
                 update mes_quality_inspection
@@ -92,10 +126,20 @@ public class QualityInspectionDao {
         }
     }
 
+    /**
+     * 数据访问：提交业务事项。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public boolean submit(long inspectionId, long inspectorId, String submittedResult, String resultNote) throws SQLException {
         return submit(inspectionId, inspectorId, submittedResult, resultNote, true);
     }
 
+    /**
+     * 数据访问：提交业务事项。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public boolean submit(long inspectionId, long inspectorId, String submittedResult,
             String resultNote, boolean requireAssignment) throws SQLException {
         String sql = """
@@ -119,6 +163,11 @@ public class QualityInspectionDao {
         }
     }
 
+    /**
+     * 数据访问：更新业务记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public boolean updateStatus(long inspectionId, String status, String judgementResult, long reviewedBy) throws SQLException {
         String sql = """
                 update mes_quality_inspection
@@ -134,6 +183,11 @@ public class QualityInspectionDao {
         }
     }
 
+    /**
+     * 数据访问：查询匹配记录。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public Optional<TraceContext> findTraceContext(long inspectionId) throws SQLException {
         String sql = """
                 select co.order_id, wo.task_id, qi.work_order_id, coalesce(wr.batch_no, wo.batch_no) as batch_no
@@ -160,6 +214,11 @@ public class QualityInspectionDao {
         return Optional.empty();
     }
 
+    /**
+     * 数据访问：执行 ensureApprovedWorkReport 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private void ensureApprovedWorkReport(Connection conn, Long workOrderId, Long workReportId) throws SQLException {
         if (workReportId == null) {
             return;
@@ -181,6 +240,11 @@ public class QualityInspectionDao {
         }
     }
 
+    /**
+     * 数据访问：把 JDBC 结果行映射为领域对象。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private MesQualityInspection mapRow(ResultSet rs) throws SQLException {
         return new MesQualityInspection(
                 rs.getLong("inspection_id"),
@@ -209,16 +273,31 @@ public class QualityInspectionDao {
             FROM mes_quality_inspection
             """;
 
+    /**
+     * 数据访问：查询单条记录或详情。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private Long getLong(ResultSet rs, String column) throws SQLException {
         long value = rs.getLong(column);
         return rs.wasNull() ? null : value;
     }
 
+    /**
+     * 数据访问：执行 setLong 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     private static void setLong(PreparedStatement statement, int index, Long value) throws SQLException {
         if (value == null) statement.setNull(index, java.sql.Types.BIGINT);
         else statement.setLong(index, value);
     }
 
+    /**
+     * 数据访问：执行 TraceContext 对应的业务步骤。
+     * 实现要点：SQL 使用 PreparedStatement 绑定变量，避免拼接用户输入；ResultSet 在当前调用边界内完成映射和关闭。
+     * 调用方：对应模块的 Service；SQLException 由服务层转换为稳定的业务异常。
+     */
     public record TraceContext(Long orderId, Long taskId, Long workOrderId, String batchNo) {
     }
 }

@@ -1,3 +1,8 @@
+/**
+ * Playwright 前端端到端冒烟测试。
+ * 外部依赖：已运行的 MES 服务、Microsoft Edge、测试账号 admin/123456；
+ * 覆盖桌面 1440x900 与手机 390x844，检查登录布局、角色首页、系统管理表格和浏览器控制台错误。
+ */
 import assert from 'node:assert/strict'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -5,12 +10,14 @@ import { chromium } from 'playwright-core'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const output = path.resolve(root, '../backend/target')
+// URL 和浏览器路径可由环境变量覆盖，默认使用本机 Edge 与专用测试端口。
 const baseUrl = process.env.MES_SMOKE_URL || 'http://127.0.0.1:18082'
 const executablePath = process.env.EDGE_PATH
   || 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe'
 
 const browser = await chromium.launch({ executablePath, headless: true })
 
+/** 完成真实登录并等待角色首页出现，证明前端、认证接口和路由跳转链路可用。 */
 async function login(page) {
   await page.goto(`${baseUrl}/login`, { waitUntil: 'networkidle' })
   await page.selectOption('select', 'admin')
@@ -20,9 +27,11 @@ async function login(page) {
   await page.locator('.dashboard-page').waitFor()
 }
 
+/** 在指定视口运行布局和业务冒烟断言，并保存整页截图到 backend/target。 */
 async function run(viewport, suffix) {
   const page = await browser.newPage({ viewport })
   const errors = []
+  // 收集 console.error 和未捕获页面异常，最终统一断言为空。
   page.on('console', message => {
     if (message.type() === 'error') errors.push(message.text())
   })
@@ -30,6 +39,7 @@ async function run(viewport, suffix) {
 
   await page.goto(`${baseUrl}/login`, { waitUntil: 'networkidle' })
   const loginButton = await page.locator('.login-panel button[type="submit"]').boundingBox()
+  // 在浏览器上下文读取真实几何尺寸，防止手机端按钮或表单溢出视口。
   const loginLayout = await page.evaluate(() => {
     const panel = document.querySelector('.login-panel')
     const form = panel.querySelector('form')
@@ -62,6 +72,7 @@ async function run(viewport, suffix) {
   await page.close()
 }
 
+// 无论断言成功或失败都关闭浏览器进程，避免 CI/本机残留 Edge。
 try {
   await run({ width: 1440, height: 900 }, 'desktop')
   await run({ width: 390, height: 844 }, 'mobile')

@@ -2,6 +2,10 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <!--
+      MES 后端模块：Java 21 + Jakarta REST(JAX-RS) + Jersey + JDBC + PostgreSQL。
+      packaging=war 支持标准 Servlet 部署；日常运行则由 exec 插件启动内嵌 Tomcat。
+    -->
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.example</groupId>
@@ -9,6 +13,7 @@
     <version>1.0-SNAPSHOT</version>
     <packaging>war</packaging>
     <name>MES Backend</name>
+    <!-- 继承根 pom 的 Java、编码和通用测试配置。 -->
     <parent>
         <groupId>com.mes</groupId>
         <artifactId>mes-system-parent</artifactId>
@@ -16,6 +21,7 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
+    <!-- mes.host/mes.port 是 Maven exec 的默认监听地址，可由 -Dmes.port 等参数覆盖。 -->
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>21</maven.compiler.release>
@@ -25,29 +31,34 @@
     </properties>
 
     <dependencies>
+        <!-- PostgreSQL JDBC 驱动：Db.getConnection() 用它连接 MES_DB_* 指向的数据库。 -->
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <version>42.7.4</version>
             <scope>runtime</scope>
         </dependency>
+        <!-- CDI API/beans.xml 提供 Jakarta 组件发现契约。 -->
         <dependency>
             <groupId>jakarta.enterprise</groupId>
             <artifactId>jakarta.enterprise.cdi-api</artifactId>
             <version>4.1.0</version>
             <scope>provided</scope>
         </dependency>
+        <!-- JAX-RS 注解、过滤器和 Response 等 HTTP 接口类型。 -->
         <dependency>
             <groupId>jakarta.ws.rs</groupId>
             <artifactId>jakarta.ws.rs-api</artifactId>
             <version>4.0.0</version>
         </dependency>
+        <!-- Servlet API 供 Jersey 容器和自定义静态文件 Servlet 使用。 -->
         <dependency>
             <groupId>jakarta.servlet</groupId>
             <artifactId>jakarta.servlet-api</artifactId>
             <version>6.1.0</version>
             <scope>provided</scope>
         </dependency>
+        <!-- 内嵌 Tomcat：MesBackendApplication.main 可直接启动 HTTP 服务。 -->
         <dependency>
             <groupId>org.apache.tomcat.embed</groupId>
             <artifactId>tomcat-embed-core</artifactId>
@@ -65,41 +76,49 @@
             <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
+        <!-- Jersey Servlet 容器把 /api/* 请求分派给 Resource 类。 -->
         <dependency>
             <groupId>org.glassfish.jersey.containers</groupId>
             <artifactId>jersey-container-servlet-core</artifactId>
             <version>3.1.9</version>
         </dependency>
+        <!-- Jersey HK2 完成 JAX-RS 运行时对象创建和注入。 -->
         <dependency>
             <groupId>org.glassfish.jersey.inject</groupId>
             <artifactId>jersey-hk2</artifactId>
             <version>3.1.9</version>
         </dependency>
+        <!-- Jersey/Jackson 集成：自动在 Java entity/record 与 JSON 之间转换。 -->
         <dependency>
             <groupId>org.glassfish.jersey.media</groupId>
             <artifactId>jersey-media-json-jackson</artifactId>
             <version>3.1.9</version>
         </dependency>
+        <!-- Jackson 核心对象映射器，JacksonConfig 进一步注册时间类型。 -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
             <version>2.17.2</version>
         </dependency>
+        <!-- Java 日期时间模块负责 LocalDate/LocalDateTime 的 ISO JSON 格式。 -->
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
             <version>2.17.2</version>
         </dependency>
+        <!-- ZXing core 生成每条轮胎追溯记录对应的二维码矩阵。 -->
         <dependency>
             <groupId>com.google.zxing</groupId>
             <artifactId>core</artifactId>
             <version>3.5.3</version>
         </dependency>
+        <!-- ZXing JavaSE 图像适配层把二维码矩阵写成 PNG。 -->
         <dependency>
             <groupId>com.google.zxing</groupId>
             <artifactId>javase</artifactId>
             <version>3.5.3</version>
         </dependency>
+        <!-- PDFBox 生成轮胎标签/公开追溯所需的产品信息 PDF。 -->
         <dependency>
             <groupId>org.apache.pdfbox</groupId>
             <artifactId>pdfbox</artifactId>
@@ -130,6 +149,7 @@
                     </execution>
                 </executions>
             </plugin>
+            <!-- WAR 将 Vite 的 frontend/dist 作为 Web 根目录，并加入 WEB-INF/web.xml。 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
@@ -149,6 +169,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.5.2</version>
             </plugin>
+            <!-- exec:java 默认启动后端；database-migration execution 可单独执行迁移入口。 -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>

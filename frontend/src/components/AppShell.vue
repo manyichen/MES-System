@@ -1,4 +1,8 @@
 <script setup>
+/**
+ * 登录后的应用框架：提供响应式侧栏、按权限过滤的导航、账号信息、退出和后端在线状态。
+ * navigation 来自 modules.js；这里只负责通用导航交互，不包含具体业务接口。
+ */
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
@@ -19,6 +23,7 @@ const collapsed = ref(false)
 const mobileOpen = ref(false)
 const backendOnline = ref(null)
 
+// 根据后端登录响应中的角色/权限隐藏无权入口；后端仍是最终安全边界。
 const items = computed(() => navigation.filter(item => {
   if (session.isSuperAdmin) return true
   if (item.roles?.length && !item.roles.some(session.hasRole)) return false
@@ -26,16 +31,19 @@ const items = computed(() => navigation.filter(item => {
   return !item.permissions?.length || session.hasAnyPermission(item.permissions)
 }))
 
+/** 撤销后端会话、清理本地缓存并回到登录页。 */
 async function logout() {
   await session.logout()
   router.replace('/login')
 }
 
+/** 移动端导航后关闭抽屉，再交给 Vue Router 切换页面。 */
 function navigate(to) {
   mobileOpen.value = false
   router.push(to)
 }
 
+// 用 GET /api/auth/me 做轻量在线检查，同时也验证当前令牌仍可被后端识别。
 onMounted(async () => {
   try {
     await api.get('/auth/me')
@@ -45,6 +53,7 @@ onMounted(async () => {
   }
 })
 
+/** 模块导航按完整路径判断激活态，首页使用精确匹配。 */
 function isActive(item) {
   return route.path === item.to || (item.key === 'executive' && route.path.startsWith('/executive/'))
 }

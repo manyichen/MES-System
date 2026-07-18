@@ -1,6 +1,11 @@
+/**
+ * 中文展示契约测试：固定角色、状态、模块、资源、动作、批次号和错误消息的中文口径。
+ * 这些断言防止后端英文编码直接泄漏到答辩页面，或翻译表调整后出现术语不一致。
+ */
 import assert from 'node:assert/strict'
 import { businessValue, codeLabel, completedMessage, incompleteMessage, localizeMessage } from '../src/utils/display.js'
 
+// 每项是 [字段名, 原始接口值, 期望中文]。
 const cases = [
   ['workOrderStatus', 'CREATED', '已创建'],
   ['kittingStatus', 'READY', '已齐套'],

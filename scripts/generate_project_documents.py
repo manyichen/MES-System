@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
-"""Generate the three MES project documents from the supplied Word templates."""
+"""生成 MES 概要设计、开发计划和需求规约三份 Word 文档。
+
+外部依赖为 python-docx 和仓库根目录的 DOCX 模板。DOCX 本质是 ZIP + OOXML：脚本会处理
+Strict/Transitional 命名空间兼容、目录域、表格样式、页眉页脚和隐私元数据，最终写入 docs/。
+代码只生成文档，不连接 MES 数据库或调用业务接口。
+"""
 
 from __future__ import annotations
 
@@ -25,6 +30,10 @@ DOC_DATE = "2026年07月16日"
 
 
 def strict_to_transitional(source: Path) -> Path:
+    """把 Strict OOXML 模板内的命名空间 URI 转为 python-docx 可读取的 Transitional URI。
+
+    原 DOCX 不修改；转换后的临时 ZIP 写到系统临时目录，XML/关系文件逐项替换，其余媒体原样复制。
+    """
     replacements = {
         b"http://purl.oclc.org/ooxml/officeDocument/relationships": b"http://schemas.openxmlformats.org/officeDocument/2006/relationships",
         b"http://purl.oclc.org/ooxml/wordprocessingml/main": b"http://schemas.openxmlformats.org/wordprocessingml/2006/main",
@@ -62,6 +71,7 @@ def scrub_personal_metadata(path: Path) -> None:
 
 
 def clear_document_body(doc: Document) -> None:
+    """删除模板正文但保留 sectPr 页面设置，以复用纸张、页边距、页眉和页脚。"""
     body = doc._element.body
     for child in list(body):
         if child.tag != qn("w:sectPr"):
@@ -69,6 +79,7 @@ def clear_document_body(doc: Document) -> None:
 
 
 def set_cell_shading(cell, fill: str) -> None:
+    """通过底层 OOXML 为表格单元格设置十六进制底色。"""
     tc_pr = cell._tc.get_or_add_tcPr()
     shd = tc_pr.find(qn("w:shd"))
     if shd is None:
@@ -78,6 +89,7 @@ def set_cell_shading(cell, fill: str) -> None:
 
 
 def repeat_table_header(row) -> None:
+    """给表格首行添加 w:tblHeader，使跨页表格在每页重复表头。"""
     tr_pr = row._tr.get_or_add_trPr()
     tbl_header = OxmlElement("w:tblHeader")
     tbl_header.set(qn("w:val"), "true")
@@ -85,6 +97,7 @@ def repeat_table_header(row) -> None:
 
 
 def set_cell_text(cell, text: str, *, bold: bool = False, size: float = 9, center: bool = False) -> None:
+    """重建单元格段落和 run，统一字号、粗体、对齐、字体及多行文本。"""
     cell.text = ""
     lines = str(text).split("\n") if text is not None else [""]
     for index, line in enumerate(lines):
@@ -101,6 +114,7 @@ def set_cell_text(cell, text: str, *, bold: bool = False, size: float = 9, cente
 
 
 def format_doc(doc: Document, title: str, subject: str) -> None:
+    """设置文档属性、A4 页面、页边距、默认字体、标题样式、页眉和自动页码。"""
     props = doc.core_properties
     props.title = title
     props.subject = subject
@@ -156,6 +170,7 @@ def format_doc(doc: Document, title: str, subject: str) -> None:
 
 
 def add_field(paragraph, instruction: str, placeholder: str = "") -> None:
+    """插入 Word 域代码，例如 TOC 或 PAGE；打开 Word 更新域后生成目录/页码。"""
     run = paragraph.add_run()
     begin = OxmlElement("w:fldChar")
     begin.set(qn("w:fldCharType"), "begin")
@@ -172,6 +187,7 @@ def add_field(paragraph, instruction: str, placeholder: str = "") -> None:
 
 
 def add_cover(doc: Document, document_title: str, document_no: str) -> None:
+    """创建统一封面，写入系统名、文档标题、编号、版本、日期和项目单位。"""
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     p.paragraph_format.space_before = Pt(42)
@@ -213,6 +229,7 @@ def add_cover(doc: Document, document_title: str, document_no: str) -> None:
 
 
 def add_revision_history(doc: Document, content: str) -> None:
+    """添加修改履历页和首次发布记录，随后插入分页符。"""
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     r = p.add_run("修 改 履 历")
@@ -231,6 +248,7 @@ def add_revision_history(doc: Document, content: str) -> None:
 
 
 def add_toc(doc: Document, max_level: int = 3) -> None:
+    """插入最多 max_level 级的自动目录域及分页符，目录内容由 Word 更新域生成。"""
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     r = p.add_run("目  录")
@@ -244,6 +262,7 @@ def add_toc(doc: Document, max_level: int = 3) -> None:
 
 
 def add_heading(doc: Document, text: str, level: int = 1):
+    """添加指定级别标题并设置与后段同页，返回段落供调用方继续扩展。"""
     p = doc.add_paragraph(style=f"Heading {level}")
     p.paragraph_format.keep_with_next = True
     p.add_run(text)
@@ -251,6 +270,7 @@ def add_heading(doc: Document, text: str, level: int = 1):
 
 
 def add_body(doc: Document, text: str, *, first_indent: bool = True, bold_prefix: str | None = None):
+    """添加正文段落，可控制中文首行缩进并将指定前缀加粗。"""
     p = doc.add_paragraph()
     p.paragraph_format.first_line_indent = Cm(0.74) if first_indent else None
     if bold_prefix and text.startswith(bold_prefix):
@@ -262,6 +282,7 @@ def add_body(doc: Document, text: str, *, first_indent: bool = True, bold_prefix
 
 
 def add_bullets(doc: Document, items: list[str], *, numbered: bool = False) -> None:
+    """添加统一悬挂缩进的项目符号或人工编号列表。"""
     for index, item in enumerate(items, 1):
         p = doc.add_paragraph()
         p.paragraph_format.left_indent = Cm(0.7)
@@ -271,6 +292,7 @@ def add_bullets(doc: Document, items: list[str], *, numbered: bool = False) -> N
 
 
 def add_table(doc: Document, headers: list[str], rows: list[list[str]], widths: list[float] | None = None):
+    """创建带网格、蓝色表头、重复标题行和可选列宽的标准项目文档表格。"""
     table = doc.add_table(rows=1, cols=len(headers))
     table.style = "Table Grid"
     table.alignment = WD_TABLE_ALIGNMENT.CENTER
@@ -292,6 +314,7 @@ def add_table(doc: Document, headers: list[str], rows: list[list[str]], widths: 
 
 
 def add_caption(doc: Document, text: str) -> None:
+    """添加居中的图表题注，并设置与相邻正文协调的段前段后距。"""
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     p.paragraph_format.space_before = Pt(3)
@@ -302,6 +325,7 @@ def add_caption(doc: Document, text: str) -> None:
 
 
 def build_overview_design() -> Path:
+    """基于概要设计模板生成总体架构、模块、接口、数据、安全、部署与测试章节。"""
     template = ROOT / "项目概要设计书.docx"
     output = DOCS / "项目概要设计书.docx"
     doc = Document(template)
@@ -455,10 +479,12 @@ def build_overview_design() -> Path:
 
 
 def set_plan_cell(table, row: int, col: int, text: str, *, bold: bool = False, center: bool = False, size: float = 8.5) -> None:
+    """开发计划表的单元格便捷包装，统一调用 set_cell_text。"""
     set_cell_text(table.cell(row, col), text, bold=bold, center=center, size=size)
 
 
 def build_development_plan() -> Path:
+    """生成项目范围、组织分工、里程碑、WBS、风险、质量和配置管理计划。"""
     template = ROOT / "项目开发计划书.docx"
     output = DOCS / "项目开发计划书.docx"
     doc = Document(template)
@@ -562,6 +588,7 @@ def build_development_plan() -> Path:
 def add_requirement_detail(doc: Document, number: str, req_id: str, name: str, priority: str,
                            background: str, functions: str, constraints: str, data: str,
                            outputs: str, exceptions: str, acceptance: str) -> None:
+    """以固定字段表添加一条详细需求，覆盖背景、功能、约束、数据、输出、异常和验收标准。"""
     add_heading(doc, f"{number} {name}", 3)
     rows = [
         ["需求编号", req_id],
@@ -589,6 +616,7 @@ def add_requirement_detail(doc: Document, number: str, req_id: str, name: str, p
 
 
 def build_requirements() -> Path:
+    """转换并读取需求规约模板，生成角色、功能、非功能、接口、数据与验收需求。"""
     source = ROOT / "需求规约.docx"
     template = strict_to_transitional(source)
     output = DOCS / "需求规约.docx"
@@ -868,6 +896,7 @@ def build_requirements() -> Path:
 
 
 def main() -> None:
+    """创建输出目录，顺序生成三份文档，清除作者元数据并打印最终路径。"""
     DOCS.mkdir(exist_ok=True)
     outputs = [build_overview_design(), build_development_plan(), build_requirements()]
     for path in outputs:

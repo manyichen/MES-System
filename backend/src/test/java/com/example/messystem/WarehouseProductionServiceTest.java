@@ -1,3 +1,9 @@
+/*
+ * 答辩定位：MES 应用基础 模块的 WarehouseProductionServiceTest。
+ * 分层职责：自动化回归测试：固定关键业务规则、接口契约和架构边界，防止重构时出现静默回归。
+ * 典型调用链：Maven Surefire -> JUnit 5 -> 被测类；测试替身用于隔离远程数据库或文件系统。
+ * 阅读提示：公开方法是本类对上层暴露的契约；private 方法只服务于本类内部实现。
+ */
 package com.example.messystem;
 
 import com.example.messystem.common.Db;
@@ -30,16 +36,29 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/**
+ * MES 应用基础 的 WarehouseProductionServiceTest，承担当前文件头所述职责，并保持与相邻层的单向依赖。
+ */
 @Execution(ExecutionMode.SAME_THREAD)
 class WarehouseProductionServiceTest {
+    /** 业务服务依赖；控制器只通过它编排用例，不直接访问数据库。 */
     private WarehouseService warehouseService;
+    /** 业务服务依赖；控制器只通过它编排用例，不直接访问数据库。 */
     private ProductionService productionService;
 
+    /**
+     * 回归场景：验证 protectRemoteDatabase 所描述的行为。
+     * 测试只固定可观察结果和关键边界，失败表示接口契约、权限规则、状态流或架构约束发生变化。
+     */
     @BeforeAll
     static void protectRemoteDatabase() {
         RemoteDatabaseTestGuard.requireExplicitOptInForRemoteDatabase();
     }
 
+    /**
+     * 回归场景：验证 setUp 所描述的行为。
+     * 测试只固定可观察结果和关键边界，失败表示接口契约、权限规则、状态流或架构约束发生变化。
+     */
     @BeforeEach
     void setUp() throws SQLException {
         cleanupTestData();
@@ -47,11 +66,19 @@ class WarehouseProductionServiceTest {
         productionService = new ProductionService();
     }
 
+    /**
+     * 回归场景：验证 tearDown 所描述的行为。
+     * 测试只固定可观察结果和关键边界，失败表示接口契约、权限规则、状态流或架构约束发生变化。
+     */
     @AfterEach
     void tearDown() throws SQLException {
         cleanupTestData();
     }
 
+    /**
+     * 回归场景：验证 approveRequisitionShouldReserveOrDeductInventory 所描述的行为。
+     * 测试只固定可观察结果和关键边界，失败表示接口契约、权限规则、状态流或架构约束发生变化。
+     */
     @Test
     void approveRequisitionShouldReserveOrDeductInventory() {
         MesMaterialRequisition requisition = createDatabaseRequisition(new BigDecimal("100"));
@@ -67,6 +94,10 @@ class WarehouseProductionServiceTest {
         assertEquals("APPROVED", warehouseService.getRequisition(requisition.requisitionId).requestStatus);
     }
 
+    /**
+     * 回归场景：验证 completePickingShouldCreateDeliveryTaskAndConfirmReceiptShouldDeductInventory 所描述的行为。
+     * 测试只固定可观察结果和关键边界，失败表示接口契约、权限规则、状态流或架构约束发生变化。
+     */
     @Test
     void completePickingShouldCreateDeliveryTaskAndConfirmReceiptShouldDeductInventory() {
         MesMaterialRequisition requisition = createDatabaseRequisition(new BigDecimal("100"));
@@ -93,6 +124,10 @@ class WarehouseProductionServiceTest {
                 .anyMatch(transaction -> Long.valueOf(pickingTaskId).equals(transaction.sourceDocId)));
     }
 
+    /**
+     * 回归场景：验证 approveRequisitionShouldFailBeforeWarehouseReceive 所描述的行为。
+     * 测试只固定可观察结果和关键边界，失败表示接口契约、权限规则、状态流或架构约束发生变化。
+     */
     @Test
     void approveRequisitionShouldFailBeforeWarehouseReceive() {
         MesMaterialRequisition requisition = createDatabaseRequisition(new BigDecimal("100"));
@@ -100,6 +135,10 @@ class WarehouseProductionServiceTest {
         assertThrows(BadRequestException.class, () -> warehouseService.approveRequisition(requisition.requisitionId, 1L));
     }
 
+    /**
+     * 回归场景：验证 approveWorkReportShouldCreatePieceworkWage 所描述的行为。
+     * 测试只固定可观察结果和关键边界，失败表示接口契约、权限规则、状态流或架构约束发生变化。
+     */
     @Test
     void approveWorkReportShouldCreatePieceworkWage() {
         String suffix = "TEST-" + System.nanoTime();
@@ -125,6 +164,10 @@ class WarehouseProductionServiceTest {
                 .wageAmount);
     }
 
+    /**
+     * 回归场景：验证 byWorkOrderApisShouldReturnBModuleRecordsOnly 所描述的行为。
+     * 测试只固定可观察结果和关键边界，失败表示接口契约、权限规则、状态流或架构约束发生变化。
+     */
     @Test
     void byWorkOrderApisShouldReturnBModuleRecordsOnly() {
         long workOrderId = createTestWorkOrder("WO-TEST-" + System.nanoTime(), 100);
@@ -145,6 +188,10 @@ class WarehouseProductionServiceTest {
                 .anyMatch(row -> row.reportId.equals(createdReport.reportId)));
     }
 
+    /**
+     * 回归场景：验证 approveRequisitionShouldFailWhenInventoryIsNotEnough 所描述的行为。
+     * 测试只固定可观察结果和关键边界，失败表示接口契约、权限规则、状态流或架构约束发生变化。
+     */
     @Test
     void approveRequisitionShouldFailWhenInventoryIsNotEnough() {
         MesMaterialRequisition requisition = createDatabaseRequisition(new BigDecimal("5"));
@@ -153,6 +200,10 @@ class WarehouseProductionServiceTest {
         assertThrows(BadRequestException.class, () -> warehouseService.approveRequisition(requisition.requisitionId, 1L));
     }
 
+    /**
+     * 回归场景：验证 externalPurchasesAcrossBatchesShouldSatisfyRequisitionWithoutSpecifiedBatch 所描述的行为。
+     * 测试只固定可观察结果和关键边界，失败表示接口契约、权限规则、状态流或架构约束发生变化。
+     */
     @Test
     void externalPurchasesAcrossBatchesShouldSatisfyRequisitionWithoutSpecifiedBatch() {
         long workOrderId = createTestWorkOrder("WO-TEST-" + System.nanoTime(), 100);
@@ -190,6 +241,10 @@ class WarehouseProductionServiceTest {
                 .compareTo(BigDecimal.ZERO));
     }
 
+    /**
+     * 回归场景：验证 confirmReceiptShouldFailWhenRepeated 所描述的行为。
+     * 测试只固定可观察结果和关键边界，失败表示接口契约、权限规则、状态流或架构约束发生变化。
+     */
     @Test
     void confirmReceiptShouldFailWhenRepeated() {
         MesMaterialRequisition requisition = createDatabaseRequisition(new BigDecimal("100"));
@@ -204,6 +259,10 @@ class WarehouseProductionServiceTest {
         assertThrows(BadRequestException.class, () -> warehouseService.confirmDeliveryReceipt(deliveryTaskId));
     }
 
+    /**
+     * 回归场景：验证 approveWorkReportShouldFailWhenRepeatedAndNotCreateDuplicateWage 所描述的行为。
+     * 测试只固定可观察结果和关键边界，失败表示接口契约、权限规则、状态流或架构约束发生变化。
+     */
     @Test
     void approveWorkReportShouldFailWhenRepeatedAndNotCreateDuplicateWage() {
         long workOrderId = createTestWorkOrder("WO-TEST-" + System.nanoTime(), 100);
@@ -224,10 +283,22 @@ class WarehouseProductionServiceTest {
                 .count());
     }
 
+    /**
+     * 回归场景：验证 createDatabaseRequisition 所描述的行为。
+     * 测试只固定可观察结果和关键边界，失败表示接口契约、权限规则、状态流或架构约束发生变化。
+     */
     private MesMaterialRequisition createDatabaseRequisition(BigDecimal inventoryQty) {
+        /**
+         * 回归场景：验证 createDatabaseRequisition 所描述的行为。
+         * 测试只固定可观察结果和关键边界，失败表示接口契约、权限规则、状态流或架构约束发生变化。
+         */
         return createDatabaseRequisition(inventoryQty, createTestWorkOrder("WO-TEST-" + System.nanoTime(), 100));
     }
 
+    /**
+     * 回归场景：验证 pickingTaskIdFor 所描述的行为。
+     * 测试只固定可观察结果和关键边界，失败表示接口契约、权限规则、状态流或架构约束发生变化。
+     */
     private long pickingTaskIdFor(long requisitionId) {
         return warehouseService.listPickingTasks().stream()
                 .filter(task -> Objects.equals(task.requisitionId, requisitionId))
@@ -236,6 +307,10 @@ class WarehouseProductionServiceTest {
                 .pickingTaskId;
     }
 
+    /**
+     * 回归场景：验证 deliveryTaskIdFor 所描述的行为。
+     * 测试只固定可观察结果和关键边界，失败表示接口契约、权限规则、状态流或架构约束发生变化。
+     */
     private long deliveryTaskIdFor(long pickingTaskId) {
         return warehouseService.listDeliveryTasks().stream()
                 .filter(task -> Objects.equals(task.pickingTaskId, pickingTaskId))
@@ -244,10 +319,22 @@ class WarehouseProductionServiceTest {
                 .deliveryTaskId;
     }
 
+    /**
+     * 回归场景：验证 createDatabaseRequisition 所描述的行为。
+     * 测试只固定可观察结果和关键边界，失败表示接口契约、权限规则、状态流或架构约束发生变化。
+     */
     private MesMaterialRequisition createDatabaseRequisition(BigDecimal inventoryQty, long workOrderId) {
+        /**
+         * 回归场景：验证 createDatabaseRequisition 所描述的行为。
+         * 测试只固定可观察结果和关键边界，失败表示接口契约、权限规则、状态流或架构约束发生变化。
+         */
         return createDatabaseRequisition(inventoryQty, workOrderId, true);
     }
 
+    /**
+     * 回归场景：验证 createDatabaseRequisition 所描述的行为。
+     * 测试只固定可观察结果和关键边界，失败表示接口契约、权限规则、状态流或架构约束发生变化。
+     */
     private MesMaterialRequisition createDatabaseRequisition(
             BigDecimal inventoryQty, long workOrderId, boolean specifyBatch) {
         String suffix = "TEST-" + System.nanoTime();
@@ -294,13 +381,25 @@ class WarehouseProductionServiceTest {
         return warehouseService.createRequisition(requisition);
     }
 
+    /**
+     * 回归场景：验证 cleanupTestData 所描述的行为。
+     * 测试只固定可观察结果和关键边界，失败表示接口契约、权限规则、状态流或架构约束发生变化。
+     */
     private static void cleanupTestData() throws SQLException {
         try (Connection connection = Db.getConnection()) {
             delete(connection, """
                     delete from mes_piecework_wage
+                    /**
+                     * 回归场景：验证 in 所描述的行为。
+                     * 测试只固定可观察结果和关键边界，失败表示接口契约、权限规则、状态流或架构约束发生变化。
+                     */
                     where report_id in (
                         select report_id from mes_work_report
                         where report_no like 'WR-TEST-%'
+                           /**
+                            * 回归场景：验证 in 所描述的行为。
+                            * 测试只固定可观察结果和关键边界，失败表示接口契约、权限规则、状态流或架构约束发生变化。
+                            */
                            or work_order_id in (
                                select work_order_id from mes_work_order where work_order_no like 'WO-TEST-%'
                            )
@@ -309,15 +408,27 @@ class WarehouseProductionServiceTest {
             delete(connection, """
                     delete from mes_work_report
                     where report_no like 'WR-TEST-%'
+                       /**
+                        * 回归场景：验证 in 所描述的行为。
+                        * 测试只固定可观察结果和关键边界，失败表示接口契约、权限规则、状态流或架构约束发生变化。
+                        */
                        or work_order_id in (
                            select work_order_id from mes_work_order where work_order_no like 'WO-TEST-%'
                        )
                     """);
             delete(connection, """
                     delete from mes_inventory_transaction
+                    /**
+                     * 回归场景：验证 in 所描述的行为。
+                     * 测试只固定可观察结果和关键边界，失败表示接口契约、权限规则、状态流或架构约束发生变化。
+                     */
                     where inventory_id in (
                         select inventory_id from mes_inventory where batch_no like 'BATCH-TEST-%'
                     )
+                       /**
+                        * 回归场景：验证 in 所描述的行为。
+                        * 测试只固定可观察结果和关键边界，失败表示接口契约、权限规则、状态流或架构约束发生变化。
+                        */
                        or source_doc_id in (
                         select p.picking_task_id
                         from mes_picking_task p
@@ -327,6 +438,10 @@ class WarehouseProductionServiceTest {
                     """);
             delete(connection, """
                     delete from mes_robot_delivery_task
+                    /**
+                     * 回归场景：验证 in 所描述的行为。
+                     * 测试只固定可观察结果和关键边界，失败表示接口契约、权限规则、状态流或架构约束发生变化。
+                     */
                     where picking_task_id in (
                         select p.picking_task_id
                         from mes_picking_task p
@@ -336,12 +451,20 @@ class WarehouseProductionServiceTest {
                     """);
             delete(connection, """
                     delete from mes_picking_task
+                    /**
+                     * 回归场景：验证 in 所描述的行为。
+                     * 测试只固定可观察结果和关键边界，失败表示接口契约、权限规则、状态流或架构约束发生变化。
+                     */
                     where requisition_id in (
                         select requisition_id from mes_material_requisition where requisition_no like 'REQ-TEST-%'
                     )
                     """);
             delete(connection, """
                     delete from mes_material_requisition_item
+                    /**
+                     * 回归场景：验证 in 所描述的行为。
+                     * 测试只固定可观察结果和关键边界，失败表示接口契约、权限规则、状态流或架构约束发生变化。
+                     */
                     where requisition_id in (
                         select requisition_id from mes_material_requisition where requisition_no like 'REQ-TEST-%'
                     )
@@ -354,6 +477,10 @@ class WarehouseProductionServiceTest {
             delete(connection, "delete from mes_material where material_code like 'MAT-TEST-%'");
             delete(connection, """
                     delete from mes_work_order_operation_log
+                    /**
+                     * 回归场景：验证 in 所描述的行为。
+                     * 测试只固定可观察结果和关键边界，失败表示接口契约、权限规则、状态流或架构约束发生变化。
+                     */
                     where work_order_id in (
                         select work_order_id from mes_work_order where work_order_no like 'WO-TEST-%'
                     )
@@ -362,6 +489,10 @@ class WarehouseProductionServiceTest {
         }
     }
 
+    /**
+     * 回归场景：验证 createTestWorkOrder 所描述的行为。
+     * 测试只固定可观察结果和关键边界，失败表示接口契约、权限规则、状态流或架构约束发生变化。
+     */
     private static long createTestWorkOrder(String workOrderNo, int plannedQty) {
         String sql = """
                 insert into mes_work_order
@@ -380,10 +511,18 @@ class WarehouseProductionServiceTest {
                 return rs.getLong(1);
             }
         } catch (SQLException e) {
+            /**
+             * 回归场景：验证 IllegalStateException 所描述的行为。
+             * 测试只固定可观察结果和关键边界，失败表示接口契约、权限规则、状态流或架构约束发生变化。
+             */
             throw new IllegalStateException(e);
         }
     }
 
+    /**
+     * 回归场景：验证 delete 所描述的行为。
+     * 测试只固定可观察结果和关键边界，失败表示接口契约、权限规则、状态流或架构约束发生变化。
+     */
     private static void delete(Connection connection, String sql) throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.executeUpdate();

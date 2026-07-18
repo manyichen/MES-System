@@ -1,4 +1,8 @@
 <script setup>
+/**
+ * 登录后的角色首页，对应 GET /api/dashboard/my-summary。
+ * 后端 RoleDashboardService 根据当前岗位聚合指标、待办和快捷入口，前端只负责展示和路由跳转。
+ */
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ArrowRight, RefreshCw } from 'lucide-vue-next'
@@ -10,6 +14,7 @@ const dashboard = ref({ metrics: [], todos: [], prohibitedActions: [] })
 const loading = ref(false)
 const error = ref('')
 const generatedAt = ref(new Date())
+// computed 为模板提供稳定默认数组，接口加载前不会出现空值异常。
 const priorityTodos = computed(() => dashboard.value.todos || [])
 
 const targetRoutes = {
@@ -19,6 +24,7 @@ const targetRoutes = {
   systemOps: '/module/access', dashboard: '/'
 }
 
+/** 刷新当前角色可见的指标和待办；错误通过公共翻译工具转为可读消息。 */
 async function load() {
   loading.value = true
   error.value = ''
@@ -28,6 +34,7 @@ async function load() {
   } catch (cause) { error.value = `工作台数据加载未完成：${localizeMessage(cause.message)}` } finally { loading.value = false }
 }
 
+/** 后端待办返回稳定 target 编码，前端在这里映射为实际 Vue 路由。 */
 function go(target) { router.push(targetRoutes[target] || '/') }
 onMounted(load)
 </script>

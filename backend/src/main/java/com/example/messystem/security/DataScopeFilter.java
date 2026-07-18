@@ -1,3 +1,9 @@
+/*
+ * 答辩定位：授权策略与数据范围 模块的 DataScopeFilter。
+ * 分层职责：安全边界：在业务方法执行前完成身份、权限或数据范围判断，避免只依赖前端隐藏按钮。
+ * 典型调用链：由应用启动、HTTP 过滤器或各业务模块按需调用。
+ * 阅读提示：公开方法是本类对上层暴露的契约；private 方法只服务于本类内部实现。
+ */
 package com.example.messystem.security;
 
 import com.example.messystem.auth.AuthFilter;
@@ -18,12 +24,20 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * 授权策略与数据范围 的 DataScopeFilter，承担当前文件头所述职责，并保持与相邻层的单向依赖。
+ */
 @Provider
 @Priority(Priorities.AUTHORIZATION + 10)
 public class DataScopeFilter implements ContainerRequestFilter, ContainerResponseFilter {
     private static final String SCOPE_PROPERTY = DataScopeFilter.class.getName() + ".scope";
+    /** 业务服务依赖；控制器只通过它编排用例，不直接访问数据库。 */
     private final DataScopeService service = new DataScopeService();
 
+    /**
+     * 公共能力：执行 filter 对应的业务步骤。
+     * 由 DataScopeFilter 的上层调用者使用；返回值或异常继续遵循当前类的职责边界。
+     */
     @Override
     public void filter(ContainerRequestContext request) {
         AuthenticatedUser user = AuthFilter.currentUser(request);
@@ -39,6 +53,10 @@ public class DataScopeFilter implements ContainerRequestFilter, ContainerRespons
         }
     }
 
+    /**
+     * 公共能力：执行 filter 对应的业务步骤。
+     * 由 DataScopeFilter 的上层调用者使用；返回值或异常继续遵循当前类的职责边界。
+     */
     @Override
     @SuppressWarnings({"rawtypes", "unchecked"})
     public void filter(ContainerRequestContext request, ContainerResponseContext response) {
@@ -56,6 +74,10 @@ public class DataScopeFilter implements ContainerRequestFilter, ContainerRespons
         }
     }
 
+    /**
+     * 内部实现步骤：执行 enforcePath 对应的业务步骤。
+     * 该方法不构成外部接口，只用于收拢重复细节并保持主流程可读。
+     */
     private static void enforcePath(ScopeSnapshot scope, String path) {
         Long id;
         if ((id = match(path, "^orders/(\\d+)(?:/.*)?$")) != null) scope.requireOrder(id);
@@ -81,11 +103,19 @@ public class DataScopeFilter implements ContainerRequestFilter, ContainerRespons
         else if ((id = match(path, "^robots/(\\d+)(?:/.*)?$")) != null) scope.requireWarehouseEntity("robot", id);
     }
 
+    /**
+     * 内部实现步骤：执行 match 对应的业务步骤。
+     * 该方法不构成外部接口，只用于收拢重复细节并保持主流程可读。
+     */
     private static Long match(String value, String regex) {
         Matcher matcher = Pattern.compile(regex).matcher(value);
         return matcher.matches() ? Long.valueOf(matcher.group(1)) : null;
     }
 
+    /**
+     * 内部实现步骤：规范化输入并补齐默认值。
+     * 该方法不构成外部接口，只用于收拢重复细节并保持主流程可读。
+     */
     private static String normalize(String path) {
         return path == null ? "" : path.replaceFirst("^/+", "").replaceFirst("/+$", "");
     }

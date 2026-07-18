@@ -1,3 +1,9 @@
+/*
+ * 答辩定位：轮胎标签与公开追溯 模块的 TireTraceService。
+ * 分层职责：业务服务层：实现一个或一组用例，负责必填校验、角色边界、状态机和跨 DAO 编排；数据库细节下沉到 DAO。
+ * 典型调用链：Resource -> 当前 Service -> DAO；外部 AI、文件系统等依赖也由服务边界统一编排。
+ * 阅读提示：公开方法是本类对上层暴露的契约；private 方法只服务于本类内部实现。
+ */
 package com.example.messystem.trace.service;
 
 import com.example.messystem.common.BadRequestException;
@@ -22,12 +28,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * 轮胎标签与公开追溯 的 TireTraceService，承担当前文件头所述职责，并保持与相邻层的单向依赖。
+ */
 public class TireTraceService {
     private static final int MAX_BATCH_SIZE = 1000;
     private static final SecureRandom RANDOM = new SecureRandom();
+    /** 数据访问依赖，集中封装 JDBC、SQL 参数绑定和结果映射。 */
     private final TireTraceDao dao;
+    /** 业务服务依赖；控制器只通过它编排用例，不直接访问数据库。 */
     private final TraceFileService fileService;
 
+    /**
+     * 业务用例：执行 TireTraceService 对应的业务步骤。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public TireTraceService() {
         this(new TireTraceDao(), new TraceFileService());
     }
@@ -85,6 +101,11 @@ public class TireTraceService {
         }
     }
 
+    /**
+     * 业务用例：查询列表。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public List<TireTraceItem> list() {
         try {
             return dao.findAll();
@@ -93,12 +114,22 @@ public class TireTraceService {
         }
     }
 
+    /**
+     * 业务用例：查询列表。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public List<TireTraceItem> list(Set<Long> warehouseIds) {
         List<TireTraceItem> rows = list();
         if (warehouseIds == null) return rows;
         return rows.stream().filter(item -> item.warehouseId() != null && warehouseIds.contains(item.warehouseId())).toList();
     }
 
+    /**
+     * 业务用例：执行 requireById 对应的业务步骤。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public TireTraceItem requireById(long tireId) {
         try {
             return dao.findById(tireId).orElseThrow(() -> new NotFoundException("轮胎实例不存在"));
@@ -107,6 +138,11 @@ public class TireTraceService {
         }
     }
 
+    /**
+     * 业务用例：执行 requireByToken 对应的业务步骤。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public TireTraceItem requireByToken(String token) {
         if (token == null || token.isBlank()) throw new BadRequestException("二维码访问令牌不能为空");
         try {
@@ -116,6 +152,11 @@ public class TireTraceService {
         }
     }
 
+    /**
+     * 业务用例：执行 publicView 对应的业务步骤。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public Map<String, Object> publicView(String token) {
         TireTraceItem tire = requireByToken(token);
         Map<String, Object> result = new LinkedHashMap<>();
@@ -138,6 +179,11 @@ public class TireTraceService {
         return result;
     }
 
+    /**
+     * 业务用例：读取二维码文件。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public Path qrCode(long tireId) {
         try {
             return fileService.resolve(dao.findQrPath(tireId));
@@ -148,6 +194,11 @@ public class TireTraceService {
         }
     }
 
+    /**
+     * 业务用例：执行 document 对应的业务步骤。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public Path document(long tireId, String type) {
         try {
             return fileService.resolve(dao.findDocumentPath(tireId, type));
@@ -159,10 +210,20 @@ public class TireTraceService {
         }
     }
 
+    /**
+     * 业务用例：执行 publicDocument 对应的业务步骤。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public Path publicDocument(String token) {
         return document(requireByToken(token).tireId(), "PDF");
     }
 
+    /**
+     * 业务用例：执行 recordPrint 对应的业务步骤。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     public void recordPrint(long tireId, long printedBy, String remark) {
         requireById(tireId);
         try {
@@ -172,6 +233,11 @@ public class TireTraceService {
         }
     }
 
+    /**
+     * 业务用例：执行 repairFiles 对应的业务步骤。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     private synchronized TraceFileBundle repairFiles(long tireId) {
         TireTraceItem tire = requireById(tireId);
         if (tire.targetUrl() == null || tire.targetUrl().isBlank()) {
@@ -193,6 +259,11 @@ public class TireTraceService {
         }
     }
 
+    /**
+     * 业务用例：校验业务输入与约束。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     private void validate(TireGenerationRequest request) {
         if (request == null) throw new BadRequestException("轮胎二维码生成参数不能为空");
         if (request.workOrderId() == null || request.workOrderId() <= 0) throw new BadRequestException("生产工单ID不能为空");
@@ -202,18 +273,33 @@ public class TireTraceService {
         if (request.quantity() > MAX_BATCH_SIZE) throw new BadRequestException("单次最多生成 " + MAX_BATCH_SIZE + " 条轮胎二维码");
     }
 
+    /**
+     * 业务用例：执行 buildSerialNo 对应的业务步骤。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     private String buildSerialNo(TireGenerationContext context, int sequence) {
         return "TIRE-" + LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE)
                 + "-" + String.format("%06d", context.workOrderId())
                 + "-" + String.format("%06d", sequence);
     }
 
+    /**
+     * 业务用例：执行 nextToken 对应的业务步骤。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     private String nextToken() {
         byte[] bytes = new byte[18];
         RANDOM.nextBytes(bytes);
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 
+    /**
+     * 业务用例：执行 withQrCode 对应的业务步骤。
+     * 服务层在调用 DAO 前完成输入、关联关系和状态流转校验，保证前端绕过页面限制时规则仍然成立。
+     * 异常语义：参数或状态不合法抛 BadRequestException，记录不存在抛 NotFoundException，数据库故障保留原因为 5xx。
+     */
     private TireTraceItem withQrCode(TireTraceItem tire, String token, String targetUrl) {
         return new TireTraceItem(
                 tire.tireId(), tire.serialNo(), tire.traceCode(), tire.workOrderId(), tire.workOrderNo(),
