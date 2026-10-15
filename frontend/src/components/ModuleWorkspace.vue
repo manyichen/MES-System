@@ -7,7 +7,10 @@
  */
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { ExternalLink, Plus, RefreshCw, Search, X } from 'lucide-vue-next'
+import {
+  BadgeCheck, Boxes, ClipboardList, ExternalLink, Factory, MessageSquareText,
+  Plus, RefreshCw, Route, Search, ShieldCheck, Sparkles, Warehouse, Wrench, X
+} from 'lucide-vue-next'
 import { api } from '../api/http'
 import { modules } from '../config/modules'
 import { businessValue, completedMessage, incompleteMessage, localizeMessage } from '../utils/display.js'
@@ -28,6 +31,20 @@ const notice = ref('')
 const query = ref('')
 const dialog = ref(null)
 const preview = ref(null)
+const moduleIcons = { planning: ClipboardList, production: Factory, warehouse: Warehouse, quality: BadgeCheck, equipment: Wrench, process: Route, trace: Boxes, feedback: MessageSquareText, access: ShieldCheck }
+const moduleDescriptions = {
+  planning: '从订单到工单，快速掌握计划执行进度',
+  production: '聚焦现场任务、报工与异常处理',
+  warehouse: '统一处理物料、库存与出入库业务',
+  quality: '集中查看检验结果与质量状态',
+  equipment: '快速跟踪设备状态、故障与维护任务',
+  process: '维护产品、工艺路线与生产基础资料',
+  trace: '按批次与序列号追踪产品全流程',
+  feedback: '汇总生产问题并推动闭环处理',
+  access: '管理系统账号、角色、权限与安全状态'
+}
+const moduleIcon = computed(() => moduleIcons[route.params.moduleKey] || Sparkles)
+const moduleDescription = computed(() => moduleDescriptions[route.params.moduleKey] || '集中处理当前模块的核心业务')
 
 // 根据路由选择模块，再按会话中的角色/权限过滤页签和按钮。
 const module = computed(() => modules[route.params.moduleKey])
@@ -201,23 +218,28 @@ onMounted(() => {
 
 <template>
   <!-- 页面标题、页签、工具栏和数据表都来自 modules.js，不在组件中硬编码业务模块。 -->
-  <main v-if="module" class="workspace-page">
-    <header class="page-header">
-      <div><span>{{ module.eyebrow }}</span><h1>{{ module.title }}</h1></div>
+  <main v-if="module" :class="['workspace-page', `module-${route.params.moduleKey}`]">
+    <header class="page-header module-heading">
+      <div class="module-heading-icon"><component :is="moduleIcon" :size="23" /></div>
+      <div class="module-heading-copy"><span>{{ module.eyebrow }}</span><h1>{{ module.title }}</h1><p>{{ moduleDescription }}</p></div>
+      <div class="module-heading-stats">
+        <div><span>当前视图</span><strong>{{ section?.title }}</strong></div>
+        <div><span>数据记录</span><strong>{{ filteredRows.length }}</strong></div>
+      </div>
       <button type="button" class="icon-button" title="刷新" @click="load()"><RefreshCw :size="19" /></button>
     </header>
 
     <nav class="section-tabs" aria-label="模块视图">
-      <button v-for="item in sections" :key="item.key" type="button" :class="{ active: item.key === section?.key }" @click="activeSection = item.key">
-        {{ item.title }}
+      <button v-for="(item, index) in sections" :key="item.key" type="button" :class="{ active: item.key === section?.key }" @click="activeSection = item.key">
+        <span>{{ String(index + 1).padStart(2, '0') }}</span>{{ item.title }}
       </button>
     </nav>
 
     <section class="data-section">
       <header class="data-toolbar">
-        <div><h2>{{ section?.title }}</h2><span>{{ filteredRows.length }} 条记录</span></div>
+        <div><span class="toolbar-kicker">当前列表</span><h2>{{ section?.title }}</h2><b>{{ query ? `筛选出 ${filteredRows.length} 条` : `共 ${filteredRows.length} 条` }}</b></div>
         <div class="toolbar-actions">
-          <label class="search-control"><Search :size="17" /><input v-model="query" type="search" placeholder="搜索当前视图" /></label>
+          <div class="search-control"><Search :size="17" /><input v-model="query" type="search" aria-label="搜索当前视图" placeholder="输入关键词快速筛选" /><button v-if="query" type="button" title="清除搜索" @click="query = ''"><X :size="15" /></button></div>
           <button v-for="action in allowedActions" :key="action.label" type="button" @click="openAction(action)"><Plus :size="17" />{{ action.label }}</button>
         </div>
       </header>

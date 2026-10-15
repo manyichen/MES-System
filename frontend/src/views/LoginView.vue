@@ -43,11 +43,19 @@ async function submit() {
 <template>
   <main class="login-page">
     <section class="login-identity">
-      <div class="login-brand"><img src="/assets/mes-icon.svg" alt="" /><span>双星轮胎制造执行系统</span></div>
+      <div class="login-visual" aria-hidden="true"><i /><i /><i /><b /></div>
+      <div class="login-brand"><div class="login-brand-mark"><i /><img src="/assets/mes-icon.svg" alt="" /></div><span>双星轮胎制造执行系统</span></div>
       <div><span class="kicker">MES</span><h1>生产现场统一工作台</h1><p>计划、仓储、生产、质量与设备业务在同一条制造链路中协同。</p></div>
       <ol class="production-steps"><li>计划</li><li>备料</li><li>生产</li><li>质检</li><li>入库</li></ol>
     </section>
     <section class="login-panel">
+      <div class="login-panel-decor" aria-hidden="true">
+        <div class="tech-tire tire-top"><i /><b /></div>
+        <div class="tech-tire tire-bottom"><i /><b /></div>
+        <div class="tire-data tire-data-top"><i /><span>SMART MANUFACTURING</span></div>
+        <div class="tire-data tire-data-bottom"><i /><span>MES · REALTIME</span></div>
+        <div class="tire-track"><i /><i /><i /><i /><i /><i /></div>
+      </div>
       <form @submit.prevent="submit">
         <span class="kicker">用户登录</span>
         <h2>双星轮胎 MES</h2>

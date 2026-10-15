@@ -22,6 +22,18 @@ const session = useSessionStore()
 const collapsed = ref(false)
 const mobileOpen = ref(false)
 const backendOnline = ref(null)
+const isExecutiveContext = computed(() => route.path.startsWith('/executive'))
+const currentItem = computed(() => items.value.find(item => isActive(item)) || items.value[0])
+const navigationGroups = computed(() => {
+  const groups = [
+    { key: 'overview', label: '总览', keys: ['dashboard', 'executive'] },
+    { key: 'manufacturing', label: '制造运营', keys: ['planning', 'production', 'warehouse', 'quality', 'equipment'] },
+    { key: 'support', label: '协同与管理', keys: ['process', 'trace', 'feedback', 'access', 'profile'] }
+  ]
+  return groups
+    .map(group => ({ ...group, items: items.value.filter(item => group.keys.includes(item.key)) }))
+    .filter(group => group.items.length)
+})
 
 // 根据后端登录响应中的角色/权限隐藏无权入口；后端仍是最终安全边界。
 const items = computed(() => navigation.filter(item => {
@@ -60,18 +72,25 @@ function isActive(item) {
 </script>
 
 <template>
-  <div :class="['app-shell', { collapsed }]">
+  <div :class="['app-shell', { collapsed, 'executive-context': isExecutiveContext }]">
     <aside :class="['sidebar', { open: mobileOpen }]">
       <header class="brand">
         <img src="/assets/mes-icon.svg" alt="" />
         <div><strong>双星轮胎 MES</strong><span>制造执行系统</span></div>
         <button type="button" class="mobile-close" title="关闭导航" @click="mobileOpen = false"><X :size="20" /></button>
       </header>
-      <nav>
+      <nav v-if="isExecutiveContext">
         <button v-for="item in items" :key="item.key" type="button" :class="{ active: isActive(item) }" :title="collapsed ? item.label : undefined" @click="navigate(item.to)">
-          <component :is="iconMap[item.icon]" :size="19" />
-          <span>{{ item.label }}</span>
+          <component :is="iconMap[item.icon]" :size="19" /><span>{{ item.label }}</span>
         </button>
+      </nav>
+      <nav v-else class="grouped-nav">
+        <section v-for="group in navigationGroups" :key="group.key" class="nav-group">
+          <span class="nav-group-label">{{ group.label }}</span>
+          <button v-for="item in group.items" :key="item.key" type="button" :class="{ active: isActive(item) }" :title="collapsed ? item.label : undefined" @click="navigate(item.to)">
+            <component :is="iconMap[item.icon]" :size="19" /><span>{{ item.label }}</span>
+          </button>
+        </section>
       </nav>
       <footer>
         <div class="account"><span>{{ session.user.realName?.slice(0, 1) || '用' }}</span><div><strong>{{ session.user.realName || session.user.username }}</strong><small>{{ codeLabel(session.user.roleCode, 'roleCode') }}</small></div></div>
@@ -83,10 +102,22 @@ function isActive(item) {
     </aside>
     <div v-if="mobileOpen" class="mobile-backdrop" @click="mobileOpen = false" />
     <section class="app-main">
+      <div v-if="!isExecutiveContext" class="app-ambient" aria-hidden="true">
+        <i class="ambient-orb ambient-orb-one" />
+        <i class="ambient-orb ambient-orb-two" />
+        <i class="ambient-grid" />
+      </div>
       <header class="topbar">
-        <button type="button" class="mobile-menu" title="打开导航" @click="mobileOpen = true"><Menu :size="20" /></button>
-        <div :class="['connection', { offline: backendOnline === false }]"><i />{{ backendOnline === null ? '正在检测后端服务' : backendOnline ? '后端服务已连接' : '后端服务连接异常' }}</div>
+        <template v-if="isExecutiveContext">
+          <button type="button" class="mobile-menu" title="打开导航" @click="mobileOpen = true"><Menu :size="20" /></button>
+          <div :class="['connection', { offline: backendOnline === false }]"><i />{{ backendOnline === null ? '正在检测后端服务' : backendOnline ? '后端服务已连接' : '后端服务连接异常' }}</div>
+        </template>
+        <div v-else class="topbar-leading">
+          <button type="button" class="mobile-menu" title="打开导航" @click="mobileOpen = true"><Menu :size="20" /></button>
+          <div class="page-location"><span>MES</span><ChevronRight :size="14" /><strong>{{ currentItem?.label || '工作台' }}</strong></div>
+        </div>
         <div class="topbar-meta"><span>{{ new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' }) }}</span><strong>双星轮胎工厂</strong></div>
+        <div v-if="!isExecutiveContext" :class="['connection', { offline: backendOnline === false }]"><i />{{ backendOnline === null ? '服务检测中' : backendOnline ? '系统在线' : '连接异常' }}</div>
       </header>
       <slot />
     </section>

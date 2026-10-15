@@ -57,17 +57,21 @@ async function run(viewport, suffix) {
   assert(loginButton, 'login button must be visible')
   assert(loginButton.x >= 0 && loginButton.x + loginButton.width <= viewport.width,
     `login button overflows ${viewport.width}px viewport: ${JSON.stringify(loginLayout)}`)
+  await page.waitForTimeout(800)
+  await page.screenshot({ path: path.join(output, `vue-login-${suffix}.png`), fullPage: true })
 
   await login(page)
   await page.locator('.metric-block').first().waitFor({ timeout: 10_000 })
+  // Wait for finite entrance motion so visual snapshots represent the settled interface.
+  await page.waitForTimeout(800)
   await page.screenshot({ path: path.join(output, `vue-dashboard-${suffix}.png`), fullPage: true })
   assert((await page.locator('.metric-block').count()) > 0, 'role dashboard metrics must render')
 
-  if (suffix === 'desktop') {
-    await page.goto(`${baseUrl}/module/access`, { waitUntil: 'networkidle' })
-    await page.locator('.data-section').waitFor()
-    assert((await page.locator('tbody tr').count()) > 0, 'access module table must render')
-  }
+  await page.goto(`${baseUrl}/module/access`, { waitUntil: 'networkidle' })
+  await page.locator('.data-section').waitFor()
+  assert((await page.locator('tbody tr').count()) > 0, 'access module table must render')
+  await page.waitForTimeout(800)
+  await page.screenshot({ path: path.join(output, `vue-module-${suffix}.png`), fullPage: true })
   assert.deepEqual(errors, [], `browser console errors: ${errors.join('; ')}`)
   await page.close()
 }

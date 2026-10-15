@@ -60,10 +60,10 @@ function actionTitle(action, row) {
           </td>
           <td v-if="actions.length" class="row-actions">
             <button
-              v-for="action in actions.filter(item => !item.visible || item.visible(row))"
+              v-for="(action, actionIndex) in actions.filter(item => !item.visible || item.visible(row))"
               :key="action.label"
               type="button"
-              class="table-action"
+              :class="['table-action', { primary: actionIndex === 0 }]"
               :disabled="isActionDisabled(action, row)"
               :title="actionTitle(action, row)"
               @click="emit('action', action, row)"

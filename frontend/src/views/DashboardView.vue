@@ -5,7 +5,7 @@
  */
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { ArrowRight, RefreshCw } from 'lucide-vue-next'
+import { Activity, ArrowRight, BarChart3, Clock3, RefreshCw, ShieldCheck } from 'lucide-vue-next'
 import { api } from '../api/http'
 import { localizeMessage, localizeText } from '../utils/display.js'
 
@@ -16,6 +16,7 @@ const error = ref('')
 const generatedAt = ref(new Date())
 // computed 为模板提供稳定默认数组，接口加载前不会出现空值异常。
 const priorityTodos = computed(() => dashboard.value.todos || [])
+const metricIcons = [BarChart3, Activity, Clock3, ShieldCheck]
 
 const targetRoutes = {
   planning: '/module/planning', production: '/module/production', warehouse: '/module/warehouse',
@@ -41,16 +42,19 @@ onMounted(load)
 
 <template>
   <main class="workspace-page dashboard-page">
-    <header class="page-header"><div><span>角色工作台</span><h1>{{ dashboard.roleName || '生产运行总览' }}</h1></div><button type="button" class="icon-button" title="刷新" @click="load"><RefreshCw :size="19" /></button></header>
+    <header class="dashboard-hero">
+      <div class="dashboard-hero-copy"><span>角色工作台</span><h1>{{ dashboard.roleName || '生产运行总览' }}</h1><p>关键数据与待办集中呈现，优先处理影响生产运行的事项。</p></div>
+      <button type="button" class="icon-button" title="刷新" @click="load"><RefreshCw :size="19" /></button>
+      <section class="dashboard-band">
+        <div><span>数据范围</span><strong>{{ localizeText(dashboard.dataScope || '-') }}</strong></div>
+        <div><span>更新时间</span><strong>{{ generatedAt.toLocaleTimeString('zh-CN', { hour12: false }) }}</strong></div>
+        <div><span>当前待办</span><strong>{{ priorityTodos.length }} 项</strong></div>
+      </section>
+    </header>
     <p v-if="error" class="notice error">{{ error }}</p>
-    <section class="dashboard-band">
-      <div><span>数据范围</span><strong>{{ localizeText(dashboard.dataScope || '-') }}</strong></div>
-      <div><span>更新时间</span><strong>{{ generatedAt.toLocaleTimeString('zh-CN', { hour12: false }) }}</strong></div>
-      <div><span>当前待办</span><strong>{{ priorityTodos.length }} 项</strong></div>
-    </section>
     <section class="metrics-grid" aria-busy="loading">
-      <button v-for="metric in dashboard.metrics || []" :key="metric.code" type="button" :class="['metric-block', metric.level]" @click="go(metric.targetTab)">
-        <span>{{ metric.label }}</span><strong>{{ metric.value }}<small>{{ metric.unit }}</small></strong><ArrowRight :size="18" />
+      <button v-for="(metric, index) in dashboard.metrics || []" :key="metric.code" type="button" :class="['metric-block', metric.level]" @click="go(metric.targetTab)">
+        <i><component :is="metricIcons[index % metricIcons.length]" :size="20" /></i><span>{{ metric.label }}</span><strong>{{ metric.value }}<small>{{ metric.unit }}</small></strong><ArrowRight :size="18" />
       </button>
     </section>
     <section class="dashboard-columns">
